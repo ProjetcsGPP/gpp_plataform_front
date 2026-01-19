@@ -1,6 +1,5 @@
 {
   "editor.formatOnSave": true,
-
   "editor.defaultFormatter": "esbenp.prettier-vscode",
 
   "[typescript]": {
@@ -22,6 +21,15 @@
     "typescript",
     "typescriptreact"
   ],
+
+  // ajuda a extensão a encontrar o eslint instalado no projeto (opcional)
+  "eslint.nodePath": "node_modules",
+
+  // útil em monorepos; "auto" detecta diretórios de trabalho
+  "eslint.workingDirectories": [{ "mode": "auto" }],
+
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "typescript.enablePromptUseWorkspaceTsdk": true,
 
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": "explicit"
