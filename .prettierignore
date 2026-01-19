@@ -1,0 +1,19 @@
+# Python
+*.py
+
+# Ambientes
+.venv/
+venv/
+.vscode/
+,eslintrc.*
+
+# Build
+.next/
+dist/
+build/
+
+# Dependências
+node_modules/
+
+# Outros
+covarege/
