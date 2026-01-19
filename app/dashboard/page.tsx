@@ -1,7 +1,8 @@
+import type { Metadata } from "next";
 import React from "react";
 import DashboardNav from "../../components/DashboardNav";
 
-export const metadata = {
+export const metadata: Metadata = {
   title: "Dashboard - GPP Plataforma",
 };
 

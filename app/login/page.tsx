@@ -1,7 +1,8 @@
+import type { Metadata } from "next";
 import React from "react";
 import AuthForm from "../../components/AuthForm";
 
-export const metadata = {
+export const metadata: Metadata = {
   title: "Login - GPP Plataforma",
 };
 
