@@ -1,12 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-
-type LoginResponse = {
-  ok: boolean;
-  token?: string;
-  message?: string;
-};
+import { authService } from "../services/api";
 
 export default function AuthForm() {
   const router = useRouter();
@@ -21,28 +16,30 @@ export default function AuthForm() {
     setError(null);
 
     try {
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-        credentials: "include",
-      });
+      // Faz login via JWT
+      const authData = await authService.login(email, password);
 
-      const data: LoginResponse = await res.json();
+      // Extrai informações do JWT (decode básico - não valida assinatura)
+      const payload = JSON.parse(atob(authData.access.split(".")[1]));
 
-      if (!res.ok || !data.ok) {
-        setError(data.message || "Erro ao autenticar");
-        setLoading(false);
-        return;
-      }
+      const user = {
+        id: payload.user_id,
+        name: payload.username,
+        email: payload.useremail,
+      };
 
-      // Se o backend retornar um token em JSON, você pode salvá-lo:
-      // localStorage.setItem("token", data.token || "");
-      // Redireciona para o dashboard
+      // Salva tokens e dados do usuário
+      authService.saveAuth(authData, user);
+
+      // Redireciona para dashboard
       router.push("/dashboard");
-    } catch (err) {
-      setError("Erro de rede");
-      console.error(err);
+    } catch (err: any) {
+      const message =
+        err.response?.data?.detail ||
+        err.response?.data?.message ||
+        "Credenciais inválidas";
+      setError(message);
+      console.error("Erro no login:", err);
     } finally {
       setLoading(false);
     }
@@ -75,7 +72,9 @@ export default function AuthForm() {
       </label>
 
       {error && (
-        <div style={{ color: "crimson", marginBottom: 12 }}>{error}</div>
+        <div style={{ color: "crimson", marginBottom: 12, fontSize: 14 }}>
+          {error}
+        </div>
       )}
 
       <button
@@ -84,11 +83,11 @@ export default function AuthForm() {
         style={{
           width: "100%",
           padding: "10px 14px",
-          background: "#0b63ff",
+          background: loading ? "#ccc" : "#0b63ff",
           color: "#fff",
           border: "none",
           borderRadius: 6,
-          cursor: "pointer",
+          cursor: loading ? "not-allowed" : "pointer",
         }}
       >
         {loading ? "Entrando..." : "Entrar"}
