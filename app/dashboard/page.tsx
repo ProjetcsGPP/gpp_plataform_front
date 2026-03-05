@@ -1,8 +1,10 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import DashboardNav from "../../components/DashboardNav";
-import { authService, portalService, Application } from "../../services/api";
+import DashboardNav from "@/components/DashboardNav";
+import type { Application } from "@/types/application";
+import { authService, portalService } from "@/services/api";
+import type { ApiError } from "@/types/api";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -26,9 +28,12 @@ export default function DashboardPage() {
       setLoading(true);
       const apps = await portalService.getApplications();
       setApplications(apps);
-    } catch (err: any) {
-      console.error("Erro ao carregar aplicações:", err);
-      setError("Erro ao carregar aplicações");
+    } catch (err: unknown) {
+      if (typeof err === "object" && err !== null && "message" in err) {
+        setError(String((err as ApiError).message));
+      } else {
+        setError("Erro ao carregar aplicações");
+      }
     } finally {
       setLoading(false);
     }

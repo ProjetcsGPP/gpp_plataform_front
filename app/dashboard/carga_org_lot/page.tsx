@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import React from "react";
-import DashboardNav from "../../../components/DashboardNav";
+import DashboardNav from "@/components/DashboardNav";
 
 export const metadata: Metadata = {
   title: "Carga Org Lot - Dashboard",
