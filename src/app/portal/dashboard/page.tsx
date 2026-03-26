@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getMe, getAplicacoes, logout, switchApp } from "@/lib/auth";
+import { useAplicacoes } from '@/hooks/useAplicacoes';
 import type { MeResponse, UserRole, Aplicacao } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -12,11 +13,15 @@ import { logError } from '@/lib/logger';
 
 export default function PortalDashboardPage() {
   const router = useRouter();
-  const [me, setMe] = useState<MeResponse | null>(null);
-  const [apps, setApps] = useState<Aplicacao[]>([]);
+  const [me, setMe] = useState<MeResponse | null>(null);  
+  const [appList, setAppList] = useState<Aplicacao[]>([]);
   const [loading, setLoading] = useState(true);
   const [switching, setSwitching] = useState<string | null>(null);
+  const { apps, isLoading, refresh } = useAplicacoes();
 
+  // Auto-refresh button
+  const handleRefresh = () => refresh();
+  
   useEffect(() => {
     // Ambas as chamadas exigem sessão autenticada.
     // getAplicacoes() retorna apenas as aplicações às quais o usuário tem acesso via roles (filtrado no backend).
@@ -32,7 +37,7 @@ export default function PortalDashboardPage() {
         const appsDataFiltered = appsData.filter(
                                                   (a) => roleCodigos.has(a.codigointerno) && a.isshowinportal
                                                 );
-        setApps(appsDataFiltered);
+        setAppList(appsDataFiltered);
       })
       .catch(async (err) => {
           await logError(err, 'portal/dashboard/load');
@@ -107,40 +112,73 @@ export default function PortalDashboardPage() {
           <h2 className="text-xl font-bold text-slate-800">Suas Aplicações</h2>
         </div>
 
-        {apps.length === 0 ? (
-          <div className="rounded-2xl bg-white p-10 text-center shadow-sm">
-            <p className="text-slate-500">Nenhuma aplicação disponível para o seu perfil.</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {apps.map((app) => (
-              <Card
-                key={app.codigointerno}
-                className="cursor-pointer rounded-2xl shadow-sm transition hover:shadow-md hover:-translate-y-0.5"
-                onClick={() => handleAppClick(app)}
-              >
-                <CardHeader>
-                  <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-xl bg-[#1B3A6B]/10">
-                    <span className="text-xl font-bold text-[#1B3A6B]">
-                      {app.nomeaplicacao.charAt(0)}
-                    </span>
-                  </div>
-                  <CardTitle className="text-base text-slate-800">{app.nomeaplicacao}</CardTitle>
-                  <CardDescription className="text-xs">{app.codigointerno}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {switching === app.codigointerno ? (
-                    <div className="flex items-center gap-2 text-sm text-slate-500">
-                      <Loader2 className="h-4 w-4 animate-spin" /> Acessando...
-                    </div>
-                  ) : (
-                    <Badge className="bg-emerald-100 text-emerald-700 text-xs">Ativo</Badge>
+        {appList.map((app) => {
+          const isBlocked = app.isappbloqueada;  // ← seu campo
+          
+          return (
+            <Card
+              key={app.codigointerno}
+              className={`rounded-2xl shadow-sm transition-all duration-200 ${
+                isBlocked
+                  ? 'opacity-60 cursor-not-allowed border-2 border-orange-300 hover:shadow-md'
+                  : 'cursor-pointer hover:shadow-lg hover:-translate-y-1'
+              }`}
+              onClick={isBlocked ? undefined : () => handleAppClick(app)}
+            >
+              <CardHeader>
+                {/* Ícone com cor condicional */}
+                <div className={`mb-3 flex h-14 w-14 items-center justify-center rounded-2xl ${
+                  isBlocked ? 'bg-orange-100 border-2 border-orange-300' : 'bg-gradient-to-br from-[#1B3A6B] to-blue-600'
+                }`}>
+                  <span className={`text-2xl font-bold ${
+                    isBlocked ? 'text-orange-600' : 'text-white'
+                  }`}>
+                    {app.nomeaplicacao.charAt(0).toUpperCase()}
+                  </span>
+                </div>
+                
+                <CardTitle className="text-lg font-semibold text-slate-800 line-clamp-1">
+                  {app.nomeaplicacao}
+                </CardTitle>
+                <CardDescription className="flex items-center gap-1 text-xs font-medium text-slate-500">
+                  {app.codigointerno}
+                  {app.isappproductionready && (
+                    <Badge variant="secondary" className="ml-1 text-xs bg-green-100 text-green-800 border-green-200">
+                      Production Ready
+                    </Badge>
                   )}
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
+                </CardDescription>
+              </CardHeader>
+              
+              <CardContent className="pt-0">
+                {isBlocked ? (
+                  /* 🟡 APP BLOQUEADA */
+                  <div className="flex items-center justify-center gap-2 p-3 bg-orange-50 rounded-xl border border-orange-200">
+                    <div className="p-1 bg-orange-200 rounded-full">
+                      <svg className="h-4 w-4 text-orange-600" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <span className="text-sm font-medium text-orange-800">Aplicação Bloqueada</span>
+                  </div>
+                ) : switching === app.codigointerno ? (
+                  /* ⏳ CARREGANDO */
+                  <div className="flex items-center justify-center gap-2 p-3 bg-emerald-50 rounded-xl border border-emerald-200">
+                    <Loader2 className="h-4 w-4 animate-spin text-emerald-600" />
+                    <span className="text-sm font-medium text-emerald-800">Acessando...</span>
+                  </div>
+                ) : (
+                  /* 🟢 ATIVA */
+                  <Badge className="bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-medium shadow-lg">
+                    Ativa
+                  </Badge>
+                )}
+              </CardContent>
+            </Card>
+          );
+        })}
+
+
       </main>
     </div>
   );
