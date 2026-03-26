@@ -2,6 +2,13 @@ import api from "./api";
 
 export type AppContext = "PORTAL" | "ACOES_PNGI" | "CARGA_ORG_LOT";
 
+// Dados mínimos retornados pelo endpoint público (sem autenticação)
+export interface AplicacaoPublica {
+  codigointerno: string;
+  nomeaplicacao: string;
+}
+
+// Dados completos retornados pelo endpoint autenticado
 export interface Aplicacao {
   codigointerno: string;
   nomeaplicacao: string;
@@ -26,7 +33,12 @@ export interface MeResponse {
   user_roles: UserRole[];
 }
 
-export async function getAplicacoesPublicas(): Promise<Aplicacao[]> {
+/**
+ * Lista aplicações públicas — não requer autenticação.
+ * Usada na tela de login para popular o seletor de aplicação.
+ * Endpoint: GET /accounts/auth/aplicacoes/
+ */
+export async function getAplicacoesPublicas(): Promise<AplicacaoPublica[]> {
   const { data } = await api.get("/accounts/auth/aplicacoes/");
   return data;
 }
@@ -64,6 +76,11 @@ export async function getMe(): Promise<MeResponse> {
   return data;
 }
 
+/**
+ * Lista aplicações às quais o usuário autenticado tem acesso (filtrado por roles no backend).
+ * Requer sessão autenticada.
+ * Endpoint: GET /accounts/aplicacoes/
+ */
 export async function getAplicacoes(): Promise<Aplicacao[]> {
   const { data } = await api.get("/accounts/aplicacoes/");
   return data;

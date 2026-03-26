@@ -17,9 +17,16 @@ export default function PortalDashboardPage() {
   const [switching, setSwitching] = useState<string | null>(null);
 
   useEffect(() => {
+    // Ambas as chamadas exigem sessão autenticada.
+    // getAplicacoes() retorna apenas as aplicações às quais o usuário tem acesso via roles (filtrado no backend).
+    // getMe() retorna os dados do usuário incluindo user_roles para exibição de informações de perfil.
     Promise.all([getMe(), getAplicacoes()])
       .then(([meData, appsData]) => {
         setMe(meData);
+        // O backend já filtra as aplicações pelo role do usuário autenticado.
+        // Caso o backend não filtre, é possível aplicar filtro local:
+        // const roleCodigos = new Set(meData.user_roles.map((r) => r.aplicacao_codigo));
+        // setApps(appsData.filter((a) => roleCodigos.has(a.codigointerno)));
         setApps(appsData);
       })
       .catch(() => router.push("/portal/login"))

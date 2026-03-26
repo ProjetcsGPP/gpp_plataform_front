@@ -7,13 +7,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { getAplicacoesPublicas, login } from "@/lib/auth";
-import type { Aplicacao } from "@/lib/auth";
+import type { AplicacaoPublica } from "@/lib/auth";
 import { Loader2, LogIn } from "lucide-react";
-import api from "@/lib/api";
 
 export default function PortalLoginPage() {
   const router = useRouter();
-  const [apps, setApps] = useState<Aplicacao[]>([]);
+  const [apps, setApps] = useState<AplicacaoPublica[]>([]);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [appContext, setAppContext] = useState("PORTAL");
@@ -21,13 +20,11 @@ export default function PortalLoginPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    // Busca CSRF token e apps públicas em paralelo
-    Promise.all([
-      api.get("/accounts/auth/aplicacoes/"),
-      // GET qualquer endpoint Django para receber o cookie csrftoken
-    ]).then(([appsRes]) => {
-      setApps(appsRes.data);
-    }).catch(() => {});
+    // Busca aplicações públicas (sem autenticação) para popular o seletor
+    // A chamada a getAplicacoesPublicas já faz o GET ao backend e obtém o cookie csrftoken
+    getAplicacoesPublicas()
+      .then((data) => setApps(data))
+      .catch(() => {});
   }, []);
 
   async function handleSubmit(e: React.FormEvent) {
