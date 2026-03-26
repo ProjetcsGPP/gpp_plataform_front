@@ -10,8 +10,15 @@ export interface AplicacaoPublica {
 
 // Dados completos retornados pelo endpoint autenticado
 export interface Aplicacao {
+
+  idaplicacao: number;
   codigointerno: string;
   nomeaplicacao: string;
+  base_url: string;
+  isshowinportal: boolean
+  isappbloqueada: boolean
+  isappproductionready: boolean
+
 }
 
 export interface UserRole {

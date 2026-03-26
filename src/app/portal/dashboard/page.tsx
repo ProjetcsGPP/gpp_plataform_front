@@ -25,9 +25,13 @@ export default function PortalDashboardPage() {
         setMe(meData);
         // O backend já filtra as aplicações pelo role do usuário autenticado.
         // Caso o backend não filtre, é possível aplicar filtro local:
-        // const roleCodigos = new Set(meData.user_roles.map((r) => r.aplicacao_codigo));
-        // setApps(appsData.filter((a) => roleCodigos.has(a.codigointerno)));
-        setApps(appsData);
+        //setApps(appsData);
+
+        const roleCodigos = new Set(meData.user_roles.map((r) => r.aplicacao_codigo));
+        const appsDataFiltered = appsData.filter(
+                                                  (a) => roleCodigos.has(a.codigointerno) && a.isshowinportal
+                                                );
+        setApps(appsDataFiltered);
       })
       .catch(() => router.push("/portal/login"))
       .finally(() => setLoading(false));
