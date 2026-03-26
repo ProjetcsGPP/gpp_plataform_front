@@ -3,11 +3,12 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getMe, getAplicacoes, logout, switchApp } from "@/lib/auth";
-import type { MeResponse, Aplicacao } from "@/lib/auth";
+import type { MeResponse, UserRole, Aplicacao } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { LogOut, Loader2, LayoutGrid } from "lucide-react";
+import { logError } from '@/lib/logger';
 
 export default function PortalDashboardPage() {
   const router = useRouter();
@@ -21,19 +22,22 @@ export default function PortalDashboardPage() {
     // getAplicacoes() retorna apenas as aplicações às quais o usuário tem acesso via roles (filtrado no backend).
     // getMe() retorna os dados do usuário incluindo user_roles para exibição de informações de perfil.
     Promise.all([getMe(), getAplicacoes()])
-      .then(([meData, appsData]) => {
+      .then(([meData, appsData]) => {              
         setMe(meData);
         // O backend já filtra as aplicações pelo role do usuário autenticado.
         // Caso o backend não filtre, é possível aplicar filtro local:
-        //setApps(appsData);
 
-        const roleCodigos = new Set(meData.user_roles.map((r) => r.aplicacao_codigo));
+        const roles = meData.roles ?? [];
+        const roleCodigos = new Set(roles.map((r: UserRole) => r.aplicacao_codigo));
         const appsDataFiltered = appsData.filter(
                                                   (a) => roleCodigos.has(a.codigointerno) && a.isshowinportal
                                                 );
         setApps(appsDataFiltered);
       })
-      .catch(() => router.push("/portal/login"))
+      .catch(async (err) => {
+          await logError(err, 'portal/dashboard/load');
+          router.push("/portal/login");
+        })
       .finally(() => setLoading(false));
   }, [router]);
 

@@ -37,7 +37,7 @@ export interface MeResponse {
   is_portal_admin: boolean;
   name: string;
   orgao: string;
-  user_roles: UserRole[];
+  roles: UserRole[];
 }
 
 /**
