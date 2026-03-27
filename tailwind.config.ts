@@ -7,17 +7,6 @@ const config: Config = {
     './components/**/*.{js,ts,jsx,tsx,mdx}',
     './app/**/*.{js,ts,jsx,tsx,mdx}',
   ],
-  safelist: [
-    // Garante que classes dinâmicas dos StatCards não sejam purgadas
-    'border-primary', 'hover:bg-primary-container',
-    'border-blue-400', 'hover:bg-blue-600',
-    'border-error', 'hover:bg-error',
-    'border-tertiary-container', 'hover:bg-on-tertiary-container',
-    'text-primary', 'text-blue-500', 'text-error', 'text-tertiary-container',
-    'group-hover:text-blue-100', 'group-hover:text-blue-200', 'group-hover:text-white',
-    'group-hover:bg-green-600', 'group-hover:bg-blue-400',
-    'bg-tertiary-container', 'text-on-error-container',
-  ],
   theme: {
     extend: {
       colors: {
@@ -72,14 +61,11 @@ const config: Config = {
         },
       },
       fontFamily: {
-        // font-outfit: classe usada nos HTMLs de referência (visao-Google.html)
         outfit:   ['Outfit', 'sans-serif'],
-        // font-headline: alias mantido para compatibilidade com componentes existentes
         headline: ['Outfit', 'sans-serif'],
         heading:  ['Outfit', 'sans-serif'],
-        // font-body / font-label: Plus Jakarta Sans
-        body:  ['"Plus Jakarta Sans"', 'sans-serif'],
-        label: ['"Plus Jakarta Sans"', 'sans-serif'],
+        body:     ['"Plus Jakarta Sans"', 'sans-serif'],
+        label:    ['"Plus Jakarta Sans"', 'sans-serif'],
       },
       borderRadius: {
         gov: '8px',
