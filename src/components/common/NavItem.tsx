@@ -1,10 +1,9 @@
 'use client'
 
-import { ReactNode } from 'react'
 import { cn } from '@/lib/utils'
 
 interface NavItemProps {
-  icon: ReactNode
+  icon: string
   label: string
   isExpanded: boolean
   active?: boolean
@@ -12,16 +11,32 @@ interface NavItemProps {
 
 export function NavItem({ icon, label, isExpanded, active = false }: NavItemProps) {
   return (
-    <div className={cn(
-      'group flex items-center gap-4 p-3 rounded-lg cursor-pointer transition-all duration-200 hover:shadow-sm',
-      active 
-        ? 'bg-primary-container text-on-primary font-semibold border-r-2 border-primary shadow-sm' 
-        : 'text-on-surface-variant hover:text-primary hover:bg-surface-container hover:shadow-md'
-    )}>
-      <div className="min-w-[24px] flex-shrink-0">{icon}</div>
-      {isExpanded && (
-        <span className="whitespace-nowrap font-medium text-sm">{label}</span>
+    <div
+      className={cn(
+        'flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-200 overflow-hidden',
+        active
+          ? 'bg-blue-100 text-blue-900 font-semibold scale-95'
+          : 'text-on-surface-variant hover:text-primary hover:bg-surface-container hover:shadow-sm'
       )}
+    >
+      {/* Ícone — tamanho fixo para o material-symbols renderizar */}
+      <span
+        className="material-symbols-outlined flex-shrink-0 text-[22px] leading-none"
+        style={active ? { fontVariationSettings: "'FILL' 1" } : {}}
+        data-icon={icon}
+      >
+        {icon}
+      </span>
+
+      {/* Label — anima com max-width para não vazar durante recolher */}
+      <span
+        className={cn(
+          'whitespace-nowrap text-sm font-medium transition-all duration-300 overflow-hidden',
+          isExpanded ? 'max-w-[160px] opacity-100' : 'max-w-0 opacity-0'
+        )}
+      >
+        {label}
+      </span>
     </div>
   )
 }

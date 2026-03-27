@@ -17,62 +17,59 @@ export default function Sidebar() {
 
   return (
     <aside
-      className={`
-        fixed left-0 top-0 h-full bg-surface-container-lowest
-        border-r border-outline-variant shadow-sm z-50
-        transition-all duration-300
-        ${isExpanded ? 'w-64' : 'w-20'}
-      `}
+      className={cn(
+        'fixed left-0 top-0 h-full bg-surface-container-lowest',
+        'border-r border-outline-variant shadow-sm z-50',
+        'transition-all duration-300 overflow-hidden',
+        isExpanded ? 'w-64' : 'w-[72px]'
+      )}
       onMouseEnter={() => setIsExpanded(true)}
       onMouseLeave={() => setIsExpanded(false)}
     >
       {/* Logo / Header */}
-      <div className="px-6 py-8">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 authority-gradient rounded-lg flex items-center justify-center shadow-md shadow-primary/20">
-            <span
-              className="material-symbols-outlined text-white"
-              style={{ fontVariationSettings: "'FILL' 1" }}
-            >
-              account_balance
-            </span>
-          </div>
-          {isExpanded && (
-            <div className="hidden md:block">
-              <h1 className="text-lg font-bold tracking-tight text-blue-900 font-outfit">
-                SUBGES/SEGER
-              </h1>
-              <p className="text-[10px] uppercase tracking-widest text-on-surface-variant font-semibold">
-                Gov Management
-              </p>
-            </div>
+      <div className="px-4 py-6 flex items-center gap-3 overflow-hidden">
+        <div className="w-10 h-10 flex-shrink-0 authority-gradient rounded-lg flex items-center justify-center shadow-md">
+          <span
+            className="material-symbols-outlined text-white text-[20px] leading-none"
+            style={{ fontVariationSettings: "'FILL' 1" }}
+          >
+            account_balance
+          </span>
+        </div>
+        <div
+          className={cn(
+            'overflow-hidden transition-all duration-300 whitespace-nowrap',
+            isExpanded ? 'max-w-[160px] opacity-100' : 'max-w-0 opacity-0'
           )}
+        >
+          <h1 className="text-base font-bold tracking-tight text-blue-900 font-outfit">
+            SUBGES/SEGER
+          </h1>
+          <p className="text-[10px] uppercase tracking-widest text-on-surface-variant font-semibold">
+            Gov Management
+          </p>
         </div>
       </div>
 
-      {/* CTA — visível apenas expandido */}
-      {isExpanded && (
-        <div className="px-4 mb-4">
-          <button className="authority-gradient text-white rounded-lg py-3 px-4 flex items-center justify-center gap-2 font-semibold text-sm hover:opacity-90 transition-all w-full active:scale-95">
-            <span className="material-symbols-outlined text-white" style={{ fontSize: '18px' }}>add</span>
-            Nova Solicitação
-          </button>
-        </div>
-      )}
+      {/* CTA — anima com max-height */}
+      <div
+        className={cn(
+          'px-4 mb-4 overflow-hidden transition-all duration-300',
+          isExpanded ? 'max-h-20 opacity-100' : 'max-h-0 opacity-0'
+        )}
+      >
+        <button className="authority-gradient text-white rounded-lg py-3 px-4 flex items-center justify-center gap-2 font-semibold text-sm hover:opacity-90 transition-all w-full active:scale-95">
+          <span className="material-symbols-outlined text-white text-[18px] leading-none">add</span>
+          Nova Solicitação
+        </button>
+      </div>
 
       {/* Navegação Principal */}
-      <nav className="flex-1 px-4 space-y-2 mt-4">
+      <nav className="px-2 space-y-1 mt-2">
         {navItems.map((item) => (
           <NavItem
             key={item.icon}
-            icon={
-              <span
-                className="material-symbols-outlined"
-                style={item.active ? { fontVariationSettings: "'FILL' 1" } : {}}
-              >
-                {item.icon}
-              </span>
-            }
+            icon={item.icon}
             label={item.label}
             isExpanded={isExpanded}
             active={item.active}
@@ -81,18 +78,14 @@ export default function Sidebar() {
       </nav>
 
       {/* Footer */}
-      <div className="p-4 mt-auto border-t border-outline-variant/50 space-y-1">
-        <NavItem
-          icon={<span className="material-symbols-outlined">help</span>}
-          label="Support"
-          isExpanded={isExpanded}
-        />
-        <NavItem
-          icon={<span className="material-symbols-outlined">logout</span>}
-          label="Logout"
-          isExpanded={isExpanded}
-        />
+      <div className="p-2 mt-auto border-t border-outline-variant/50 space-y-1">
+        <NavItem icon="help"   label="Support" isExpanded={isExpanded} />
+        <NavItem icon="logout" label="Logout"  isExpanded={isExpanded} />
       </div>
     </aside>
   )
+}
+
+function cn(...classes: (string | boolean | undefined)[]) {
+  return classes.filter(Boolean).join(' ')
 }
