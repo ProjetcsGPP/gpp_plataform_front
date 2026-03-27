@@ -14,10 +14,6 @@ const nextConfig: NextConfig = {
         source: "/api/:path*",
         destination: "http://172.22.176.1:8000/api/:path*/",
       },
-      {
-        source: "/lab",
-        destination: "/_lab",
-      },
     ];
   },
 };
