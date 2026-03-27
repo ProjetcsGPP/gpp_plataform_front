@@ -7,18 +7,18 @@ import { StatCard } from '@/components/ui/StatCard'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { ImpactMap } from '@/components/dashboard/ImpactMap'
 import { ActivityFeed } from '@/components/dashboard/ActivityFeed'
-import { Rocket, FolderTree, AlertCircle, Gauge, PlusCircle, FileText, BarChart3 } from 'lucide-react'
+import { PlusCircle } from 'lucide-react'
 
 export default function TestSidebar() {
   return (
     <div className="flex min-h-screen bg-background">
       <Sidebar />
-      
-      <div className="flex flex-col flex-1 ml-20 md:ml-64 min-h-screen">
+
+      <div className="flex flex-col flex-1 ml-20 min-h-screen">
         <TopBar />
-        
-        <main className="px-8 py-8 space-y-10 max-w-[1600px] mx-auto">
-          
+
+        <main className="px-8 py-8 space-y-10 max-w-[1600px] mx-auto w-full">
+
           {/* === 1. PageHeader === */}
           <PageHeader
             eyebrow="Comando Solar (Sóbrio)"
@@ -40,34 +40,36 @@ export default function TestSidebar() {
                 label="Projetos Ativos"
                 value="248"
                 trend="+12%"
-                icon={<Rocket />} 
+                icon="rocket_launch"
                 variant="proj"
               />
               <StatCard
                 label="Processos Mapeados"
                 value="1,429"
                 trend="94% Comp."
-                icon={<FolderTree />} 
+                icon="account_tree"
                 variant="proc"
               />
               <StatCard
                 label="Alertas Críticos"
                 value="07"
-                icon={<AlertCircle />} 
+                subtext="Require immediate action"
+                icon="report_problem"
                 variant="alert"
               />
               <StatCard
                 label="Eficiência Geral"
                 value="88.5%"
-                icon={<Gauge />} 
+                icon="speed"
                 variant="efi"
+                progress={88.5}
               />
             </div>
           </section>
 
           {/* === 3. StatusBadge Demo === */}
           <section className="space-y-4">
-            <h3 className="text-lg font-bold text-primary font-headline">StatusBadge (copie este!)</h3>
+            <h3 className="text-lg font-bold text-primary font-headline">StatusBadge</h3>
             <div className="flex flex-wrap gap-3 items-center">
               <StatusBadge status="Em Dia" />
               <StatusBadge status="Atenção" />
@@ -93,22 +95,6 @@ export default function TestSidebar() {
             </div>
           </section>
 
-          {/* === 5. Sidebar + TopBar sempre visíveis === */}
-          <div className="p-6 bg-surface-container-high rounded-lg text-sm text-on-surface-variant space-y-2">
-            <strong>✅ Template pronto para copiar:</strong>
-            <ul className="list-disc list-inside space-y-1 ml-2">
-              <li>Sidebar flexível (`ml-20 md:ml-64`)</li>
-              <li>TopBar sticky (`z-40 sticky top-0`)</li>
-              <li>PageHeader responsivo</li>
-              <li>StatCard com hover perfeito</li>
-              <li>StatusBadge tipado TypeScript</li>
-              <li>ImpactMap com tooltip + pins</li>
-              <li>ActivityFeed timeline completa</li>
-            </ul>
-            <div className="mt-4 p-3 bg-primary-container text-on-primary rounded-lg text-xs">
-              Copie qualquer seção para sua página real!
-            </div>
-          </div>
         </main>
       </div>
     </div>
