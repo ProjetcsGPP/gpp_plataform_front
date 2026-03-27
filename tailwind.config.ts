@@ -62,10 +62,9 @@ const config: Config = {
         }
       },
       fontFamily: {
-        headline: ['Outfit', 'sans-serif'], // PRIORIDADE: HTMLs
-        body: ['Plus Jakarta Sans', 'sans-serif'], // PRIORIDADE: HTMLs
+        headline: ['Outfit', 'sans-serif'],  // HTMLs: Outfit
+        body: ['"Plus Jakarta Sans"', 'sans-serif'],  // HTMLs: Plus Jakarta Sans
         heading: ['Outfit', 'sans-serif'],
-        label: ['Plus Jakarta Sans', 'sans-serif'],
       },
       borderRadius: {
         gov: '8px',

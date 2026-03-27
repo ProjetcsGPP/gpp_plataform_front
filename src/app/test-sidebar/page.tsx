@@ -40,27 +40,27 @@ export default function TestSidebar() {
                 label="Projetos Ativos"
                 value="248"
                 trend="+12%"
-                icon={<Rocket className="h-6 w-6 text-primary" />}
-                color="primary"
+                icon={<Rocket />} 
+                variant="proj"
               />
               <StatCard
                 label="Processos Mapeados"
                 value="1,429"
                 trend="94% Comp."
-                icon={<FolderTree className="h-6 w-6 text-blue-500" />}
-                color="blue"
+                icon={<FolderTree />} 
+                variant="proc"
               />
               <StatCard
                 label="Alertas Críticos"
                 value="07"
-                icon={<AlertCircle className="h-6 w-6 text-error" />}
-                color="error"
+                icon={<AlertCircle />} 
+                variant="alert"
               />
               <StatCard
                 label="Eficiência Geral"
                 value="88.5%"
-                icon={<Gauge className="h-6 w-6 text-tertiary-container" />}
-                color="tertiary"
+                icon={<Gauge />} 
+                variant="efi"
               />
             </div>
           </section>
