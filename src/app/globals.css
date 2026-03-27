@@ -12,19 +12,10 @@
 
 /*
   2. SAFELIST via @source inline (Tailwind v4)
-  Força a geração de classes dinâmicas dos StatCards que não aparecem
-  literalmente no JSX escaneado (ex: montadas por lógica condicional).
+  Sintaxe correta: @source inline("classe1 classe2 ...")
+  Força a geração de classes dos StatCards que não aparecem literalmente no JSX.
 */
-@source inline({
-  border-primary border-blue-400 border-error border-tertiary-container
-  hover:bg-primary-container hover:bg-blue-600 hover:bg-error hover:bg-on-tertiary-container
-  hover:text-white
-  text-primary text-blue-500 text-error text-tertiary-container
-  group-hover:text-blue-100 group-hover:text-blue-200 group-hover:text-white
-  group-hover:bg-green-600 group-hover:bg-blue-400
-  bg-tertiary-container text-on-error-container
-  font-outfit font-headline
-});
+@source inline("border-primary border-blue-400 border-error border-tertiary-container hover:bg-primary-container hover:bg-blue-600 hover:bg-error hover:bg-on-tertiary-container hover:text-white text-primary text-blue-500 text-error text-tertiary-container group-hover:text-blue-100 group-hover:text-blue-200 group-hover:text-white group-hover:bg-green-600 group-hover:bg-blue-400 bg-tertiary-container text-on-error-container font-outfit font-headline");
 
 /* 3. CUSTOM VARIANT */
 @custom-variant dark (&:is(.dark *));
