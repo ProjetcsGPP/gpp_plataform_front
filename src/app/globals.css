@@ -4,14 +4,18 @@
    ========================================================================= */
 
 /* 1. IMPORTS */
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
+/* 2. FONTES GOOGLE DEPOIS */
 /*
-  2. THEME — Registro de tokens para geração de utilitários Tailwind v4
+  @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+  @import url('https://fonts.googleapis.com/icon?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200');
+*/
+
+/*
+  3. THEME — Registro de tokens para geração de utilitários Tailwind v4
   --color-X  → gera: bg-X, text-X, border-X, ring-X ...
   --font-X   → gera: font-X
   Ref: https://tailwindcss.com/docs/theme
@@ -60,7 +64,7 @@
 }
 
 /*
-  3. THEME INLINE — apenas aliases para tokens do shadcn/sidebar
+  4. THEME INLINE — apenas aliases para tokens do shadcn/sidebar
   (não gera novos utilitários, só remapeia variáveis existentes)
 */
 @theme inline {
@@ -93,11 +97,11 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-/* 4. CUSTOM VARIANT */
+/* 5. CUSTOM VARIANT */
 @custom-variant dark (&:is(.dark *));
 
 /*
-  5. SAFELIST via @source inline
+  6. SAFELIST via @source inline
   Força geração de variantes dinâmicas dos StatCards.
   Sintaxe v4: "{prefixo:,}classe" expande com e sem o prefixo.
 */
@@ -116,7 +120,7 @@
 @source inline("text-primary text-blue-500 text-error text-tertiary-container");
 @source inline("font-outfit font-headline font-body");
 
-/* 6. TOKENS SHADCN / SIDEBAR (:root) */
+/* 7. TOKENS SHADCN / SIDEBAR (:root) */
 :root {
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
@@ -148,7 +152,7 @@
   --sidebar-foreground: #191c1e;
 }
 
-/* 7. TOKENS DARK */
+/* 8. TOKENS DARK */
 .dark {
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
@@ -176,7 +180,7 @@
   --sidebar-ring: oklch(0.556 0 0);
 }
 
-/* 8. BASE LAYER */
+/* 9. BASE LAYER */
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -187,14 +191,25 @@
   }
 }
 
-/* 9. UTILITIES COMANDO SOLAR */
+/* 10. UTILITIES COMANDO SOLAR */
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 .glass-card { background: rgba(255,255,255,0.8); backdrop-filter: blur(20px); }
 .material-symbols-outlined {
-  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-  vertical-align: middle;
+  font-family: 'Material Symbols Outlined';        /* ← ESSENCIAL */
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  display: inline-block;
   line-height: 1;
+  text-transform: none;
+  letter-spacing: normal;
+  word-wrap: normal;
+  white-space: nowrap;
+  direction: ltr;
+  vertical-align: middle;
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  -webkit-font-smoothing: antialiased;
 }
 .authority-gradient {
   background: linear-gradient(135deg, #00244a 0%, #003a70 100%);
