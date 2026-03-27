@@ -1,6 +1,6 @@
 /* =========================================================================
    COMANDO SOLAR (SÓBRIO) - GPP PLATAFORMA
-   Ordem obrigatória: @import → @source → @custom-variant → @theme → :root
+   Tailwind v4: cores e fontes DEVEM estar no @theme {} para gerar utilitários
    ========================================================================= */
 
 /* 1. IMPORTS */
@@ -11,94 +11,112 @@
 @import "shadcn/tailwind.css";
 
 /*
-  2. SAFELIST via @source inline (Tailwind v4)
-  Sintaxe correta para variantes: "{hover:,group-hover:,}classe"
-  Ref: https://tailwindcss.com/docs/detecting-classes-in-source-files
-
-  CARD PROJ: border-primary, hover:bg-primary-container, group-hover:text-blue-100/200
-  CARD PROC: border-blue-400, hover:bg-blue-600, group-hover:text-blue-100, group-hover:bg-blue-400
-  CARD ALERT: border-error, hover:bg-error, text-on-error-container, group-hover:text-white
-  CARD EFI: border-tertiary-container, hover:bg-on-tertiary-container, bg-tertiary-container
+  2. THEME — Registro de tokens para geração de utilitários Tailwind v4
+  --color-X  → gera: bg-X, text-X, border-X, ring-X ...
+  --font-X   → gera: font-X
+  Ref: https://tailwindcss.com/docs/theme
 */
+@theme {
+  /* Paleta Comando Solar */
+  --color-primary:               #00244a;
+  --color-primary-container:     #003a70;
+  --color-on-primary:            #ffffff;
+  --color-on-primary-container:  #7ea5e2;
 
-/* Borders dos cards */
-@source inline("border-primary border-blue-400 border-error border-tertiary-container");
+  --color-surface:                    #f7f9fb;
+  --color-surface-container-lowest:   #ffffff;
+  --color-surface-container-low:      #f2f4f6;
+  --color-surface-container:          #eceef0;
+  --color-surface-container-high:     #e6e8ea;
+  --color-surface-container-highest:  #e0e3e5;
+  --color-on-surface:             #191c1e;
+  --color-on-surface-variant:     #434750;
 
-/* Hover backgrounds dos cards */
-@source inline("{hover:,}bg-primary-container");
-@source inline("{hover:,}bg-blue-600");
-@source inline("{hover:,}bg-error");
-@source inline("{hover:,}bg-on-tertiary-container");
-@source inline("{hover:,}text-white");
+  --color-outline:         #737781;
+  --color-outline-variant: #c3c6d1;
 
-/* Cores de ícones e textos normais */
-@source inline("text-primary text-blue-500 text-error text-tertiary-container text-on-error-container");
+  --color-error:              #ba1a1a;
+  --color-error-container:    #ffdad6;
+  --color-on-error:           #ffffff;
+  --color-on-error-container: #93000a;
 
-/* group-hover: textos dos filhos do card */
-@source inline("{group-hover:,}text-white");
-@source inline("{group-hover:,}text-blue-100");
-@source inline("{group-hover:,}text-blue-200");
+  --color-tertiary:              #421800;
+  --color-tertiary-container:    #632901;
+  --color-on-tertiary:           #ffffff;
+  --color-on-tertiary-container: #e48f60;
 
-/* group-hover: badges de trend */
-@source inline("{group-hover:,}bg-green-600");
-@source inline("{group-hover:,}bg-blue-400");
+  --color-secondary:           #515f77;
+  --color-secondary-container: #d2e0fc;
+  --color-on-secondary:        #ffffff;
 
-/* Barra de progresso (efi) */
-@source inline("bg-tertiary-container");
-@source inline("{group-hover:,}bg-white");
+  --color-background:  #f7f9fb;
+  --color-foreground:  #191c1e;
 
-/* Fontes */
-@source inline("font-outfit font-headline");
+  /* Fontes — gera font-outfit e font-body */
+  --font-outfit: 'Outfit', sans-serif;
+  --font-headline: 'Outfit', sans-serif;
+  --font-body: '"Plus Jakarta Sans"', sans-serif;
+  --font-label: '"Plus Jakarta Sans"', sans-serif;
+}
 
-/* 3. CUSTOM VARIANT */
-@custom-variant dark (&:is(.dark *));
-
-/* 4. THEME INLINE */
+/*
+  3. THEME INLINE — apenas aliases para tokens do shadcn/sidebar
+  (não gera novos utilitários, só remapeia variáveis existentes)
+*/
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
-  --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
-  --color-sidebar-ring: var(--sidebar-ring);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar: var(--sidebar);
-  --color-chart-5: var(--chart-5);
-  --color-chart-4: var(--chart-4);
-  --color-chart-3: var(--chart-3);
-  --color-chart-2: var(--chart-2);
-  --color-chart-1: var(--chart-1);
-  --color-ring: var(--ring);
-  --color-input: var(--input);
-  --color-border: var(--border);
+  --color-ring:       var(--ring);
+  --color-input:      var(--input);
+  --color-border:     var(--border);
   --color-destructive: var(--destructive);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-accent: var(--accent);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-muted: var(--muted);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-secondary: var(--secondary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-primary: var(--primary);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-popover: var(--popover);
-  --color-card-foreground: var(--card-foreground);
-  --color-card: var(--card);
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
+  --color-muted:                var(--muted);
+  --color-muted-foreground:     var(--muted-foreground);
+  --color-accent:               var(--accent);
+  --color-accent-foreground:    var(--accent-foreground);
+  --color-popover:              var(--popover);
+  --color-popover-foreground:   var(--popover-foreground);
+  --color-card:                 var(--card);
+  --color-card-foreground:      var(--card-foreground);
+  --color-sidebar:              var(--sidebar);
+  --color-sidebar-foreground:   var(--sidebar-foreground);
+  --color-sidebar-primary:             var(--sidebar-primary);
+  --color-sidebar-primary-foreground:  var(--sidebar-primary-foreground);
+  --color-sidebar-accent:              var(--sidebar-accent);
+  --color-sidebar-accent-foreground:   var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring:   var(--sidebar-ring);
+  --radius-sm:  calc(var(--radius) * 0.6);
+  --radius-md:  calc(var(--radius) * 0.8);
+  --radius-lg:  var(--radius);
+  --radius-xl:  calc(var(--radius) * 1.4);
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-/* 5. TOKENS LIGHT */
+/* 4. CUSTOM VARIANT */
+@custom-variant dark (&:is(.dark *));
+
+/*
+  5. SAFELIST via @source inline
+  Força geração de variantes dinâmicas dos StatCards.
+  Sintaxe v4: "{prefixo:,}classe" expande com e sem o prefixo.
+*/
+@source inline("{hover:,group-hover:,}bg-primary-container");
+@source inline("{hover:,group-hover:,}bg-blue-600");
+@source inline("{hover:,group-hover:,}bg-error");
+@source inline("{hover:,group-hover:,}bg-on-tertiary-container");
+@source inline("{hover:,group-hover:,}text-white");
+@source inline("{group-hover:,}text-blue-100");
+@source inline("{group-hover:,}text-blue-200");
+@source inline("{group-hover:,}bg-green-600");
+@source inline("{group-hover:,}bg-blue-400");
+@source inline("{group-hover:,}bg-white");
+@source inline("bg-tertiary-container text-on-error-container");
+@source inline("border-primary border-blue-400 border-error border-tertiary-container");
+@source inline("text-primary text-blue-500 text-error text-tertiary-container");
+@source inline("font-outfit font-headline font-body");
+
+/* 6. TOKENS SHADCN / SIDEBAR (:root) */
 :root {
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
@@ -119,40 +137,18 @@
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
+  --radius: 0.5rem;
   --sidebar-primary: oklch(0.205 0 0);
   --sidebar-primary-foreground: oklch(0.985 0 0);
   --sidebar-accent: oklch(0.97 0 0);
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
-
-  /* === COMANDO SOLAR tokens === */
-  --background: #f7f9fb;
-  --foreground: #191c1e;
-  --primary: #00244a;
-  --primary-foreground: #ffffff;
-  --primary-container: #003a70;
-  --on-primary-container: #7ea5e2;
-  --surface-container-lowest: #ffffff;
-  --surface-container-low: #f2f4f6;
-  --surface-container: #eceef0;
-  --surface-container-high: #e6e8ea;
-  --surface-container-highest: #e0e3e5;
-  --on-surface: #191c1e;
-  --on-surface-variant: #434750;
-  --outline: #737781;
-  --outline-variant: #c3c6d1;
-  --error: #ba1a1a;
-  --error-container: #ffdad6;
-  --on-error-container: #93000a;
-  --tertiary-container: #632901;
-  --on-tertiary-container: #e48f60;
   --sidebar: #f7f9fb;
   --sidebar-foreground: #191c1e;
 }
 
-/* 6. TOKENS DARK */
+/* 7. TOKENS DARK */
 .dark {
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
@@ -160,9 +156,6 @@
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.205 0 0);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --primary-container: #003a70;
   --secondary: oklch(0.269 0 0);
   --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(0.269 0 0);
@@ -170,15 +163,9 @@
   --accent: oklch(0.269 0 0);
   --accent-foreground: oklch(0.985 0 0);
   --destructive: oklch(0.704 0.191 22.216);
-  --error-container: #ffdad6;
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
   --sidebar: oklch(0.205 0 0);
   --sidebar-foreground: oklch(0.985 0 0);
   --sidebar-primary: oklch(0.488 0.243 264.376);
@@ -189,7 +176,7 @@
   --sidebar-ring: oklch(0.556 0 0);
 }
 
-/* 7. BASE LAYER */
+/* 8. BASE LAYER */
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -198,32 +185,12 @@
     @apply bg-background text-foreground;
     font-family: 'Plus Jakarta Sans', var(--font-sans), sans-serif;
   }
-  html {
-    font-family: 'Plus Jakarta Sans', var(--font-sans), sans-serif;
-  }
 }
 
-/* 8. UTILITIES COMANDO SOLAR */
-.font-outfit {
-  font-family: 'Outfit', sans-serif;
-}
-.font-headline {
-  font-family: 'Outfit', var(--font-sans), sans-serif;
-}
-.font-body {
-  font-family: 'Plus Jakarta Sans', var(--font-sans), sans-serif;
-}
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-.no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-.glass-card {
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(20px);
-}
+/* 9. UTILITIES COMANDO SOLAR */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+.glass-card { background: rgba(255,255,255,0.8); backdrop-filter: blur(20px); }
 .material-symbols-outlined {
   font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
   vertical-align: middle;
