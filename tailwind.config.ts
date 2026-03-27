@@ -1,4 +1,4 @@
-import type { Config } from 'tailwindcss';
+import type { Config } from 'tailwindcss'
 
 const config: Config = {
   content: [
@@ -9,22 +9,66 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        // Paleta Comando Solar (Sóbrio) - EXTRAÍDA DOS HTMLS
+        primary: '#00244a',
+        'primary-container': '#003a70',
+        'on-primary': '#ffffff',
+        'primary-fixed': '#d5e3ff',
+        'on-primary-fixed': '#001c3b',
+        'primary-fixed-dim': '#a6c8ff',
+        'on-primary-fixed-variant': '#18477e',
+        surface: '#f7f9fb',
+        'surface-bright': '#f7f9fb',
+        'surface-dim': '#d8dadc',
+        'surface-container': '#eceef0',
+        'surface-container-low': '#f2f4f6',
+        'surface-container-lowest': '#ffffff',
+        'surface-container-high': '#e6e8ea',
+        'surface-container-highest': '#e0e3e5',
+        'surface-variant': '#e0e3e5',
+        'on-surface': '#191c1e',
+        'on-surface-variant': '#434750',
+        outline: '#737781',
+        'outline-variant': '#c3c6d1',
+        secondary: '#515f77',
+        'secondary-container': '#d2e0fc',
+        'on-secondary': '#ffffff',
+        'secondary-fixed': '#d5e3ff',
+        'secondary-fixed-dim': '#b9c7e2',
+        'on-secondary-fixed': '#0d1c30',
+        error: '#ba1a1a',
+        'error-container': '#ffdad6',
+        'on-error': '#ffffff',
+        'on-error-container': '#93000a',
+        tertiary: '#421800',
+        'tertiary-container': '#632901',
+        'on-tertiary': '#ffffff',
+        'on-tertiary-container': '#e48f60',
+        'tertiary-fixed': '#ffdbca',
+        'tertiary-fixed-dim': '#ffb68f',
+        'on-tertiary-fixed': '#331100',
+        'on-tertiary-fixed-variant': '#73350c',
+        background: '#f7f9fb',
+        'on-background': '#191c1e',
+        // Institucional (do guia)
         institutional: {
-          blue: '#003A70', // Azul Sóbrio Principal
-          light: '#F7F9FB', // Fundo das telas
-          muted: '#64748B', // Texto secundário
+          blue: '#003A70',
+          light: '#F7F9FB',
+          muted: '#64748B',
         },
         accent: {
-          urgent: '#EF4444', // Alertas críticos
-          success: '#10B981', // Eficiência/Concluído
+          urgent: '#EF4444',
+          success: '#10B981',
         }
       },
       fontFamily: {
-        heading: ['Manrope', 'sans-serif'],
-        body: ['Inter', 'sans-serif'],
+        headline: ['Outfit', 'sans-serif'], // PRIORIDADE: HTMLs
+        body: ['Plus Jakarta Sans', 'sans-serif'], // PRIORIDADE: HTMLs
+        heading: ['Outfit', 'sans-serif'],
+        label: ['Plus Jakarta Sans', 'sans-serif'],
       },
       borderRadius: {
-        'gov': '8px',
+        gov: '8px',
       }
     },
   },
