@@ -2,14 +2,25 @@ import type { Config } from 'tailwindcss'
 
 const config: Config = {
   content: [
+    './src/**/*.{js,ts,jsx,tsx,mdx}',
     './pages/**/*.{js,ts,jsx,tsx,mdx}',
     './components/**/*.{js,ts,jsx,tsx,mdx}',
     './app/**/*.{js,ts,jsx,tsx,mdx}',
   ],
+  safelist: [
+    // Garante que classes dinâmicas dos StatCards não sejam purgadas
+    'border-primary', 'hover:bg-primary-container',
+    'border-blue-400', 'hover:bg-blue-600',
+    'border-error', 'hover:bg-error',
+    'border-tertiary-container', 'hover:bg-on-tertiary-container',
+    'text-primary', 'text-blue-500', 'text-error', 'text-tertiary-container',
+    'group-hover:text-blue-100', 'group-hover:text-blue-200', 'group-hover:text-white',
+    'group-hover:bg-green-600', 'group-hover:bg-blue-400',
+    'bg-tertiary-container', 'text-on-error-container',
+  ],
   theme: {
     extend: {
       colors: {
-        // Paleta Comando Solar (Sóbrio) - EXTRAÍDA DOS HTMLS
         primary: '#00244a',
         'primary-container': '#003a70',
         'on-primary': '#ffffff',
@@ -50,7 +61,6 @@ const config: Config = {
         'on-tertiary-fixed-variant': '#73350c',
         background: '#f7f9fb',
         'on-background': '#191c1e',
-        // Institucional (do guia)
         institutional: {
           blue: '#003A70',
           light: '#F7F9FB',
@@ -59,16 +69,21 @@ const config: Config = {
         accent: {
           urgent: '#EF4444',
           success: '#10B981',
-        }
+        },
       },
       fontFamily: {
-        headline: ['Outfit', 'sans-serif'],  // HTMLs: Outfit
-        body: ['"Plus Jakarta Sans"', 'sans-serif'],  // HTMLs: Plus Jakarta Sans
-        heading: ['Outfit', 'sans-serif'],
+        // font-outfit: classe usada nos HTMLs de referência (visao-Google.html)
+        outfit:   ['Outfit', 'sans-serif'],
+        // font-headline: alias mantido para compatibilidade com componentes existentes
+        headline: ['Outfit', 'sans-serif'],
+        heading:  ['Outfit', 'sans-serif'],
+        // font-body / font-label: Plus Jakarta Sans
+        body:  ['"Plus Jakarta Sans"', 'sans-serif'],
+        label: ['"Plus Jakarta Sans"', 'sans-serif'],
       },
       borderRadius: {
         gov: '8px',
-      }
+      },
     },
   },
   plugins: [],
