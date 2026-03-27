@@ -1,9 +1,20 @@
+/* =========================================================================
+   COMANDO SOLAR (SÓBRIO) - GPP PLATAFORMA
+   Ordem: imports → theme → tokens light → tokens dark → base → utilities
+   ========================================================================= */
+
+/* 1. IMPORTS BASE (shadcn + animações) */
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
+/* 2. FONTES (prioridade: HTMLs de exemplo — Outfit + Plus Jakarta Sans) */
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+
+/* 3. CUSTOM VARIANT */
 @custom-variant dark (&:is(.dark *));
 
+/* 4. THEME INLINE (shadcn — mantém compatibilidade) */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -48,13 +59,13 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/* 5. TOKENS LIGHT — shadcn base + Comando Solar (substituições marcadas) */
 :root {
+  /* shadcn base */
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(0.97 0 0);
@@ -71,18 +82,37 @@
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
   --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
   --sidebar-primary: oklch(0.205 0 0);
   --sidebar-primary-foreground: oklch(0.985 0 0);
   --sidebar-accent: oklch(0.97 0 0);
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
+
+  /* === COMANDO SOLAR — substitui shadcn === */
+  --background: #f7f9fb;            /* Fundo geral — surface-bright */
+  --foreground: #191c1e;            /* Texto principal */
+  --primary: #00244a;               /* Azul institucional escuro */
+  --primary-foreground: #ffffff;
+  --primary-container: #003a70;     /* Azul médio (sidebar, botões) */
+  --on-primary-container: #7ea5e2;  /* Texto sobre primary-container */
+  --surface-container-lowest: #ffffff;
+  --surface-container-low: #f2f4f6;
+  --surface-container: #eceef0;
+  --surface-container-high: #e6e8ea;
+  --surface-container-highest: #e0e3e5;
+  --on-surface: #191c1e;
+  --on-surface-variant: #434750;
+  --outline: #737781;
+  --outline-variant: #c3c6d1;
+  --error: #ba1a1a;
+  --error-container: #ffdad6;
+  --on-error-container: #93000a;
+  --sidebar: #f7f9fb;
+  --sidebar-foreground: #191c1e;
 }
 
+/* 6. TOKENS DARK */
 .dark {
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
@@ -92,6 +122,7 @@
   --popover-foreground: oklch(0.985 0 0);
   --primary: oklch(0.922 0 0);
   --primary-foreground: oklch(0.205 0 0);
+  --primary-container: #003a70;     /* Azul mantém no dark */
   --secondary: oklch(0.269 0 0);
   --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(0.269 0 0);
@@ -99,6 +130,7 @@
   --accent: oklch(0.269 0 0);
   --accent-foreground: oklch(0.985 0 0);
   --destructive: oklch(0.704 0.191 22.216);
+  --error-container: #ffdad6;
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.556 0 0);
@@ -117,51 +149,35 @@
   --sidebar-ring: oklch(0.556 0 0);
 }
 
+/* 7. BASE LAYER */
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
   body {
     @apply bg-background text-foreground;
+    font-family: 'Plus Jakarta Sans', var(--font-sans), sans-serif;
   }
   html {
-    @apply font-sans;
+    font-family: 'Plus Jakarta Sans', var(--font-sans), sans-serif;
   }
 }
-/* === COMANDO SOLAR SOBRE shadcn === */
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
 
-/* Força fontes */
-.font-headline { 
-  font-family: 'Outfit', var(--font-sans), sans-serif !important; 
+/* 8. UTILITIES COMANDO SOLAR */
+.font-headline {
+  font-family: 'Outfit', var(--font-sans), sans-serif;
 }
-.font-body { 
-  font-family: '"Plus Jakarta Sans"', var(--font-sans), sans-serif !important; 
+.font-body {
+  font-family: 'Plus Jakarta Sans', var(--font-sans), sans-serif;
 }
-
-/* Força tokens Comando Solar */
-:root {
-  --primary: #00244a !important;
-  --primary-container: #003a70 !important;
-  --on-primary: #ffffff !important;
-  --surface-container-lowest: #ffffff !important;
-  --surface-container-low: #f2f4f6 !important;
-  --surface-container-high: #e6e8ea !important;
-  --on-surface-variant: #434750 !important;
-  --error: #ba1a1a !important;
-  --error-container: #ffdad6 !important;
-  --on-error-container: #93000a !important;
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }
-
-.dark {
-  --primary-container: #003a70 !important; /* Mantém azul no dark */
-  --error-container: #ffdad6 !important;
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
-
-/* Hover suave pros cards */
-.hover\:bg-primary-container\/50:hover {
-  background-color: rgba(0, 58, 112, 0.08) !important;
-}
-.hover\:text-primary:hover {
-  color: #00244a !important;
+.glass-card {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(20px);
 }
