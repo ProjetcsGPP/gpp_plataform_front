@@ -2,24 +2,16 @@
 
 // =============================================================================
 // StatCard — pixel-perfect baseado em visao-Google.html
-// Uso:
-//   <StatCard label="Projetos Ativos" value="248" trend="+12%"    icon="rocket_launch" variant="proj" />
-//   <StatCard label="Processos"       value="1,429" trend="94% Comp." icon="account_tree"  variant="proc" />
-//   <StatCard label="Alertas"         value="07" subtext="Require immediate action" icon="report_problem" variant="alert" />
-//   <StatCard label="Eficiência"      value="88.5%" icon="speed" variant="efi" progress={88.5} />
 // =============================================================================
 
 interface StatCardProps {
   label: string
   value: string | number
-  /** Badge de tendência (proj/proc) */
   trend?: string
-  /** Subtexto simples sem badge (alert) */
   subtext?: string
   /** Nome do Material Symbol: 'rocket_launch' | 'account_tree' | 'report_problem' | 'speed' */
   icon: string
   variant?: 'proj' | 'proc' | 'alert' | 'efi'
-  /** Percentual da barra de progresso — apenas variant="efi" */
   progress?: number
 }
 
@@ -38,9 +30,6 @@ export function StatCard({
       ? (progress ?? (typeof value === 'string' ? parseFloat(value) : (value as number)))
       : null
 
-  // -------------------------------------------------------------------------
-  // PROJ — Projetos Ativos
-  // -------------------------------------------------------------------------
   if (variant === 'proj') {
     return (
       <div className="bg-surface-container-lowest p-6 rounded-lg shadow-sm border-l-4 border-primary group hover:bg-primary-container hover:text-white transition-all duration-300 cursor-pointer">
@@ -48,7 +37,7 @@ export function StatCard({
           <span className="text-xs font-bold uppercase tracking-wider text-on-surface-variant group-hover:text-blue-100">
             {label}
           </span>
-          <span className="material-symbols-outlined text-primary group-hover:text-blue-200">
+          <span className="material-symbols-outlined text-primary group-hover:text-blue-200" data-icon={icon}>
             {icon}
           </span>
         </div>
@@ -69,9 +58,6 @@ export function StatCard({
     )
   }
 
-  // -------------------------------------------------------------------------
-  // PROC — Processos Mapeados
-  // -------------------------------------------------------------------------
   if (variant === 'proc') {
     return (
       <div className="bg-surface-container-lowest p-6 rounded-lg shadow-sm border-l-4 border-blue-400 group hover:bg-blue-600 hover:text-white transition-all duration-300 cursor-pointer">
@@ -79,7 +65,7 @@ export function StatCard({
           <span className="text-xs font-bold uppercase tracking-wider text-on-surface-variant group-hover:text-blue-100">
             {label}
           </span>
-          <span className="material-symbols-outlined text-blue-500 group-hover:text-blue-100">
+          <span className="material-symbols-outlined text-blue-500 group-hover:text-blue-100" data-icon={icon}>
             {icon}
           </span>
         </div>
@@ -97,9 +83,6 @@ export function StatCard({
     )
   }
 
-  // -------------------------------------------------------------------------
-  // ALERT — Alertas Críticos
-  // -------------------------------------------------------------------------
   if (variant === 'alert') {
     return (
       <div className="bg-surface-container-lowest p-6 rounded-lg shadow-sm border-l-4 border-error group hover:bg-error hover:text-white transition-all duration-300 cursor-pointer">
@@ -109,6 +92,7 @@ export function StatCard({
           </span>
           <span
             className="material-symbols-outlined text-error group-hover:text-white"
+            data-icon={icon}
             style={{ fontVariationSettings: "'FILL' 1" }}
           >
             {icon}
@@ -126,16 +110,14 @@ export function StatCard({
     )
   }
 
-  // -------------------------------------------------------------------------
-  // EFI — Eficiência Geral
-  // -------------------------------------------------------------------------
+  // EFI
   return (
     <div className="bg-surface-container-lowest p-6 rounded-lg shadow-sm border-l-4 border-tertiary-container group hover:bg-on-tertiary-container hover:text-white transition-all duration-300 cursor-pointer">
       <div className="flex justify-between items-start">
         <span className="text-xs font-bold uppercase tracking-wider text-on-surface-variant group-hover:text-white">
           {label}
         </span>
-        <span className="material-symbols-outlined text-tertiary-container group-hover:text-white">
+        <span className="material-symbols-outlined text-tertiary-container group-hover:text-white" data-icon={icon}>
           {icon}
         </span>
       </div>
