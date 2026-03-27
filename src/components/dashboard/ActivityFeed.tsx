@@ -1,11 +1,9 @@
 'use client'
 
-import { FileText, RefreshCcw, CheckCircle2, AlertTriangle } from 'lucide-react'
-
 const activities = [
   {
     id: 1,
-    icon: FileText,
+    icon: 'description',
     iconBg: 'bg-blue-100',
     iconColor: 'text-blue-600',
     time: 'Há 12 min',
@@ -14,16 +12,16 @@ const activities = [
   },
   {
     id: 2,
-    icon: RefreshCcw,
+    icon: 'update',
     iconBg: 'bg-amber-100',
     iconColor: 'text-amber-600',
     time: 'Há 45 min',
     title: "Cronograma do projeto 'Comando Solar' atualizado.",
-    meta: "Por Dr. Henrique Silva",
+    meta: 'Por Dr. Henrique Silva',
   },
   {
     id: 3,
-    icon: CheckCircle2,
+    icon: 'check_circle',
     iconBg: 'bg-green-100',
     iconColor: 'text-green-600',
     time: 'Há 2 horas',
@@ -31,7 +29,7 @@ const activities = [
   },
   {
     id: 4,
-    icon: AlertTriangle,
+    icon: 'warning',
     iconBg: 'bg-red-100',
     iconColor: 'text-red-600',
     time: 'Há 4 horas',
@@ -42,7 +40,7 @@ const activities = [
 
 export function ActivityFeed() {
   return (
-    <div className="bg-surface-container-lowest rounded-lg shadow-sm h-[460px] flex flex-col">
+    <div className="bg-surface-container-lowest rounded-lg shadow-sm h-[500px] flex flex-col">
       <div className="p-6 border-b border-surface-container">
         <h4 className="text-lg font-bold font-headline text-primary leading-tight">
           Atividades Recentes
@@ -59,17 +57,27 @@ export function ActivityFeed() {
               <div className="absolute left-4 top-8 bottom-[-16px] w-[1px] bg-slate-100" />
             )}
 
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 z-10 ${item.iconBg}`}>
-              <item.icon className={`text-sm ${item.iconColor}`} />
+            <div
+              className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 z-10 shadow-sm ${item.iconBg}`}
+            >
+              <span
+                className={`material-symbols-outlined ${item.iconColor}`}
+                style={{
+                  fontSize: '18px',
+                  fontVariationSettings: item.icon === 'check_circle' || item.icon === 'warning'
+                    ? "'FILL' 1"
+                    : "'FILL' 0",
+                }}
+              >
+                {item.icon}
+              </span>
             </div>
 
             <div>
               <p className="text-xs text-on-surface-variant">{item.time}</p>
-              <p className="text-sm font-semibold mt-0.5">{item.title}</p>
+              <p className="text-sm font-semibold mt-0.5 text-on-surface">{item.title}</p>
               {item.meta && (
-                <p className="text-[10px] text-blue-900 font-medium mt-1">
-                  {item.meta}
-                </p>
+                <p className="text-[10px] text-blue-900 font-medium mt-1">{item.meta}</p>
               )}
               {item.action && (
                 <button className="mt-2 text-xs font-bold text-on-primary bg-error px-3 py-1 rounded hover:bg-error/90 transition-colors">
@@ -81,9 +89,10 @@ export function ActivityFeed() {
         ))}
       </div>
 
-      <div className="p-4 text-center">
-        <button className="text-xs font-bold text-primary hover:underline">
+      <div className="p-4 text-center border-t border-surface-container-low">
+        <button className="text-xs font-bold text-primary hover:underline flex items-center gap-1 mx-auto">
           Ver histórico completo
+          <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>arrow_forward</span>
         </button>
       </div>
     </div>

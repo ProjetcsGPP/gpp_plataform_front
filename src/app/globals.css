@@ -6,6 +6,7 @@
 
 /* 1. TODOS OS IMPORTS (ordem obrigatória: fontes antes de tudo) */
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap');
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
@@ -107,6 +108,8 @@
   --error: #ba1a1a;
   --error-container: #ffdad6;
   --on-error-container: #93000a;
+  --tertiary-container: #632901;
+  --on-tertiary-container: #e48f60;
   --sidebar: #f7f9fb;
   --sidebar-foreground: #191c1e;
 }
@@ -179,4 +182,15 @@
 .glass-card {
   background: rgba(255, 255, 255, 0.8);
   backdrop-filter: blur(20px);
+}
+/* Material Symbols config */
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  vertical-align: middle;
+  font-size: 20px;
+  line-height: 1;
+}
+/* authority-gradient — usado no CTA da Sidebar */
+.authority-gradient {
+  background: linear-gradient(135deg, #00244a 0%, #003a70 100%);
 }
