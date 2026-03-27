@@ -5,7 +5,7 @@ export function ImpactMap() {
     <div className="bg-surface-container-lowest rounded-lg overflow-hidden shadow-sm flex flex-col h-[500px]">
       <div className="p-6 flex justify-between items-center border-b border-surface-container">
         <div>
-          <h4 className="text-lg font-bold font-headline text-primary leading-tight">
+          <h4 className="text-lg font-bold font-outfit text-primary">
             Mapa de Impacto Governamental
           </h4>
           <p className="text-sm text-on-surface-variant">
@@ -23,7 +23,6 @@ export function ImpactMap() {
       </div>
 
       <div className="flex-1 relative bg-slate-100">
-        {/* Fundo — placeholder mapa topográfico */}
         <div
           className="absolute inset-0 grayscale contrast-125 opacity-40 mix-blend-multiply"
           style={{
@@ -33,13 +32,9 @@ export function ImpactMap() {
             backgroundPosition: 'center',
           }}
         />
-
-        {/* Pins interativos */}
         <div className="absolute top-1/4 left-1/3 w-4 h-4 bg-primary rounded-full border-2 border-white shadow-xl animate-pulse" />
         <div className="absolute top-1/2 left-1/2 w-4 h-4 bg-primary rounded-full border-2 border-white shadow-xl" />
         <div className="absolute bottom-1/4 right-1/4 w-4 h-4 bg-blue-400 rounded-full border-2 border-white shadow-xl" />
-
-        {/* Tooltip */}
         <div className="absolute top-[20%] left-[36%] glass-card p-3 rounded-lg shadow-lg border border-white/20 z-10">
           <p className="text-[10px] font-bold text-primary uppercase">Infraestrutura</p>
           <p className="text-xs font-bold mt-1">Complexo Solar Norte</p>

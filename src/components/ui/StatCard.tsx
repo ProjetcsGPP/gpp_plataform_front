@@ -1,32 +1,41 @@
 'use client'
 
-import { ReactNode } from 'react'
 import { cn } from '@/lib/utils'
 
 interface StatCardProps {
   label: string
   value: string | number
+  /** Badge de tendência (ex: "+12%", "94% Comp.") */
   trend?: string
+  /** Subtexto simples sem badge (ex: "Require immediate action") */
   subtext?: string
-  icon: ReactNode
+  /** Nome do Material Symbol (ex: "rocket_launch") */
+  icon: string
   variant?: 'proj' | 'proc' | 'alert' | 'efi'
-  /** Usado apenas em variant="efi" — número de 0 a 100 */
+  /** Percentual para a barra de progresso — somente variant="efi" */
   progress?: number
 }
 
-export function StatCard({ label, value, trend, subtext, icon, variant = 'proj', progress }: StatCardProps) {
-  const variants = {
-    //  border-left  | hover background               | hover texto
-    proj:  'border-primary          hover:bg-primary-container      hover:text-white',
-    proc:  'border-blue-400         hover:bg-blue-600               hover:text-white',
-    alert: 'border-error            hover:bg-error                  hover:text-white',
-    efi:   'border-[#632901]        hover:bg-[#e48f60]              hover:text-white',
+export function StatCard({
+  label,
+  value,
+  trend,
+  subtext,
+  icon,
+  variant = 'proj',
+  progress,
+}: StatCardProps) {
+
+  // Estilos exatos extraídos do visao-Google.html
+  const cardBase = 'bg-surface-container-lowest p-6 rounded-lg shadow-sm border-l-4 group transition-all duration-300 cursor-pointer'
+
+  const cardVariant = {
+    proj:  'border-primary           hover:bg-primary-container   hover:text-white',
+    proc:  'border-blue-400          hover:bg-blue-600            hover:text-white',
+    alert: 'border-error             hover:bg-error               hover:text-white',
+    efi:   'border-tertiary-container hover:bg-on-tertiary-container hover:text-white',
   }
 
-  // Cor do label no estado normal
-  const labelNormal = 'text-on-surface-variant'
-
-  // Cor do label no hover — cada variante tem tom diferente
   const labelHover = {
     proj:  'group-hover:text-blue-100',
     proc:  'group-hover:text-blue-100',
@@ -34,21 +43,15 @@ export function StatCard({ label, value, trend, subtext, icon, variant = 'proj',
     efi:   'group-hover:text-white',
   }
 
-  // Cor do ícone no estado normal
-  const iconNormal = {
-    proj:  'text-primary',
-    proc:  'text-blue-500',
-    alert: 'text-error',
-    efi:   'text-[#632901]',
+  const iconColor = {
+    proj:  'text-primary           group-hover:text-blue-200',
+    proc:  'text-blue-500          group-hover:text-blue-100',
+    alert: 'text-error             group-hover:text-white',
+    efi:   'text-tertiary-container group-hover:text-white',
   }
 
-  // Badge de trend — cor diferente por variante
-  const trendBadge = {
-    proj:  'bg-green-100 text-green-700 group-hover:bg-green-600 group-hover:text-white',
-    proc:  'bg-blue-100  text-blue-700  group-hover:bg-blue-400  group-hover:text-white',
-    alert: 'bg-red-100   text-red-700   group-hover:bg-red-600   group-hover:text-white',
-    efi:   'bg-orange-100 text-orange-700 group-hover:bg-orange-600 group-hover:text-white',
-  }
+  // FILL=1 apenas nos ícones que ficam melhores preenchidos
+  const iconFill = variant === 'alert' ? "'FILL' 1" : "'FILL' 0"
 
   const progressValue =
     variant === 'efi'
@@ -56,79 +59,65 @@ export function StatCard({ label, value, trend, subtext, icon, variant = 'proj',
       : null
 
   return (
-    <div
-      className={cn(
-        'group bg-surface-container-lowest p-6 rounded-lg shadow-sm border-l-4 cursor-pointer transition-all duration-300',
-        variants[variant],
-      )}
-    >
+    <div className={cn(cardBase, cardVariant[variant])}>
+
       {/* Header: label + ícone */}
       <div className="flex justify-between items-start">
         <span
           className={cn(
-            'text-xs font-bold uppercase tracking-wider font-body transition-colors',
-            labelNormal,
+            'text-xs font-bold uppercase tracking-wider text-on-surface-variant',
             labelHover[variant],
           )}
         >
           {label}
         </span>
         <span
-          className={cn(
-            'material-symbols-outlined transition-colors',
-            iconNormal[variant],
-            'group-hover:text-white/90',
-          )}
-          style={{ fontVariationSettings: "'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24" }}
+          className={cn('material-symbols-outlined', iconColor[variant])}
+          style={{ fontVariationSettings: iconFill }}
         >
-          {/* icon é passado como string do Material Symbol ou ReactNode legado */}
-          {typeof icon === 'string' ? icon : null}
+          {icon}
         </span>
-        {typeof icon !== 'string' && (
-          <span className={cn('transition-colors', iconNormal[variant], 'group-hover:text-white/90')}>
-            {icon}
-          </span>
-        )}
       </div>
 
-      {/* Valor principal */}
-      <div className="mt-4 space-y-2">
-        <span className="text-3xl font-extrabold font-headline tracking-tight block leading-none text-on-surface group-hover:text-white transition-colors">
+      {/* Valor principal — fonte Outfit igual ao HTML original */}
+      <div className="mt-4">
+        <span className="text-3xl font-extrabold font-outfit tracking-tight">
           {value}
         </span>
 
-        {/* Trend badge */}
-        {trend && (
+        {/* Trend badge — verde para proj, azul para proc */}
+        {trend && variant === 'proj' && (
           <div className="flex items-center gap-2 mt-2">
-            <span
-              className={cn(
-                'text-xs font-bold px-2 py-0.5 rounded-full transition-colors',
-                trendBadge[variant],
-              )}
-            >
+            <span className="text-xs font-bold bg-green-100 text-green-700 px-2 py-0.5 rounded-full group-hover:bg-green-600 group-hover:text-white transition-colors">
               {trend}
             </span>
-            {variant !== 'alert' && (
-              <span className="text-[10px] text-on-surface-variant group-hover:text-white/80 font-body">
-                vs. mês anterior
-              </span>
-            )}
+            <span className="text-[10px] text-on-surface-variant group-hover:text-blue-200">
+              vs. last month
+            </span>
           </div>
         )}
 
-        {/* Subtexto customizado (ex: alert card) */}
-        {subtext && !trend && (
+        {trend && variant === 'proc' && (
+          <div className="flex items-center gap-2 mt-2">
+            <span className="text-xs font-bold bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full group-hover:bg-blue-400 group-hover:text-white transition-colors">
+              {trend}
+            </span>
+          </div>
+        )}
+
+        {/* Subtexto simples — alert card */}
+        {subtext && variant === 'alert' && (
           <div className="flex items-center gap-2 mt-2 text-on-error-container group-hover:text-white">
             <span className="text-[10px] font-bold">{subtext}</span>
           </div>
         )}
 
-        {/* Barra de progresso — somente variant efi */}
+        {/* Barra de progresso — efi card */}
         {variant === 'efi' && progressValue !== null && (
-          <div className="mt-2">
-            <div className="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden group-hover:bg-white/30 transition-colors">
+          <div className="flex items-center gap-2 mt-2">
+            <div className="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden">
               <div
-                className="bg-[#632901] h-full group-hover:bg-white transition-all rounded-full"
+                className="bg-tertiary-container h-full group-hover:bg-white transition-all"
                 style={{ width: `${progressValue}%` }}
               />
             </div>

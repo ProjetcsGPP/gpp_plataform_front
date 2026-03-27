@@ -4,12 +4,12 @@ import { useState } from 'react'
 import { NavItem } from '@/components/common/NavItem'
 
 const navItems = [
-  { icon: 'dashboard',        label: 'Dashboard',        active: true },
-  { icon: 'account_balance',  label: 'Administrative' },
-  { icon: 'groups',           label: 'Human Resources' },
-  { icon: 'payments',         label: 'Financials' },
-  { icon: 'monitoring',       label: 'Analytics' },
-  { icon: 'settings',         label: 'Settings' },
+  { icon: 'dashboard',       label: 'Dashboard',       active: true },
+  { icon: 'account_balance', label: 'Administrative' },
+  { icon: 'groups',          label: 'Human Resources' },
+  { icon: 'payments',        label: 'Financials' },
+  { icon: 'monitoring',      label: 'Analytics' },
+  { icon: 'settings',        label: 'Settings' },
 ]
 
 export default function Sidebar() {
@@ -30,14 +30,17 @@ export default function Sidebar() {
       <div className="px-6 py-8">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 authority-gradient rounded-lg flex items-center justify-center shadow-md shadow-primary/20">
-            <span className="material-symbols-outlined text-white" style={{ fontVariationSettings: "'FILL' 1" }}>
+            <span
+              className="material-symbols-outlined text-white"
+              style={{ fontVariationSettings: "'FILL' 1" }}
+            >
               account_balance
             </span>
           </div>
           {isExpanded && (
-            <div>
-              <h1 className="text-lg font-bold tracking-tight text-primary font-headline">
-                SUBGESEGER
+            <div className="hidden md:block">
+              <h1 className="text-lg font-bold tracking-tight text-blue-900 font-outfit">
+                SUBGES/SEGER
               </h1>
               <p className="text-[10px] uppercase tracking-widest text-on-surface-variant font-semibold">
                 Gov Management
@@ -58,7 +61,7 @@ export default function Sidebar() {
       )}
 
       {/* Navegação Principal */}
-      <nav className="flex-1 px-4 space-y-1 mt-2">
+      <nav className="flex-1 px-4 space-y-2 mt-4">
         {navItems.map((item) => (
           <NavItem
             key={item.icon}
@@ -77,7 +80,7 @@ export default function Sidebar() {
         ))}
       </nav>
 
-      {/* Footer: Suporte e Logout */}
+      {/* Footer */}
       <div className="p-4 mt-auto border-t border-outline-variant/50 space-y-1">
         <NavItem
           icon={<span className="material-symbols-outlined">help</span>}
