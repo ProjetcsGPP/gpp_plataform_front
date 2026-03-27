@@ -14,7 +14,7 @@ const portalTheme: LoginTheme = {
     PORTAL:       '/portal/dashboard',
     ACOES_PNGI:   '/acoes-pngi/dashboard',
     CARGA_ORG_LOT: '/carga-org-lot/dashboard',
-  },
+  }
 }
 
 export default function PortalLoginPage() {

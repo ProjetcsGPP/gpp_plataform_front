@@ -1,25 +1,24 @@
 'use client'
 
-export default function TopBar() {
+
+type TopBarProps = {
+  titleMinor: string;
+  title: string
+
+}
+
+export default function TopBar({ titleMinor, title }: TopBarProps) {
   return (
     <header className="flex justify-between items-center w-full px-8 py-4 sticky top-0 z-40 bg-surface-container-lowest/80 backdrop-blur-md border-b border-outline-variant/50 shadow-sm transition-all duration-200 ease-in-out">
-
+      
       {/* Título + Nav */}
-      <div className="flex items-center gap-8">
+      <div className="flex flex-col gap-1">
+        <span className="text-xs font-bold text-blue-900/60 uppercase tracking-[0.2em] font-outfit">
+          {titleMinor}
+        </span>
         <h2 className="text-xl font-extrabold text-blue-900 font-outfit tracking-tight">
-          SUBGES/SEGER Portal
+          {title}
         </h2>
-        <nav className="hidden lg:flex items-center gap-6">
-          <a className="text-blue-900 font-semibold border-b-2 border-blue-900 py-1 transition-all cursor-pointer">
-            Documents
-          </a>
-          <a className="text-on-surface-variant hover:text-blue-900 transition-all cursor-pointer">
-            Procedures
-          </a>
-          <a className="text-on-surface-variant hover:text-blue-900 transition-all cursor-pointer">
-            Compliance
-          </a>
-        </nav>
       </div>
 
       {/* Busca + Ícones + Perfil */}
