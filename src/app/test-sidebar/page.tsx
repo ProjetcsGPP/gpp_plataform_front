@@ -2,11 +2,11 @@
 
 import Sidebar from '@/components/layout/Sidebar'
 import TopBar from '@/components/layout/TopBar'
-import { PageHeader } from '@/components/layout/PageHeader'
-import { StatCard } from '@/components/ui/StatCard'
-import { StatusBadge } from '@/components/ui/StatusBadge'
-import { ImpactMap } from '@/components/dashboard/ImpactMap'
-import { ActivityFeed } from '@/components/dashboard/ActivityFeed'
+import { PageHeader } from './components/PageHeader'
+import { StatCard } from './components/StatCard'
+import { StatusBadge } from './components/StatusBadge'
+import { ImpactMap } from './components/ImpactMap'
+import { ActivityFeed } from './components/ActivityFeed'
 import { PlusCircle } from 'lucide-react'
 
 export default function TestSidebar() {
