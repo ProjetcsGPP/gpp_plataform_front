@@ -11,6 +11,7 @@ export default function PortalLayout({
       <TopBarNoLogin
           title="Orquestrador de Aplicaçãoes"
           titleMinor="SEGER/SUBGES/GPP"
+          primaryColor="#3b3a65" 
       />
       <main className="flex-1">
         {children}
