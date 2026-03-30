@@ -7,7 +7,7 @@ export default function PortalLayout({
   children: React.ReactNode
 }) {
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="min-h-screen flex flex-col bg-app-gradient">
         <TopBar 
           title="Portal de Aplicações"
           titleMinor="SEGER/SUBGES/GPP"

@@ -102,7 +102,7 @@ export default function PortalDashboardPage() {
           <div className="flex items-center gap-2">
             <LayoutGrid className="h-5 w-5 text-[#1B3A6B]" />
             <h2 className="text-xl font-bold text-slate-800">Suas Aplicações</h2>
-            <Badge variant="secondary" className="ml-1 text-xs bg-slate-200 text-slate-600">
+            <Badge variant="secondary" className="ml-1 text-xs bg-app-gradient text-slate-600">
               {appList.length}{' '}
               {appList.length === 1 ? 'aplicação disponível' : 'aplicações disponíveis'}
             </Badge>

@@ -22,6 +22,10 @@
 */
 @theme {
   /* Paleta Comando Solar */
+
+  --color-app-bg-from:           #468BC4;
+  --color-app-bg-to:             #3F93B8;
+
   --color-primary:               #00244a;
   --color-primary-container:     #003a70;
   --color-on-primary:            #ffffff;
