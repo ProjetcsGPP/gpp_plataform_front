@@ -59,7 +59,7 @@ export function LoginPage({ theme }: LoginPageProps) {
   const [appContext, setAppContext] = useState(theme.defaultAppContext ?? 'PORTAL')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const size = 48;
+  const size = 24;
 
   useEffect(() => {
     getAplicacoesPublicas()
@@ -124,14 +124,14 @@ export function LoginPage({ theme }: LoginPageProps) {
               alt="Governo do Estado do Espírito Santo"
               width={200}
               height={200}
-              className="mx-auto mb-3"
+              className="mx-auto mb-3 w-32 h-auto"
             />
           )}
 
           <h1 className="text-2xl font-bold text-slate-800">
             {theme.appName}
           </h1>
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-slate-800">
             {theme.subtitle}
           </p>
         </div>
@@ -222,7 +222,7 @@ export function LoginPage({ theme }: LoginPageProps) {
         </Card>
 
         {/* Rodapé */}
-        <p className="text-center text-xs text-slate-400">
+        <p className="text-center text-xs text-slate-800">
           {theme.footerText ?? `GPP Plataform 2.0 © ${new Date().getFullYear()} SEGER/ES`}
         </p>
       </div>

@@ -5,13 +5,13 @@ import type { LoginTheme } from '@/components/auth/LoginPage'
 const portalTheme: LoginTheme = {
   primaryColor:      '#00244a',
   primaryHoverColor: '#003a70',
-  appName:           'Orquestrador de Aplicaçãoes',
+  appName:           'Dashboard de Ações PNGI',
   subtitle:          'SEGER — Governo do Espírito Santo',
-  logoSymbol:        'flowchart',
-  logoIsMaterialIcon: false,
-  defaultAppContext:  'PORTAL',
+  logoSymbol:        'move_down',
+  logoIsMaterialIcon: true,
+  defaultAppContext:  'ACOES_PNGI',
   redirectMap: {
-    PORTAL:       '/portal/dashboard',
+    ACOES_PNGI:   '/acoes-pngi/dashboard',
   }
 }
 
