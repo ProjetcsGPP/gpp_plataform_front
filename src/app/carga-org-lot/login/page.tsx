@@ -8,7 +8,9 @@ const carga_org_lotTheme: LoginTheme = {
   appName:           'Carga de Organograma e Lotações',
   subtitle:          'SEGER — Governo do Espírito Santo',
   logoSymbol:        'flowchart',
-  logoIsMaterialIcon: true,
+  logoIsMaterialIcon: false,
+  logoProdestSymbol: 'pro-society',
+  logoIsProdestIcon: true,
   defaultAppContext:  'CARGA_ORG_LOT',
   redirectMap: {
     CARGA_ORG_LOT: '/carga-org-lot/dashboard',

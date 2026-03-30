@@ -8,7 +8,9 @@ const acoes_pngiTheme: LoginTheme = {
   appName:           'Dashboard de Ações PNGI',
   subtitle:          'SEGER — Governo do Espírito Santo',
   logoSymbol:        'move_down',
-  logoIsMaterialIcon: true,
+  logoIsMaterialIcon: false,
+  logoProdestSymbol: 'pro-stats-bars2',
+  logoIsProdestIcon: true,
   defaultAppContext:  'ACOES_PNGI',
   redirectMap: {
     ACOES_PNGI:   '/acoes-pngi/dashboard',

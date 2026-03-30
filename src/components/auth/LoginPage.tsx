@@ -33,6 +33,10 @@ export interface LoginTheme {
   logoSymbol: string
   /** Usa Material Symbol no logo? Se false, trata logoSymbol como texto */
   logoIsMaterialIcon?: boolean
+  /** Símbolo ou texto a exibir dentro do ícone Prodest */
+  logoProdestSymbol: string
+  /** Usa Material Symbol no logo? Se false, trata logoSymbol como texto */
+  logoIsProdestIcon?: boolean
   /** Rodapé */
   footerText?: string
   /** Contexto padrão pré-selecionado no select */
@@ -60,6 +64,51 @@ export function LoginPage({ theme }: LoginPageProps) {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const size = 24;
+  let logoElement;
+
+  if (theme.logoIsMaterialIcon) {
+    logoElement = (
+      <div
+        className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-2xl shadow-md"
+        style={inlineStyle(theme.primaryColor)}
+      >
+        <span
+          className="material-symbols-outlined text-white leading-none"
+          style={{
+            fontSize: `${size}px`,
+            fontVariationSettings: `'FILL' 1, 'wght' 400, 'opsz' ${size}`,
+          }}
+        >
+          {theme.logoSymbol}
+        </span>
+      </div>
+    );
+  } else if (theme.logoIsProdestIcon) {
+    logoElement = (
+      <div
+        className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-2xl shadow-md"
+        style={inlineStyle(theme.primaryColor)}
+      >
+        <i
+          className={`${theme.logoProdestSymbol} text-white`}
+          style={{ fontSize: `${size}px` }}
+        />
+      </div>
+    );
+  } else {
+    logoElement = (
+      <Image
+        src="/Logo_GOVES.png"
+        alt="Governo do Estado do Espírito Santo"
+        width={200}
+        height={200}
+        className="mx-auto mb-3 w-32 h-auto"
+        priority
+        loading="eager"
+      />
+    );
+  }
+      
 
   useEffect(() => {
     getAplicacoesPublicas()
@@ -103,6 +152,7 @@ export function LoginPage({ theme }: LoginPageProps) {
 
         {/* Logo + Nome */}
         <div className="text-center">
+          {/*
           {theme.logoIsMaterialIcon ? (
             <div
               className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-2xl shadow-md"
@@ -125,8 +175,13 @@ export function LoginPage({ theme }: LoginPageProps) {
               width={200}
               height={200}
               className="mx-auto mb-3 w-32 h-auto"
+              priority
+              loading="eager"
             />
           )}
+            */}
+
+          {logoElement}
 
           <h1 className="text-2xl font-bold text-slate-800">
             {theme.appName}

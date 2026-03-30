@@ -9,9 +9,9 @@ export default function PortalLayout({
   return (
     <div className="min-h-screen flex flex-col bg-app-gradient">
       <TopBarNoLogin
-          title="Orquestrador de Aplicaçãoes"
+          title="Orquestrador de Aplicações"
           titleMinor="SEGER/SUBGES/GPP"
-          primaryColor="#3b3a65" 
+          primaryColor="#00244a"
       />
       <main className="flex-1">
         {children}
