@@ -98,7 +98,7 @@ export function LoginPage({ theme }: LoginPageProps) {
   } as React.CSSProperties
 
   return (
-    <div className="flex min-h-[calc(100vh-64px)] items-center justify-center bg-slate-100 p-4">
+    <div className="flex min-h-[calc(100vh-64px)] items-center justify-center bg-background p-4">
       {/* min-h desconta a altura do TopBar (64px) para centralizar visualmente */}
       <div className="w-full max-w-md space-y-6">
 

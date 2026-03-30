@@ -5,20 +5,29 @@ const PUBLIC_PATHS = [
   "/acoes-pngi/login",
   "/carga-org-lot/login",
 ];
-
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const isPublic = PUBLIC_PATHS.some((p) => pathname.startsWith(p));
+
+  // ✅ ignora arquivos estáticos
+  if (
+    pathname.startsWith("/_next") ||
+    pathname.startsWith("/api") ||
+    pathname === "/favicon.ico" ||
+    /\.(png|jpg|jpeg|svg|gif|webp|ico)$/.test(pathname)
+  ) {
+    return NextResponse.next();
+  }
+
+  const isPublic = PUBLIC_PATHS.includes(pathname);
   const hasSession = request.cookies.has("gpp_session");
 
   if (!isPublic && !hasSession) {
-    const loginUrl = new URL("/portal/login", request.url);
-    return NextResponse.redirect(loginUrl);
+    return NextResponse.redirect(new URL("/portal/login", request.url));
   }
 
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/((?!_next|favicon.ico|api|_next/static|_next/image).*)"],
+  matcher: ["/:path*"],
 };
