@@ -1,4 +1,4 @@
-// src/app/portal/layout.tsx
+// src/app/acoes_pngi/layout.tsx
 import TopBarNoLogin from '@/components/layout/TopBarNoLogin'
 
 export default function PortalLayout({
@@ -11,6 +11,7 @@ export default function PortalLayout({
       <TopBarNoLogin
           title="Dashboard de Ações PNGI"
           titleMinor="SEGER/SUBGES/GPP"
+          primaryColor="#0253aa" 
       />
       <main className="flex-1">
         {children}

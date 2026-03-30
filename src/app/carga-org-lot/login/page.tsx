@@ -1,8 +1,8 @@
-// src/app/portal/login/page.tsx
+// src/app/carga_org_lot/login/page.tsx
 import { LoginPage } from '@/components/auth/LoginPage'
 import type { LoginTheme } from '@/components/auth/LoginPage'
 
-const portalTheme: LoginTheme = {
+const carga_org_lotTheme: LoginTheme = {
   primaryColor:      '#00244a',
   primaryHoverColor: '#003a70',
   appName:           'Carga de Organograma e Lotações',
@@ -15,6 +15,6 @@ const portalTheme: LoginTheme = {
   }
 }
 
-export default function PortalLoginPage() {
-  return <LoginPage theme={portalTheme} />
+export default function CargaOrgLotLoginPage() {
+  return <LoginPage theme={carga_org_lotTheme} />
 }

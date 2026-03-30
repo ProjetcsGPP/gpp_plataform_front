@@ -1,8 +1,8 @@
-// src/app/portal/login/page.tsx
+// src/app/acoes_pngi/login/page.tsx
 import { LoginPage } from '@/components/auth/LoginPage'
 import type { LoginTheme } from '@/components/auth/LoginPage'
 
-const portalTheme: LoginTheme = {
+const acoes_pngiTheme: LoginTheme = {
   primaryColor:      '#00244a',
   primaryHoverColor: '#003a70',
   appName:           'Dashboard de Ações PNGI',
@@ -15,6 +15,6 @@ const portalTheme: LoginTheme = {
   }
 }
 
-export default function PortalLoginPage() {
-  return <LoginPage theme={portalTheme} />
+export default function AcoesPngiLoginPage() {
+  return <LoginPage theme={acoes_pngiTheme} />
 }

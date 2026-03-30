@@ -1,4 +1,4 @@
-// src/app/portal/layout.tsx
+// src/app/carga_org_lot/layout.tsx
 import TopBarNoLogin from '@/components/layout/TopBarNoLogin'
 
 export default function PortalLayout({
@@ -11,6 +11,7 @@ export default function PortalLayout({
       <TopBarNoLogin
           title="Carga de Organograma e Lotações"
           titleMinor="SEGER/SUBGES/GPP"
+          primaryColor="#7d5457" 
       />
       <main className="flex-1">
         {children}

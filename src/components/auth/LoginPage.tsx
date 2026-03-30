@@ -172,31 +172,7 @@ export function LoginPage({ theme }: LoginPageProps) {
                   style={focusRingStyle}
                 />
               </div>
-{/*
-              <div className="space-y-1">
-                <Label htmlFor="app">Aplicação</Label>
-                <select
-                  id="app"
-                  value={appContext}
-                  onChange={(e) => setAppContext(e.target.value)}
-                  className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm focus:outline-none focus:ring-2"
-                  style={focusRingStyle}
-                >
-                  <option value="PORTAL">Portal GPP</option>
-                  {apps.map((app) => (
-                    <option key={app.codigointerno} value={app.codigointerno}>
-                      {app.nomeaplicacao}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {error && (
-                <div className="rounded-md bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-600">
-                  {error}
-                </div>
-              )}
-*/}
+              
               <Button
                 type="submit"
                 disabled={loading}
@@ -217,6 +193,13 @@ export function LoginPage({ theme }: LoginPageProps) {
                   <><LogIn className="mr-2 h-4 w-4" /> Entrar</>
                 )}
               </Button>
+
+              {error && (
+                <div className="rounded-md bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-600">
+                  {error}
+                </div>
+              )}
+                            
             </form>
           </CardContent>
         </Card>
