@@ -7,7 +7,7 @@ const portalTheme: LoginTheme = {
   primaryHoverColor: '#003a70',
   appName:           'Carga de Organograma e Lotações',
   subtitle:          'SEGER — Governo do Espírito Santo',
-  logoSymbol:        'view_apps',
+  logoSymbol:        'flowchart',
   logoIsMaterialIcon: true,
   defaultAppContext:  'CARGA_ORG_LOT',
   redirectMap: {

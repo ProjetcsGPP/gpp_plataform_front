@@ -9,7 +9,7 @@ export default function PortalLayout({
   return (
     <div className="min-h-screen flex flex-col bg-app-gradient">
       <TopBarNoLogin
-          title="Orquestrador de Aplicaçãoes"
+          title="Carga de Organograma e Lotações"
           titleMinor="SEGER/SUBGES/GPP"
       />
       <main className="flex-1">

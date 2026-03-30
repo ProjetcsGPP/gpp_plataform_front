@@ -7,7 +7,7 @@ const portalTheme: LoginTheme = {
   primaryHoverColor: '#003a70',
   appName:           'Orquestrador de Aplicaçãoes',
   subtitle:          'SEGER — Governo do Espírito Santo',
-  logoSymbol:        'flowchart',
+  logoSymbol:        'view_apps',
   logoIsMaterialIcon: false,
   defaultAppContext:  'PORTAL',
   redirectMap: {
