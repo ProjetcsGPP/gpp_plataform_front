@@ -218,3 +218,6 @@
 .authority-gradient {
   background: linear-gradient(135deg, #00244a 0%, #003a70 100%);
 }
+.bg-app-gradient {
+  background: linear-gradient(135deg, #468BC4 0%, #3F93B8 100%);
+}
