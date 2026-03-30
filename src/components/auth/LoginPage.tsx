@@ -19,8 +19,8 @@ import { Loader2, LogIn } from 'lucide-react'
 import Image from "next/image";
 
 
-// ─── Contrato do tema ───────────────────────────────────────────────────────
-export interface LoginTheme {
+// ─── Contrato do tema ───────────────────────────────────────────────
+Export interface LoginTheme {
   /** Cor principal (fundo do ícone, botão, foco) — ex: "#00244a" */
   primaryColor: string
   /** Cor do hover do botão — ex: "#003a70" */
@@ -45,12 +45,12 @@ interface LoginPageProps {
   theme: LoginTheme
 }
 
-// ─── Utilitário inline (sem dependência extra) ──────────────────────────────
+// ─── Utilitário inline (sem dependência extra) ───────────────────────────
 function inlineStyle(color: string) {
   return { backgroundColor: color } as React.CSSProperties
 }
 
-// ─── Componente ─────────────────────────────────────────────────────────────
+// ─── Componente ─────────────────────────────────────────────────────────────────────────
 export function LoginPage({ theme }: LoginPageProps) {
   const router = useRouter()
   const [apps, setApps] = useState<AplicacaoPublica[]>([])
@@ -98,7 +98,7 @@ export function LoginPage({ theme }: LoginPageProps) {
   } as React.CSSProperties
 
   return (
-    <div className="flex min-h-[calc(100vh-64px)] items-center justify-center bg-background p-4">
+    <div className="flex min-h-[calc(100vh-64px)] items-center justify-center p-4">
       {/* min-h desconta a altura do TopBar (64px) para centralizar visualmente */}
       <div className="w-full max-w-md space-y-6">
 
