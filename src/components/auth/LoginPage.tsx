@@ -20,7 +20,7 @@ import Image from "next/image";
 
 
 // ─── Contrato do tema ───────────────────────────────────────────────
-Export interface LoginTheme {
+export interface LoginTheme {
   /** Cor principal (fundo do ícone, botão, foco) — ex: "#00244a" */
   primaryColor: string
   /** Cor do hover do botão — ex: "#003a70" */
@@ -74,7 +74,6 @@ export function LoginPage({ theme }: LoginPageProps) {
     try {
       await login(username, password, appContext as 'PORTAL' | 'ACOES_PNGI' | 'CARGA_ORG_LOT')
 
-      // Tenta rota do redirectMap, fallback para /portal/dashboard
       const redirectMap = theme.redirectMap ?? {}
       const destination = redirectMap[appContext] ?? '/portal/dashboard'
       router.push(destination)
@@ -102,39 +101,40 @@ export function LoginPage({ theme }: LoginPageProps) {
       {/* min-h desconta a altura do TopBar (64px) para centralizar visualmente */}
       <div className="w-full max-w-md space-y-6">
 
-        {/* Logo + Nome */}<div className="text-center">
-        {theme.logoIsMaterialIcon ? (
-          <div
-            className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-2xl shadow-md"
-            style={inlineStyle(theme.primaryColor)}
-          >
-            <span
-              className="material-symbols-outlined text-white leading-none"
-              style={{
-                fontSize: `${size}px`,
-                fontVariationSettings: `'FILL' 1, 'wght' 400, 'opsz' ${size}`,
-              }}
+        {/* Logo + Nome */}
+        <div className="text-center">
+          {theme.logoIsMaterialIcon ? (
+            <div
+              className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-2xl shadow-md"
+              style={inlineStyle(theme.primaryColor)}
             >
-              {theme.logoSymbol}
-            </span>
-          </div>
-        ) : (
-          <Image
-            src="/Logo_GOVES.png"
-            alt="Governo do Estado do Espírito Santo"
-            width={200}
-            height={200}
-            className="mx-auto mb-3"
-          />
-        )}
+              <span
+                className="material-symbols-outlined text-white leading-none"
+                style={{
+                  fontSize: `${size}px`,
+                  fontVariationSettings: `'FILL' 1, 'wght' 400, 'opsz' ${size}`,
+                }}
+              >
+                {theme.logoSymbol}
+              </span>
+            </div>
+          ) : (
+            <Image
+              src="/Logo_GOVES.png"
+              alt="Governo do Estado do Espírito Santo"
+              width={200}
+              height={200}
+              className="mx-auto mb-3"
+            />
+          )}
 
-        <h1 className="text-2xl font-bold text-slate-800">
-          {theme.appName}
-        </h1>
-        <p className="text-sm text-slate-500">
-          {theme.subtitle}
-        </p>
-      </div>
+          <h1 className="text-2xl font-bold text-slate-800">
+            {theme.appName}
+          </h1>
+          <p className="text-sm text-slate-500">
+            {theme.subtitle}
+          </p>
+        </div>
 
         {/* Card de formulário */}
         <Card className="shadow-md rounded-2xl">
