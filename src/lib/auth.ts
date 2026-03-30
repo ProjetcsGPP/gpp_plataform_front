@@ -1,3 +1,4 @@
+import { Switch } from "radix-ui";
 import api from "./api";
 
 export type AppContext = "PORTAL" | "ACOES_PNGI" | "CARGA_ORG_LOT";
@@ -40,6 +41,13 @@ export interface MeResponse {
   roles: UserRole[];
 }
 
+
+const loginRoutes: Record<AppContext, string> = {
+  PORTAL: "/accounts/login/",
+  ACOES_PNGI: "/accounts/login/",
+  CARGA_ORG_LOT: "/accounts/login/",
+};
+
 /**
  * Lista aplicações públicas — não requer autenticação.
  * Usada na tela de login para popular o seletor de aplicação.
@@ -63,7 +71,18 @@ export async function login(
   app_context: AppContext
 ): Promise<void> {
   const username = await resolveUsername(identifier);
-  await api.post("/accounts/login/", { username, password, app_context });
+ 
+  const url = loginRoutes[app_context];
+
+  if (!url) {
+    throw new Error(`App context não suportado: ${app_context}`);
+  }
+
+  await api.post(url, {
+    username,
+    password,
+    app_context,
+  });
 }
 
 export async function logout(): Promise<void> {

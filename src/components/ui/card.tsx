@@ -69,6 +69,7 @@ function CardAction({ className, ...props }: React.ComponentProps<"div">) {
   )
 }
 
+/**
 function CardContent({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
@@ -78,6 +79,25 @@ function CardContent({ className, ...props }: React.ComponentProps<"div">) {
     />
   )
 }
+
+*/
+function CardContent({
+      className,
+      ...props
+    }: React.ComponentProps<"div">) {
+      return (
+        <div
+          data-slot="card-content"
+          className={cn(
+            "px-6 w-full", // garante que pode expandir
+            "group-data-[size=sm]/card:px-4",
+            className
+          )}
+          {...props}
+        />
+      );
+}
+
 
 function CardFooter({ className, ...props }: React.ComponentProps<"div">) {
   return (

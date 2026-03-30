@@ -16,6 +16,8 @@ import {
 import { getAplicacoesPublicas, login } from '@/lib/auth'
 import type { AplicacaoPublica } from '@/lib/auth'
 import { Loader2, LogIn } from 'lucide-react'
+import Image from "next/image";
+
 
 // ─── Contrato do tema ───────────────────────────────────────────────────────
 export interface LoginTheme {
@@ -57,6 +59,7 @@ export function LoginPage({ theme }: LoginPageProps) {
   const [appContext, setAppContext] = useState(theme.defaultAppContext ?? 'PORTAL')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const size = 48;
 
   useEffect(() => {
     getAplicacoesPublicas()
@@ -99,33 +102,46 @@ export function LoginPage({ theme }: LoginPageProps) {
       {/* min-h desconta a altura do TopBar (64px) para centralizar visualmente */}
       <div className="w-full max-w-md space-y-6">
 
-        {/* Logo + Nome */}
-        <div className="text-center">
+        {/* Logo + Nome */}<div className="text-center">
+        {theme.logoIsMaterialIcon ? (
           <div
             className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-2xl shadow-md"
             style={inlineStyle(theme.primaryColor)}
           >
-            {theme.logoIsMaterialIcon ? (
-              <span
-                className="material-symbols-outlined text-white text-[28px] leading-none"
-                style={{ fontVariationSettings: "'FILL' 1" }}
-              >
-                {theme.logoSymbol}
-              </span>
-            ) : (
-              <span className="text-2xl font-bold text-white">{theme.logoSymbol}</span>
-            )}
+            <span
+              className="material-symbols-outlined text-white leading-none"
+              style={{
+                fontSize: `${size}px`,
+                fontVariationSettings: `'FILL' 1, 'wght' 400, 'opsz' ${size}`,
+              }}
+            >
+              {theme.logoSymbol}
+            </span>
           </div>
-          <h1 className="text-2xl font-bold text-slate-800">{theme.appName}</h1>
-          <p className="text-sm text-slate-500">{theme.subtitle}</p>
-        </div>
+        ) : (
+          <Image
+            src="/Logo_GOVES.png"
+            alt="Governo do Estado do Espírito Santo"
+            width={200}
+            height={200}
+            className="mx-auto mb-3"
+          />
+        )}
+
+        <h1 className="text-2xl font-bold text-slate-800">
+          {theme.appName}
+        </h1>
+        <p className="text-sm text-slate-500">
+          {theme.subtitle}
+        </p>
+      </div>
 
         {/* Card de formulário */}
         <Card className="shadow-md rounded-2xl">
           <CardHeader>
             <CardTitle className="text-lg text-slate-700">Acesso ao Sistema</CardTitle>
             <CardDescription>
-              Informe suas credenciais e selecione a aplicação
+              Informe suas credenciais para fazer login
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -156,7 +172,7 @@ export function LoginPage({ theme }: LoginPageProps) {
                   style={focusRingStyle}
                 />
               </div>
-
+{/*
               <div className="space-y-1">
                 <Label htmlFor="app">Aplicação</Label>
                 <select
@@ -180,7 +196,7 @@ export function LoginPage({ theme }: LoginPageProps) {
                   {error}
                 </div>
               )}
-
+*/}
               <Button
                 type="submit"
                 disabled={loading}

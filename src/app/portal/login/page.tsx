@@ -5,10 +5,10 @@ import type { LoginTheme } from '@/components/auth/LoginPage'
 const portalTheme: LoginTheme = {
   primaryColor:      '#00244a',
   primaryHoverColor: '#003a70',
-  appName:           'GPP Plataform 2.0',
-  subtitle:          'SEGER — Governo do Espírito Santo',
-  logoSymbol:        'account_balance',
-  logoIsMaterialIcon: true,
+  appName:           'SEGER — Governo do Espírito Santo',
+  subtitle:          'Orquestrador de Aplicaçãoes',
+  logoSymbol:        'view_apps',
+  logoIsMaterialIcon: false,
   defaultAppContext:  'PORTAL',
   redirectMap: {
     PORTAL:       '/portal/dashboard',
