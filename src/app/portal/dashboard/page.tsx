@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getMe, logout, switchApp } from "@/lib/auth";
+import { getMe, logoutApp, switchApp } from "@/lib/auth";
 import { useAplicacoes } from '@/hooks/useAplicacoes';
+import { useAuthStore } from '@/store/authStore';
 import type { MeResponse, UserRole, Aplicacao } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -13,17 +14,14 @@ import { logError } from '@/lib/logger';
 
 export default function PortalDashboardPage() {
   const router = useRouter();
+  const clearAuth = useAuthStore((s) => s.clearAuth);
   const [me, setMe] = useState<MeResponse | null>(null);
   const [loadingMe, setLoadingMe] = useState(true);
   const [switching, setSwitching] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // SWR: auto-refresh + cache inteligente (não precisa de useEffect para apps)
-  // useEffect → roda 1x quando o componente monta
-  // SWR      → busca, cacheia e re-valida automaticamente a cada 2 min ou ao focar a aba
   const { apps, isLoading: appsLoading, refresh } = useAplicacoes();
 
-  // Carrega dados do usuário 1x ao montar
   useEffect(() => {
     getMe()
       .then((meData) => {
@@ -36,7 +34,6 @@ export default function PortalDashboardPage() {
       .finally(() => setLoadingMe(false));
   }, [router]);
 
-  // Loading global: aguarda tanto o usuário quanto as aplicações
   if (!me || loadingMe || appsLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
@@ -45,7 +42,6 @@ export default function PortalDashboardPage() {
     );
   }
 
-  // Filtra aplicações pelo role do usuário e flag isshowinportal
   const roles = me.roles ?? [];
   const roleCodigos = new Set(roles.map((r: UserRole) => r.aplicacao_codigo));
   const appList = apps.filter(
@@ -54,10 +50,11 @@ export default function PortalDashboardPage() {
 
   async function handleLogout() {
     try {
-      await logout();
+      await logoutApp('PORTAL');
     } catch (err) {
       await logError(err, 'portal/dashboard/logout');
     }
+    clearAuth();
     router.push("/portal/login");
   }
 
@@ -73,7 +70,6 @@ export default function PortalDashboardPage() {
   }
 
   async function handleAppClick(app: Aplicacao) {
-    // Validação explícita: não prossegue se a aplicação estiver bloqueada
     if (app.isappbloqueada) {
       await logError(
         new Error(`Tentativa de acesso a aplicação bloqueada: ${app.codigointerno}`),
@@ -92,7 +88,7 @@ export default function PortalDashboardPage() {
       setSwitching(null);
     }
   }
-    
+
   return (
     <div className="mx-auto max-w-6xl px-6 py-10">
 
@@ -107,7 +103,6 @@ export default function PortalDashboardPage() {
               {appList.length === 1 ? 'aplicação disponível' : 'aplicações disponíveis'}
             </Badge>
           </div>
-          {/* Informações do usuário movidas para cá (antes estavam no header duplicado) */}
           <div className="hidden md:flex items-center gap-2 text-sm text-slate-500">
             <span className="font-medium text-slate-700">{me?.name || me?.username}</span>
             {me?.is_portal_admin && (
