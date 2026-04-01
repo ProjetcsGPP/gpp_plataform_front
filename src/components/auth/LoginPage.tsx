@@ -63,7 +63,7 @@ export function LoginPage({ theme }: LoginPageProps) {
   const [appContext, setAppContext] = useState(theme.defaultAppContext ?? 'PORTAL')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const size = 24;
+  const size = 52;
   let logoElement;
 
   if (theme.logoIsMaterialIcon) {
