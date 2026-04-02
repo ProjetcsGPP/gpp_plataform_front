@@ -1,6 +1,6 @@
 // src/__tests__/middleware.test.ts
 import { describe, it, expect } from 'vitest'
-import { middleware } from '../middleware'
+import { proxy } from '../proxy'
 import { NextRequest } from 'next/server'
 
 function makeRequest(pathname: string, cookies: Record<string, string> = {}): NextRequest {
@@ -12,11 +12,11 @@ function makeRequest(pathname: string, cookies: Record<string, string> = {}): Ne
   return req
 }
 
-describe('middleware — FASE 4', () => {
+describe('proxy — FASE 4', () => {
   // ── PORTAL ────────────────────────────────────────────────────────
   it('deve redirecionar /portal/dashboard sem cookie para /portal/login', () => {
     const req = makeRequest('/portal/dashboard')
-    const res = middleware(req)
+    const res = proxy(req)
     expect(res.status).toBe(307)
     expect(res.headers.get('location')).toContain('/portal/login')
     expect(res.headers.get('location')).toContain('reason=session_expired')
@@ -27,7 +27,7 @@ describe('middleware — FASE 4', () => {
     const req = makeRequest('/portal/dashboard', {
       'gpp_session_PORTAL': 'valid-session-token',
     })
-    const res = middleware(req)
+    const res = proxy(req)
     expect(res.status).toBe(200)
   })
 
@@ -37,7 +37,7 @@ describe('middleware — FASE 4', () => {
     const req = makeRequest('/acoes-pngi/dashboard', {
       'gpp_session_PORTAL': 'valid-session-token',
     })
-    const res = middleware(req)
+    const res = proxy(req)
     expect(res.status).toBe(307)
     expect(res.headers.get('location')).toContain('/acoes-pngi/login')
     expect(res.headers.get('location')).toContain('reason=session_expired')
@@ -47,14 +47,14 @@ describe('middleware — FASE 4', () => {
     const req = makeRequest('/acoes-pngi/dashboard', {
       'gpp_session_ACOES_PNGI': 'valid-session-token',
     })
-    const res = middleware(req)
+    const res = proxy(req)
     expect(res.status).toBe(200)
   })
 
   // ── CARGA ORG LOT ─────────────────────────────────────────────────
   it('deve redirecionar /carga-org-lot/dashboard sem cookie correto', () => {
     const req = makeRequest('/carga-org-lot/dashboard')
-    const res = middleware(req)
+    const res = proxy(req)
     expect(res.status).toBe(307)
     expect(res.headers.get('location')).toContain('/carga-org-lot/login')
   })
@@ -63,26 +63,26 @@ describe('middleware — FASE 4', () => {
     const req = makeRequest('/carga-org-lot/dashboard', {
       'gpp_session_CARGA_ORG_LOT': 'valid-session-token',
     })
-    const res = middleware(req)
+    const res = proxy(req)
     expect(res.status).toBe(200)
   })
 
   // ── ROTAS PÚBLICAS ────────────────────────────────────────────────
   it('deve deixar rotas de login passarem sem verificar cookie', () => {
     const req = makeRequest('/portal/login')
-    const res = middleware(req)
+    const res = proxy(req)
     expect(res.status).toBe(200)
   })
 
   it('deve deixar rotas de API passarem sem verificar cookie', () => {
     const req = makeRequest('/api/accounts/me/')
-    const res = middleware(req)
+    const res = proxy(req)
     expect(res.status).toBe(200)
   })
 
   it('deve deixar _next/ passar sem verificar cookie', () => {
     const req = makeRequest('/_next/static/chunks/main.js')
-    const res = middleware(req)
+    const res = proxy(req)
     expect(res.status).toBe(200)
   })
 
@@ -91,7 +91,7 @@ describe('middleware — FASE 4', () => {
     const req = makeRequest('/portal/dashboard', {
       'gpp_session_ACOES_PNGI': 'valid-session-token',
     })
-    const res = middleware(req)
+    const res = proxy(req)
     expect(res.status).toBe(307)
     expect(res.headers.get('location')).toContain('/portal/login')
   })
@@ -100,7 +100,7 @@ describe('middleware — FASE 4', () => {
     const req = makeRequest('/acoes-pngi/dashboard', {
       'gpp_session_CARGA_ORG_LOT': 'valid-session-token',
     })
-    const res = middleware(req)
+    const res = proxy(req)
     expect(res.status).toBe(307)
     expect(res.headers.get('location')).toContain('/acoes-pngi/login')
   })
