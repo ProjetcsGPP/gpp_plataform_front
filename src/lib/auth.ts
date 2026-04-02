@@ -1,7 +1,6 @@
-import { Switch } from "radix-ui";
 import api from "./api";
-
-export type AppContext = "PORTAL" | "ACOES_PNGI" | "CARGA_ORG_LOT";
+import type { AppContext } from '@/types/auth'
+import { APP_CONFIG } from '@/types/auth'
 
 // Dados mínimos retornados pelo endpoint público (sem autenticação)
 export interface AplicacaoPublica {
@@ -11,7 +10,6 @@ export interface AplicacaoPublica {
 
 // Dados completos retornados pelo endpoint autenticado
 export interface Aplicacao {
-
   idaplicacao: number;
   codigointerno: string;
   nomeaplicacao: string;
@@ -19,7 +17,6 @@ export interface Aplicacao {
   isshowinportal: boolean
   isappbloqueada: boolean
   isappproductionready: boolean
-
 }
 
 export interface UserRole {
@@ -40,7 +37,6 @@ export interface MeResponse {
   orgao: string;
   roles: UserRole[];
 }
-
 
 const loginRoutes: Record<AppContext, string> = {
   PORTAL: "/accounts/login/",
@@ -71,7 +67,7 @@ export async function login(
   app_context: AppContext
 ): Promise<void> {
   const username = await resolveUsername(identifier);
- 
+
   const url = loginRoutes[app_context];
 
   if (!url) {
@@ -85,11 +81,29 @@ export async function login(
   });
 }
 
+/** @deprecated Use logoutApp(appContext) instead */
 export async function logout(): Promise<void> {
   try {
     await api.post("/accounts/logout/");
   } catch {
     // sessão já inválida — segue para redirect normalmente
+  }
+}
+
+/**
+ * Faz logout apenas da aplicação especificada.
+ * NÃO encerra sessões de outras apps.
+ *
+ * @param appContext - Contexto da app que está fazendo logout
+ * @returns Promise<void>
+ */
+export async function logoutApp(appContext: AppContext): Promise<void> {
+  const { slug } = APP_CONFIG[appContext]
+  try {
+    await api.post(`/accounts/logout/${slug}/`)
+  } catch (error) {
+    // Silencia erro de rede — o redirect acontece de qualquer forma
+    console.warn(`[logoutApp] Falha ao chamar endpoint de logout para ${slug}:`, error)
   }
 }
 
