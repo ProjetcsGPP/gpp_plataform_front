@@ -1,5 +1,6 @@
 // src/app/portal/dashboard/layout.tsx
 import { AppThemeProvider } from '@/components/common/AppThemeProvider'
+import { LoadingGuard } from '@/components/common/LoadingGuard'
 import TopBar from '@/components/layout/TopBar'
 
 export default function PortalDashboardLayout({
@@ -9,16 +10,18 @@ export default function PortalDashboardLayout({
 }) {
   return (
     <AppThemeProvider appContext="PORTAL">
-      <div className="min-h-screen flex flex-col bg-app-gradient">
-        <TopBar
-          title="Portal de Aplicações"
-          titleMinor="SEGER/SUBGES/GPP"
-          appContext="PORTAL"
-        />
-        <main className="flex-1">
-          {children}
-        </main>
-      </div>
+      <LoadingGuard>
+        <div className="min-h-screen flex flex-col bg-app-gradient">
+          <TopBar
+            title="Portal de Aplicações"
+            titleMinor="SEGER/SUBGES/GPP"
+            appContext="PORTAL"
+          />
+          <main className="flex-1">
+            {children}
+          </main>
+        </div>
+      </LoadingGuard>
     </AppThemeProvider>
   )
 }
