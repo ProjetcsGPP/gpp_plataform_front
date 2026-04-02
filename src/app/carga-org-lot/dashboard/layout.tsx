@@ -1,17 +1,17 @@
-// src/app/portal/dashboard/layout.tsx
+// src/app/carga-org-lot/dashboard/layout.tsx
 import { AppThemeProvider } from '@/components/common/AppThemeProvider'
 import TopBar from '@/components/layout/TopBar'
 
-export default function PortalDashboardLayout({
+export default function CargaOrgLotDashboardLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
   return (
-    <AppThemeProvider appContext="PORTAL">
+    <AppThemeProvider appContext="CARGA_ORG_LOT">
       <div className="min-h-screen flex flex-col bg-app-gradient">
         <TopBar
-          title="Portal de Aplicações"
+          title="Carga Org/Lot"
           titleMinor="SEGER/SUBGES/GPP"
         />
         <main className="flex-1">
