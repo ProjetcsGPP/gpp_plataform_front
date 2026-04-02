@@ -2,6 +2,7 @@
 'use client'
 
 import { useEffect } from 'react'
+import { useMe } from '@/hooks/useMe'
 import type { AppContext } from '@/types/auth'
 
 interface AppThemeProviderProps {
@@ -12,11 +13,13 @@ interface AppThemeProviderProps {
 
 /**
  * Aplica o atributo data-app no <body> para ativar o tema CSS da aplicação.
+ * Hidrata a authStore com os dados do usuário autenticado via useMe().
  * Deve envolver o conteúdo do layout de cada app.
- *
- * Nota: a hidratação da authStore (useMe) será adicionada na Fase 5.
  */
 export function AppThemeProvider({ appContext, children }: AppThemeProviderProps) {
+  // Hidrata a store com os dados do usuário autenticado
+  useMe()
+
   useEffect(() => {
     document.body.setAttribute('data-app', appContext)
 
