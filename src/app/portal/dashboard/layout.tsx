@@ -13,6 +13,7 @@ export default function PortalDashboardLayout({
         <TopBar
           title="Portal de Aplicações"
           titleMinor="SEGER/SUBGES/GPP"
+          appContext="PORTAL"
         />
         <main className="flex-1">
           {children}

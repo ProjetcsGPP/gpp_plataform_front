@@ -13,6 +13,7 @@ export default function AcoesPngiDashboardLayout({
         <TopBar
           title="Ações PNGI"
           titleMinor="SEGER/SUBGES/GPP"
+          appContext="ACOES_PNGI"
         />
         <main className="flex-1">
           {children}
