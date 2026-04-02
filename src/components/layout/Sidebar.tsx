@@ -9,6 +9,7 @@ import { useAuthStore } from '@/store/authStore'
 import { logoutApp } from '@/lib/auth'
 import { APP_CONFIG } from '@/types/auth'
 import type { AppContext } from '@/types/auth'
+import { NavReloadButton } from '@/components/dev/NavReloadButton'
 
 const navItems = [
   { icon: 'dashboard',       label: 'Dashboard',       active: true },
@@ -129,8 +130,9 @@ export default function Sidebar({ appContext }: SidebarProps) {
       </nav>
 
       {/* Footer */}
-      <div className="p-2 border-t border-outline-variant/50 space-y-1">
-        <NavItem icon="help"   label="Suporte" isExpanded={expanded} />
+      <div className="mt-auto px-2 pb-2 flex flex-col gap-1">
+        {/* Separador visual de dev tools */}
+        <NavReloadButton />
         <NavItem
           icon="logout"
           label="Sair"

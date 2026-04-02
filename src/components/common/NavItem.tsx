@@ -8,13 +8,21 @@ interface NavItemProps {
   label: string
   isExpanded: boolean
   active?: boolean
+  onClick?: () => void  // ← ADICIONE ESTA LINHA
 }
 
-export function NavItem({ icon, label, isExpanded, active = false }: NavItemProps) {
+export function NavItem({ 
+  icon, 
+  label, 
+  isExpanded, 
+  active = false,
+  onClick 
+}: NavItemProps) {
   return (
     <div
       role="button"
       tabIndex={0}
+      onClick={onClick}
       className={cn(
         'flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer',
         'transition-colors duration-200',

@@ -1,0 +1,56 @@
+{
+  "items": [
+    {
+      "id": "dashboard",
+      "label": "Dashboard",
+      "icon": "dashboard",
+      "href": "/portal/dashboard",
+      "order": 1
+    },
+    {
+      "id": "programas",
+      "label": "Programas",
+      "icon": "account_tree",
+      "href": "/portal/programas",
+      "order": 2,
+      "permissionKey": "programas.view",
+      "visibleWhenDenied": false,
+      "children": [
+        {
+          "id": "programas-list",
+          "label": "Listar Programas",
+          "icon": "list",
+          "href": "/portal/programas",
+          "order": 1,
+          "permissionKey": "programas.view"
+        },
+        {
+          "id": "programas-new",
+          "label": "Novo Programa",
+          "icon": "add_circle",
+          "href": "/portal/programas/novo",
+          "order": 2,
+          "permissionKey": "programas.create"
+        }
+      ]
+    },
+    {
+      "id": "relatorios",
+      "label": "Relatórios",
+      "icon": "bar_chart",
+      "href": "/portal/relatorios",
+      "order": 3,
+      "permissionKey": "relatorios.view",
+      "visibleWhenDenied": true
+    },
+    {
+      "id": "usuarios",
+      "label": "Usuários",
+      "icon": "group",
+      "href": "/portal/usuarios",
+      "order": 4,
+      "permissionKey": "usuarios.manage",
+      "visibleWhenDenied": false
+    }
+  ]
+}
