@@ -2,8 +2,13 @@
 'use client'
 
 import { useRef, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { NavItem } from '@/components/common/NavItem'
 import { cn } from '@/lib/utils'
+import { useAuthStore } from '@/store/authStore'
+import { logoutApp } from '@/lib/auth'
+import { APP_CONFIG } from '@/types/auth'
+import type { AppContext } from '@/types/auth'
 
 const navItems = [
   { icon: 'dashboard',       label: 'Dashboard',       active: true },
@@ -14,12 +19,17 @@ const navItems = [
   { icon: 'settings',        label: 'Settings' },
 ]
 
-export default function Sidebar() {
+interface SidebarProps {
+  appContext: AppContext
+}
+
+export default function Sidebar({ appContext }: SidebarProps) {
   const [isExpanded, setIsExpanded] = useState(false)
   const [isPinned, setIsPinned] = useState(false)
   const collapseTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const router = useRouter()
+  const clearAuth = useAuthStore((s) => s.clearAuth)
 
-  // Debounce no fechamento: evita flicker ao passar o mouse rapidamente
   const handleMouseEnter = () => {
     if (collapseTimer.current) clearTimeout(collapseTimer.current)
     setIsExpanded(true)
@@ -31,6 +41,13 @@ export default function Sidebar() {
   }
 
   const expanded = isExpanded || isPinned
+
+  async function handleLogout() {
+    const { loginPath } = APP_CONFIG[appContext]
+    await logoutApp(appContext)
+    clearAuth()
+    router.push(loginPath)
+  }
 
   return (
     <aside
@@ -46,7 +63,6 @@ export default function Sidebar() {
     >
       {/* Logo / Header */}
       <div className="px-4 py-6 flex items-center gap-3 min-h-[72px]">
-        {/* Botão de pin — visível só quando expandido */}
         <button
           onClick={() => setIsPinned((p) => !p)}
           className={cn(
@@ -64,7 +80,6 @@ export default function Sidebar() {
           </span>
         </button>
 
-        {/* Texto do header — usa opacity + translateX em vez de max-w */}
         <div
           className={cn(
             'flex flex-col overflow-hidden whitespace-nowrap',
@@ -84,7 +99,7 @@ export default function Sidebar() {
         </div>
       </div>
 
-      {/* CTA — usa grid-rows para transição de altura sem max-h */}
+      {/* CTA */}
       <div
         className={cn(
           'px-4 mb-4 grid transition-[grid-template-rows,opacity] duration-300 ease-in-out',
@@ -116,7 +131,12 @@ export default function Sidebar() {
       {/* Footer */}
       <div className="p-2 border-t border-outline-variant/50 space-y-1">
         <NavItem icon="help"   label="Suporte" isExpanded={expanded} />
-        <NavItem icon="logout" label="Sair"    isExpanded={expanded} />
+        <NavItem
+          icon="logout"
+          label="Sair"
+          isExpanded={expanded}
+          onClick={handleLogout}
+        />
       </div>
     </aside>
   )

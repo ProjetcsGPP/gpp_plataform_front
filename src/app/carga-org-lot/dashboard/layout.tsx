@@ -13,6 +13,7 @@ export default function CargaOrgLotDashboardLayout({
         <TopBar
           title="Carga Org/Lot"
           titleMinor="SEGER/SUBGES/GPP"
+          appContext="CARGA_ORG_LOT"
         />
         <main className="flex-1">
           {children}
