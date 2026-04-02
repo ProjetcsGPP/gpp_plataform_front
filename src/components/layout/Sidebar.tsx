@@ -2,23 +2,15 @@
 'use client'
 
 import { useRef, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { NavItem } from '@/components/common/NavItem'
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/store/authStore'
+import { useNavigationStore } from '@/store/navigationStore'
 import { logoutApp } from '@/lib/auth'
 import { APP_CONFIG } from '@/types/auth'
 import type { AppContext } from '@/types/auth'
 import { NavReloadButton } from '@/components/dev/NavReloadButton'
-
-const navItems = [
-  { icon: 'dashboard',       label: 'Dashboard',       active: true },
-  { icon: 'account_balance', label: 'Administrative' },
-  { icon: 'groups',          label: 'Human Resources' },
-  { icon: 'payments',        label: 'Financials' },
-  { icon: 'monitoring',      label: 'Analytics' },
-  { icon: 'settings',        label: 'Settings' },
-]
 
 interface SidebarProps {
   appContext: AppContext
@@ -28,8 +20,14 @@ export default function Sidebar({ appContext }: SidebarProps) {
   const [isExpanded, setIsExpanded] = useState(false)
   const [isPinned, setIsPinned] = useState(false)
   const collapseTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
   const router = useRouter()
+  const pathname = usePathname()
+
   const clearAuth = useAuthStore((s) => s.clearAuth)
+
+  const items = useNavigationStore((s) => s.items)
+  const isLoading = useNavigationStore((s) => s.isLoading)
 
   const handleMouseEnter = () => {
     if (collapseTimer.current) clearTimeout(collapseTimer.current)
@@ -62,7 +60,6 @@ export default function Sidebar({ appContext }: SidebarProps) {
       onMouseLeave={handleMouseLeave}
       aria-expanded={expanded}
     >
-      {/* Logo / Header */}
       <div className="px-4 py-6 flex items-center gap-3 min-h-[72px]">
         <button
           onClick={() => setIsPinned((p) => !p)}
@@ -100,7 +97,6 @@ export default function Sidebar({ appContext }: SidebarProps) {
         </div>
       </div>
 
-      {/* CTA */}
       <div
         className={cn(
           'px-4 mb-4 grid transition-[grid-template-rows,opacity] duration-300 ease-in-out',
@@ -110,28 +106,38 @@ export default function Sidebar({ appContext }: SidebarProps) {
       >
         <div className="overflow-hidden">
           <button className="authority-gradient text-white rounded-lg py-3 px-4 flex items-center justify-center gap-2 font-semibold text-sm hover:opacity-90 transition-opacity w-full active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">
-            <span className="material-symbols-outlined text-white text-[18px] leading-none">add</span>
+            <span className="material-symbols-outlined text-white text-[18px] leading-none">
+              add
+            </span>
             Nova Solicitação
           </button>
         </div>
       </div>
 
-      {/* Navegação Principal */}
       <nav className="px-2 space-y-1 mt-2 flex-1" aria-label="Navegação principal">
-        {navItems.map((item) => (
-          <NavItem
-            key={item.icon}
-            icon={item.icon}
-            label={item.label}
-            isExpanded={expanded}
-            active={item.active}
-          />
-        ))}
+        {isLoading ? (
+          <div className="px-3 py-2 text-xs text-on-surface-variant">
+            Carregando navegação...
+          </div>
+        ) : items.length > 0 ? (
+          items.map((item) => (
+            <NavItem
+              key={item.id}
+              icon={item.icon}
+              label={item.label}
+              isExpanded={expanded}
+              active={pathname === item.href || pathname.startsWith(`${item.href}/`)}
+              onClick={item.enabled ? () => router.push(item.href) : undefined}
+            />
+          ))
+        ) : (
+          <div className="px-3 py-2 text-xs text-on-surface-variant">
+            Nenhum item de navegação disponível
+          </div>
+        )}
       </nav>
 
-      {/* Footer */}
       <div className="mt-auto px-2 pb-2 flex flex-col gap-1">
-        {/* Separador visual de dev tools */}
         <NavReloadButton />
         <NavItem
           icon="logout"
