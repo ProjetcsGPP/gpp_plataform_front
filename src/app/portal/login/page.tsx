@@ -13,10 +13,24 @@ const portalTheme: LoginTheme = {
   logoIsProdestIcon: true,
   defaultAppContext:  'PORTAL',
   redirectMap: {
-    PORTAL:       '/portal/dashboard',
+    PORTAL: '/portal/dashboard',
   }
 }
 
-export default function PortalLoginPage() {
-  return <LoginPage theme={portalTheme} />
+interface PortalLoginPageProps {
+  searchParams: Promise<{ reason?: string; redirect?: string }>
+}
+
+export default async function PortalLoginPage({ searchParams }: PortalLoginPageProps) {
+  const params = await searchParams
+  const sessionExpired = params.reason === 'session_expired'
+
+  return (
+    <LoginPage
+      theme={portalTheme}
+      sessionExpiredMessage={
+        sessionExpired ? 'Sua sessão expirou. Faça login novamente.' : undefined
+      }
+    />
+  )
 }

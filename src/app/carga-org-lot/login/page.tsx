@@ -1,4 +1,4 @@
-// src/app/carga_org_lot/login/page.tsx
+// src/app/carga-org-lot/login/page.tsx
 import { LoginPage } from '@/components/auth/LoginPage'
 import type { LoginTheme } from '@/components/auth/LoginPage'
 
@@ -17,6 +17,20 @@ const carga_org_lotTheme: LoginTheme = {
   }
 }
 
-export default function CargaOrgLotLoginPage() {
-  return <LoginPage theme={carga_org_lotTheme} />
+interface CargaOrgLotLoginPageProps {
+  searchParams: Promise<{ reason?: string; redirect?: string }>
+}
+
+export default async function CargaOrgLotLoginPage({ searchParams }: CargaOrgLotLoginPageProps) {
+  const params = await searchParams
+  const sessionExpired = params.reason === 'session_expired'
+
+  return (
+    <LoginPage
+      theme={carga_org_lotTheme}
+      sessionExpiredMessage={
+        sessionExpired ? 'Sua sessão expirou. Faça login novamente.' : undefined
+      }
+    />
+  )
 }
