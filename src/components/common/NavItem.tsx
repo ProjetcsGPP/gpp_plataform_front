@@ -8,15 +8,17 @@ interface NavItemProps {
   label: string
   isExpanded: boolean
   active?: boolean
-  onClick?: () => void  // ← ADICIONE ESTA LINHA
+  onClick?: () => void
+  trailingIcon?: string
 }
 
-export function NavItem({ 
-  icon, 
-  label, 
-  isExpanded, 
+export function NavItem({
+  icon,
+  label,
+  isExpanded,
   active = false,
-  onClick 
+  onClick,
+  trailingIcon,
 }: NavItemProps) {
   return (
     <div
@@ -43,7 +45,7 @@ export function NavItem({
       {/* Label: opacity + translateX. Largura reservada pelo flex do pai */}
       <span
         className={cn(
-          'whitespace-nowrap text-sm font-medium select-none',
+          'whitespace-nowrap text-sm font-medium select-none flex-1',
           'transition-[opacity,transform] duration-300 ease-in-out',
           isExpanded
             ? 'opacity-100 translate-x-0'
@@ -53,6 +55,16 @@ export function NavItem({
       >
         {label}
       </span>
+
+      {/* Trailing icon (ex: expand_more para grupos com children) */}
+      {trailingIcon && isExpanded && (
+        <span
+          className="material-symbols-outlined flex-shrink-0 text-[18px] leading-none transition-transform duration-200"
+          aria-hidden="true"
+        >
+          {trailingIcon}
+        </span>
+      )}
     </div>
   )
 }

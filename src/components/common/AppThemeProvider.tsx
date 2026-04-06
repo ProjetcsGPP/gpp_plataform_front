@@ -3,6 +3,7 @@
 
 import { useEffect } from 'react'
 import { useMe } from '@/hooks/useMe'
+import { useNavigation } from '@/hooks/useNavigation'
 import type { AppContext } from '@/types/auth'
 
 interface AppThemeProviderProps {
@@ -14,11 +15,15 @@ interface AppThemeProviderProps {
 /**
  * Aplica o atributo data-app no <body> para ativar o tema CSS da aplicação.
  * Hidrata a authStore com os dados do usuário autenticado via useMe().
+ * Carrega e resolve a navegação via useNavigation().
  * Deve envolver o conteúdo do layout de cada app.
  */
 export function AppThemeProvider({ appContext, children }: AppThemeProviderProps) {
   // Hidrata a store com os dados do usuário autenticado
   useMe()
+
+  // Carrega manifest de navegação + permissões e popula navigationStore
+  useNavigation(appContext)
 
   useEffect(() => {
     document.body.setAttribute('data-app', appContext)

@@ -4,6 +4,7 @@
 import { useRef, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { NavItem } from '@/components/common/NavItem'
+import { NavItemGroup } from '@/components/common/NavItemGroup'
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/store/authStore'
 import { useNavigationStore } from '@/store/navigationStore'
@@ -120,16 +121,26 @@ export default function Sidebar({ appContext }: SidebarProps) {
             Carregando navegação...
           </div>
         ) : items.length > 0 ? (
-          items.map((item) => (
-            <NavItem
-              key={item.id}
-              icon={item.icon}
-              label={item.label}
-              isExpanded={expanded}
-              active={pathname === item.href || pathname.startsWith(`${item.href}/`)}
-              onClick={item.enabled ? () => router.push(item.href) : undefined}
-            />
-          ))
+          items.map((item) =>
+            item.children?.length ? (
+              <NavItemGroup
+                key={item.id}
+                item={item}
+                isExpanded={expanded}
+                pathname={pathname}
+                onNavigate={(href) => router.push(href)}
+              />
+            ) : (
+              <NavItem
+                key={item.id}
+                icon={item.icon}
+                label={item.label}
+                isExpanded={expanded}
+                active={pathname === item.href || pathname.startsWith(`${item.href}/`)}
+                onClick={item.enabled ? () => router.push(item.href) : undefined}
+              />
+            )
+          )
         ) : (
           <div className="px-3 py-2 text-xs text-on-surface-variant">
             Nenhum item de navegação disponível

@@ -2,6 +2,7 @@
 import { AppThemeProvider } from '@/components/common/AppThemeProvider'
 import { LoadingGuard } from '@/components/common/LoadingGuard'
 import TopBar from '@/components/layout/TopBar'
+import Sidebar from '@/components/layout/Sidebar'
 
 export default function CargaOrgLotDashboardLayout({
   children,
@@ -11,15 +12,16 @@ export default function CargaOrgLotDashboardLayout({
   return (
     <AppThemeProvider appContext="CARGA_ORG_LOT">
       <LoadingGuard>
-        <div className="min-h-screen flex flex-col bg-app-gradient">
-          <TopBar
-            title="Carga Org/Lot"
-            titleMinor="SEGER/SUBGES/GPP"
-            appContext="CARGA_ORG_LOT"
-          />
-          <main className="flex-1">
-            {children}
-          </main>
+        <div className="min-h-screen flex bg-app-gradient">
+          <Sidebar appContext="CARGA_ORG_LOT" />
+          <div className="flex flex-col flex-1 pl-[72px]">
+            <TopBar
+              title="Carga Org/Lot"
+              titleMinor="SEGER/SUBGES/GPP"
+              appContext="CARGA_ORG_LOT"
+            />
+            <main className="flex-1">{children}</main>
+          </div>
         </div>
       </LoadingGuard>
     </AppThemeProvider>
