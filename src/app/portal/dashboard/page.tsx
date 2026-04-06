@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { LogOut, Loader2, LayoutGrid, RefreshCw, PackageOpen } from "lucide-react";
 import { logError } from '@/lib/logger';
+import Sidebar from '@/components/layout/Sidebar'
 
 export default function PortalDashboardPage() {
   const router = useRouter();
@@ -92,6 +93,8 @@ export default function PortalDashboardPage() {
   return (
     <div className="mx-auto max-w-6xl px-6 py-10">
 
+      <Sidebar appContext={"PORTAL"} />
+      
       {/* Cabeçalho da seção */}
       <div className="mb-8 flex items-center justify-between">
         <div className="flex items-center gap-4">
