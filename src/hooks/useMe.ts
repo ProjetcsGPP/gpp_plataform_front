@@ -55,3 +55,45 @@ export function useMe() {
     isError: !!error,
   }
 }
+
+// ─── MePermissions ────────────────────────────────────────────────────────────
+
+export interface MePermissionsResponse {
+  role: string
+  granted: string[]
+}
+
+const fetchMePermissions = (url: string): Promise<MePermissionsResponse> =>
+  api.get<MePermissionsResponse>(url).then((res) => res.data)
+
+/**
+ * Hook para buscar as permissões do usuário na aplicação atual.
+ *
+ * - Faz GET /api/accounts/me/permissions/ usando SWR
+ * - O backend infere a aplicação a partir do cookie de sessão (app_context)
+ * - Não revalida em foco — permissões mudam raramente
+ * - Cache de 5 minutos (dedupingInterval)
+ *
+ * @returns { permissions, isLoading, isError }
+ */
+export function useMePermissions() {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
+
+  const { data, error, isLoading } = useSWR<MePermissionsResponse>(
+    isAuthenticated ? '/accounts/me/permissions/' : null,  // só busca se autenticado
+    fetchMePermissions,
+    {
+      dedupingInterval: 5 * 60 * 1000,
+      revalidateOnFocus: false,
+      shouldRetryOnError: false,
+    }
+  )
+
+  return {
+    permissions: data ?? null,
+    role: data?.role ?? null,
+    granted: data?.granted ?? [],
+    isLoading,
+    isError: !!error,
+  }
+}
