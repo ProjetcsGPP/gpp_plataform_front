@@ -46,7 +46,8 @@ export interface LoginTheme {
 }
 
 interface LoginPageProps {
-  theme: LoginTheme
+  theme: LoginTheme,
+  sessionExpiredMessage?: string
 }
 
 // ─── Utilitário inline (sem dependência extra) ───────────────────────────
