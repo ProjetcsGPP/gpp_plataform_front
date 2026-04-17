@@ -1,8 +1,9 @@
 // src/app/acoes-pngi/dashboard/layout.tsx
 import { AppThemeProvider } from "@/components/common/AppThemeProvider";
-import { LoadingGuard } from "@/components/common/LoadingGuard";
-import TopBar from "@/components/layout/TopBar";
-import Sidebar from "@/components/layout/Sidebar";
+import { AuthHydrator }     from "@/components/common/AuthHydrator";
+import { LoadingGuard }     from "@/components/common/LoadingGuard";
+import TopBar               from "@/components/layout/TopBar";
+import Sidebar              from "@/components/layout/Sidebar";
 
 export default function AcoesPngiDashboardLayout({
   children,
@@ -11,6 +12,7 @@ export default function AcoesPngiDashboardLayout({
 }) {
   return (
     <AppThemeProvider appContext="ACOES_PNGI">
+      <AuthHydrator />
       <LoadingGuard>
         <div className="min-h-screen flex bg-app-gradient">
           <Sidebar appContext="ACOES_PNGI" />

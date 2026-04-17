@@ -5,7 +5,8 @@ export interface NavItemDefinition {
   id: string;
   label: string;
   icon: string;
-  href: string;
+  /** Opcional: grupos de expansão pura não têm rota própria (P6c) */
+  href?: string;
   order: number;
   /** Se presente, o backend deve incluir esta chave em `granted` para o item ser habilitado */
   permissionKey?: string;
@@ -29,7 +30,7 @@ export interface ResolvedNavItem extends Omit<NavItemDefinition, "children"> {
   children?: ResolvedNavItem[];
 }
 
-/** Resposta do endpoint GET /api/accounts/me/permissions/?app={APP} */
+/** Resposta do endpoint GET /api/accounts/me/permissions/ */
 export interface PermissionsResponse {
   role: string;
   granted: string[];
