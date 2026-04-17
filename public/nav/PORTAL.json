@@ -3,53 +3,41 @@
     {
       "id": "dashboard",
       "label": "Dashboard",
-      "icon": "dashboard",
+      "icon": "layout-dashboard",
       "href": "/portal/dashboard",
       "order": 1
     },
     {
-      "id": "programas",
-      "label": "Programas",
-      "icon": "account_tree",
-      "href": "/portal/programas",
+      "id": "aplicacoes",
+      "label": "Aplicações",
+      "icon": "grid-2x2",
+      "href": "/portal/aplicacoes",
       "order": 2,
-      "permissionKey": "programas.view",
-      "visibleWhenDenied": false,
-      "children": [
-        {
-          "id": "programas-list",
-          "label": "Listar Programas",
-          "icon": "list",
-          "href": "/portal/programas",
-          "order": 1,
-          "permissionKey": "programas.view"
-        },
-        {
-          "id": "programas-new",
-          "label": "Novo Programa",
-          "icon": "add_circle",
-          "href": "/portal/programas/novo",
-          "order": 2,
-          "permissionKey": "programas.create"
-        }
-      ]
-    },
-    {
-      "id": "relatorios",
-      "label": "Relatórios",
-      "icon": "bar_chart",
-      "href": "/portal/relatorios",
-      "order": 3,
-      "permissionKey": "relatorios.view",
-      "visibleWhenDenied": true
+      "permissionKey": "aplicacoes.view"
     },
     {
       "id": "usuarios",
       "label": "Usuários",
-      "icon": "group",
+      "icon": "users",
       "href": "/portal/usuarios",
+      "order": 3,
+      "permissionKey": "usuarios.view"
+    },
+    {
+      "id": "roles",
+      "label": "Perfis e Roles",
+      "icon": "shield-check",
+      "href": "/portal/roles",
       "order": 4,
-      "permissionKey": "usuarios.manage",
+      "permissionKey": "roles.view"
+    },
+    {
+      "id": "permissoes",
+      "label": "Permissões",
+      "icon": "key-round",
+      "href": "/portal/permissoes",
+      "order": 5,
+      "permissionKey": "permissoes.manage",
       "visibleWhenDenied": false
     }
   ]

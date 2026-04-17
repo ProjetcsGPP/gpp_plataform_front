@@ -3,25 +3,42 @@
     {
       "id": "dashboard",
       "label": "Dashboard",
-      "icon": "dashboard",
+      "icon": "layout-dashboard",
       "href": "/carga-org-lot/dashboard",
       "order": 1
     },
     {
-      "id": "carga",
-      "label": "Carga de Dados",
-      "icon": "upload_file",
-      "href": "/carga-org-lot/carga",
+      "id": "cargas",
+      "label": "Cargas",
+      "icon": "upload",
+      "href": "/carga-org-lot/cargas",
       "order": 2,
-      "permissionKey": "add_cargaorglot"
+      "permissionKey": "cargas.view"
+    },
+    {
+      "id": "lotes",
+      "label": "Lotes",
+      "icon": "layers",
+      "href": "/carga-org-lot/lotes",
+      "order": 3,
+      "permissionKey": "lotes.view"
+    },
+    {
+      "id": "validacao",
+      "label": "Validação",
+      "icon": "shield-check",
+      "href": "/carga-org-lot/validacao",
+      "order": 4,
+      "permissionKey": "validacao.view",
+      "visibleWhenDenied": true
     },
     {
       "id": "historico",
       "label": "Histórico",
       "icon": "history",
       "href": "/carga-org-lot/historico",
-      "order": 3,
-      "permissionKey": "view_cargaorglot"
+      "order": 5,
+      "permissionKey": "historico.view"
     }
   ]
 }

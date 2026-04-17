@@ -1,29 +1,35 @@
 // src/lib/resolveNavigation.ts
+// Transforma NavItemDefinition[] + granted[] em ResolvedNavItem[].
+//
+// Regras:
+//   enabled = granted.includes(permissionKey) (ou true se sem permissionKey)
+//   visible = enabled || visibleWhenDenied === true
+//
+// Frontend NÃO decide regra de negócio. Apenas aplica:
+//   UI = f(grantedPermissions)
 
 import type { NavItemDefinition, ResolvedNavItem } from "@/types/navigation";
+
 export function resolveNavigation(
   items: NavItemDefinition[],
   granted: string[],
 ): ResolvedNavItem[] {
   return items
-    .sort((a, b) => a.order - b.order)
     .map((item): ResolvedNavItem => {
-      const hasPermission =
-        !item.permissionKey || granted.includes(item.permissionKey);
+      const enabled = item.permissionKey
+        ? granted.includes(item.permissionKey)
+        : true; // sem permissionKey → sempre habilitado (item público da nav)
 
-      const { children, ...rest } = item;
+      const visible = enabled || item.visibleWhenDenied === true;
 
-      const resolved: ResolvedNavItem = {
-        ...rest,
-        enabled: hasPermission,
-        visible: hasPermission || (item.visibleWhenDenied ?? false),
+      return {
+        ...item,
+        enabled,
+        visible,
+        children: item.children
+          ? resolveNavigation(item.children, granted)
+          : undefined,
       };
-
-      if (children?.length) {
-        resolved.children = resolveNavigation(children, granted);
-      }
-
-      return resolved;
     })
-    .filter((item) => item.visible);
+    .sort((a, b) => a.order - b.order);
 }

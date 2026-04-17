@@ -3,33 +3,42 @@
     {
       "id": "dashboard",
       "label": "Dashboard",
-      "icon": "dashboard",
+      "icon": "layout-dashboard",
       "href": "/acoes-pngi/dashboard",
       "order": 1
     },
     {
-      "id": "acoes",
-      "label": "Ações",
-      "icon": "assignment",
-      "href": "/acoes-pngi/acoes",
-      "order": 2,
-      "permissionKey": "view_acao"
-    },
-    {
       "id": "programas",
       "label": "Programas",
-      "icon": "folder",
+      "icon": "folder-open",
       "href": "/acoes-pngi/programas",
+      "order": 2,
+      "permissionKey": "programas.view"
+    },
+    {
+      "id": "acoes",
+      "label": "Ações",
+      "icon": "list-checks",
+      "href": "/acoes-pngi/acoes",
       "order": 3,
-      "permissionKey": "view_programa"
+      "permissionKey": "acoes.view"
     },
     {
       "id": "relatorios",
       "label": "Relatórios",
-      "icon": "bar_chart",
+      "icon": "bar-chart-2",
       "href": "/acoes-pngi/relatorios",
       "order": 4,
-      "permissionKey": "view_relatorio",
+      "permissionKey": "relatorios.view",
+      "visibleWhenDenied": true
+    },
+    {
+      "id": "usuarios",
+      "label": "Usuários",
+      "icon": "users",
+      "href": "/acoes-pngi/usuarios",
+      "order": 5,
+      "permissionKey": "usuarios.manage",
       "visibleWhenDenied": false
     }
   ]
