@@ -1,43 +1,62 @@
 {
-  "id": "admin",
-  "label": "Administração",
-  "icon": "admin_panel_settings",
-  "href": "/portal/admin",
-  "order": 6,
-  "permissionKey": "view_user",
-  "children": [
+  "items": [
     {
-      "id": "usuarios",
-      "label": "Usuários",
-      "icon": "group",
-      "href": "/portal/usuarios",
-      "order": 1,
-      "permissionKey": "view_user"
+      "id": "dashboard",
+      "label": "Dashboard",
+      "icon": "dashboard",
+      "href": "/portal/dashboard",
+      "order": 1
     },
     {
-      "id": "acesso",
-      "label": "Controle de Acesso",
-      "icon": "security",
-      "href": "/portal/acesso",
+      "id": "aplicacoes",
+      "label": "Aplicações",
+      "icon": "grid_view",
+      "href": "/portal/aplicacoes",
       "order": 2,
-      "permissionKey": "view_role",
+      "permissionKey": "view_aplicacao"
+    },
+    {
+      "id": "admin",
+      "label": "Administração",
+      "icon": "admin_panel_settings",
+      "href": "/portal/admin",
+      "order": 3,
+      "permissionKey": "view_user",
       "children": [
         {
-          "id": "roles",
-          "label": "Perfis e Roles",
-          "icon": "shield",
-          "href": "/portal/roles",
+          "id": "usuarios",
+          "label": "Usuários",
+          "icon": "group",
+          "href": "/portal/usuarios",
           "order": 1,
-          "permissionKey": "view_role"
+          "permissionKey": "view_user"
         },
         {
-          "id": "permissoes",
-          "label": "Permissões",
-          "icon": "key",
-          "href": "/portal/permissoes",
+          "id": "acesso",
+          "label": "Controle de Acesso",
+          "icon": "security",
+          "href": "/portal/acesso",
           "order": 2,
-          "permissionKey": "view_permission",
-          "visibleWhenDenied": false
+          "permissionKey": "view_role",
+          "children": [
+            {
+              "id": "roles",
+              "label": "Perfis e Roles",
+              "icon": "shield",
+              "href": "/portal/roles",
+              "order": 1,
+              "permissionKey": "view_role"
+            },
+            {
+              "id": "permissoes",
+              "label": "Permissões",
+              "icon": "key",
+              "href": "/portal/permissoes",
+              "order": 2,
+              "permissionKey": "view_permission",
+              "visibleWhenDenied": false
+            }
+          ]
         }
       ]
     }

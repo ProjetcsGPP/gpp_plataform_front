@@ -16,12 +16,6 @@ export function resolveNavigation(
 ): ResolvedNavItem[] {
   return items
     .map((item): ResolvedNavItem => {
-      const enabled = item.permissionKey
-        ? granted.includes(item.permissionKey)
-        : true; // sem permissionKey → sempre habilitado (item público da nav)
-
-      const visible = enabled || item.visibleWhenDenied === true;
-
       return {
         ...item,
         enabled: !item.permissionKey || granted.includes(item.permissionKey),

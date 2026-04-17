@@ -100,25 +100,6 @@ export default function Sidebar({ appContext }: SidebarProps) {
         </div>
       </div>
 
-      <div
-        className={cn(
-          "px-4 mb-4 grid transition-[grid-template-rows,opacity] duration-300 ease-in-out",
-          expanded
-            ? "grid-rows-[1fr] opacity-100"
-            : "grid-rows-[0fr] opacity-0",
-        )}
-        aria-hidden={!expanded}
-      >
-        <div className="overflow-hidden">
-          <button className="authority-gradient text-white rounded-lg py-3 px-4 flex items-center justify-center gap-2 font-semibold text-sm hover:opacity-90 transition-opacity w-full active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">
-            <span className="material-symbols-outlined text-white text-[18px] leading-none">
-              add
-            </span>
-            Nova Solicitação
-          </button>
-        </div>
-      </div>
-
       <nav
         className="px-2 space-y-1 mt-2 flex-1"
         aria-label="Navegação principal"
