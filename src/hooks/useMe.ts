@@ -1,17 +1,17 @@
 // src/hooks/useMe.ts
-'use client'
+"use client";
 
-import useSWR from 'swr'
-import { useEffect } from 'react'
-import { useAuthStore } from '@/store/authStore'
-import api from '@/lib/api'
-import type { MeResponse } from '@/types/auth'
+import useSWR from "swr";
+import { useEffect } from "react";
+import { useAuthStore } from "@/store/authStore";
+import api from "@/lib/api";
+import type { MeResponse } from "@/types/auth";
 
 /**
  * Fetcher tipado para o SWR — usa a instância Axios configurada do projeto.
  */
 const fetchMe = (url: string): Promise<MeResponse> =>
-  api.get<MeResponse>(url).then((res) => res.data)
+  api.get<MeResponse>(url).then((res) => res.data);
 
 /**
  * Hook para buscar e cachear os dados do usuário autenticado.
@@ -24,47 +24,48 @@ const fetchMe = (url: string): Promise<MeResponse> =>
  * @returns { me, isLoading, isError }
  */
 export function useMe() {
-  const setUser = useAuthStore((s) => s.setUser)
-  const clearAuth = useAuthStore((s) => s.clearAuth)
-  const setLoading = useAuthStore((s) => s.setLoading)
+  const setUser = useAuthStore((s) => s.setUser);
+  const clearAuth = useAuthStore((s) => s.clearAuth);
+  const setLoading = useAuthStore((s) => s.setLoading);
 
   const { data, error, isLoading } = useSWR<MeResponse>(
-    '/accounts/me/',
+    "/accounts/me/",
     fetchMe,
     {
       dedupingInterval: 5 * 60 * 1000, // 5 minutos
-      revalidateOnFocus: false,          // não revalidar ao trocar de aba
-      shouldRetryOnError: false,         // não tentar novamente em 401
+      revalidateOnFocus: false, // não revalidar ao trocar de aba
+      shouldRetryOnError: false, // não tentar novamente em 401
       onSuccess(data) {
-        setUser(data, data.app_context)
+        setUser(data, data.app_context);
       },
       onError() {
-        clearAuth()
+        clearAuth();
       },
-    }
-  )
+    },
+  );
 
-  // Sincroniza isLoading da store com o estado do SWR
+  // Sincroniza isLoading
   useEffect(() => {
-    setLoading(isLoading)
-  }, [isLoading, setLoading])
+    setLoading(isLoading);
+  }, [isLoading, setLoading]);
 
-  return {
-    me: data ?? null,
-    isLoading,
-    isError: !!error,
-  }
+  // Hidrata store com dados do fetch ou do cache (cobre remontagem do layout)
+  useEffect(() => {
+    if (data && !isLoading) {
+      setUser(data, data.app_context);
+    }
+  }, [data, isLoading, setUser]);
 }
 
 // ─── MePermissions ────────────────────────────────────────────────────────────
 
 export interface MePermissionsResponse {
-  role: string
-  granted: string[]
+  role: string;
+  granted: string[];
 }
 
 const fetchMePermissions = (url: string): Promise<MePermissionsResponse> =>
-  api.get<MePermissionsResponse>(url).then((res) => res.data)
+  api.get<MePermissionsResponse>(url).then((res) => res.data);
 
 /**
  * Hook para buscar as permissões do usuário na aplicação atual.
@@ -77,17 +78,17 @@ const fetchMePermissions = (url: string): Promise<MePermissionsResponse> =>
  * @returns { permissions, isLoading, isError }
  */
 export function useMePermissions() {
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
   const { data, error, isLoading } = useSWR<MePermissionsResponse>(
-    isAuthenticated ? '/accounts/me/permissions/' : null,  // só busca se autenticado
+    isAuthenticated ? "/accounts/me/permissions/" : null, // só busca se autenticado
     fetchMePermissions,
     {
       dedupingInterval: 5 * 60 * 1000,
       revalidateOnFocus: false,
       shouldRetryOnError: false,
-    }
-  )
+    },
+  );
 
   return {
     permissions: data ?? null,
@@ -95,5 +96,5 @@ export function useMePermissions() {
     granted: data?.granted ?? [],
     isLoading,
     isError: !!error,
-  }
+  };
 }
