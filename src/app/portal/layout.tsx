@@ -1,8 +1,7 @@
-// src/app/portal/layout.tsx  ← layout persistente para todo /portal/*
+// Layout raiz do portal — neutro, sem Sidebar/TopBar
+// Mantém AppThemeProvider montado para todas as rotas /portal/*
+// evitando remontagem ao navegar entre rotas (inclusive ao voltar de 404)
 import { AppThemeProvider } from "@/components/common/AppThemeProvider";
-import { LoadingGuard } from "@/components/common/LoadingGuard";
-import Sidebar from "@/components/layout/Sidebar";
-import TopBar from "@/components/layout/TopBar";
 
 export default function PortalLayout({
   children,
@@ -11,19 +10,7 @@ export default function PortalLayout({
 }) {
   return (
     <AppThemeProvider appContext="PORTAL">
-      <LoadingGuard>
-        <div className="min-h-screen flex bg-app-gradient">
-          <Sidebar appContext="PORTAL" />
-          <div className="flex flex-col flex-1 pl-18">
-            <TopBar
-              title="Portal de Aplicações"
-              titleMinor="SEGER/SUBGES/GPP"
-              appContext="PORTAL"
-            />
-            <main className="flex-1">{children}</main>
-          </div>
-        </div>
-      </LoadingGuard>
+      {children}
     </AppThemeProvider>
   );
 }
