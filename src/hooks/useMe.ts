@@ -28,33 +28,26 @@ export function useMe() {
   const clearAuth = useAuthStore((s) => s.clearAuth);
   const setLoading = useAuthStore((s) => s.setLoading);
 
-  const { data, error, isLoading } = useSWR<MeResponse>(
-    "/accounts/me/",
-    fetchMe,
-    {
-      dedupingInterval: 5 * 60 * 1000, // 5 minutos
-      revalidateOnFocus: false, // não revalidar ao trocar de aba
-      shouldRetryOnError: false, // não tentar novamente em 401
-      onSuccess(data) {
-        setUser(data, data.app_context);
-      },
-      onError() {
-        clearAuth();
-      },
+  const { data, isLoading } = useSWR<MeResponse>("/accounts/me/", fetchMe, {
+    dedupingInterval: 5 * 60 * 1000,
+    revalidateOnFocus: false,
+    shouldRetryOnError: false,
+    onError() {
+      clearAuth();
     },
-  );
+  });
 
-  // Sincroniza isLoading
   useEffect(() => {
     setLoading(isLoading);
   }, [isLoading, setLoading]);
 
-  // Hidrata store com dados do fetch ou do cache (cobre remontagem do layout)
   useEffect(() => {
     if (data && !isLoading) {
       setUser(data, data.app_context);
     }
   }, [data, isLoading, setUser]);
+
+  return { me: data ?? null, isLoading, isError: false };
 }
 
 // ─── MePermissions ────────────────────────────────────────────────────────────

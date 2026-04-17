@@ -26,34 +26,35 @@ export default function RootLayout({
   return (
     <html lang="pt-BR" className={`${inter.variable} ${manrope.variable}`}>
       <head>
-        {/* Preconnect para performance */}
+        {/* Script inline: adiciona .fonts-loaded no <body> quando Material Symbols carregar */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+                    document.fonts.ready.then(function() {
+                      document.body.classList.add('fonts-loaded');
+                    });
+                  `,
+          }}
+        />
+
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
           rel="preconnect"
           href="https://fonts.gstatic.com"
           crossOrigin="anonymous"
         />
-
-        {/* Ícones do Estado do Espírito Santo */}
-        <link
-          rel="stylesheet"
-          href="https://cdn.es.gov.br/fonts/prodesticons/1.2.0/css/prodesticons.min.css"
-        />
-
-        {/* 1. Preload da fonte de ícones — alta prioridade, carrega antes do render */}
         <link
           rel="preload"
           as="style"
           href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block"
         />
-
-        {/* 2. Carregamento com display=block — sem fallback de texto, fica invisível até carregar */}
         <link
           rel="stylesheet"
           href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block"
         />
+        {/* resto... */}
       </head>
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body>{children}</body>
     </html>
   );
 }

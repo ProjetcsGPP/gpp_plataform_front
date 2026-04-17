@@ -23,57 +23,57 @@
 @theme {
   /* Paleta Comando Solar */
 
-  --color-app-bg-from:           #468BC4;
-  --color-app-bg-to:             #3F93B8;
+  --color-app-bg-from: #468bc4;
+  --color-app-bg-to: #3f93b8;
 
-  --color-primary:               #00244a;
-  --color-primary-container:     #003a70;
-  --color-on-primary:            #ffffff;
-  --color-on-primary-container:  #7ea5e2;
+  --color-primary: #00244a;
+  --color-primary-container: #003a70;
+  --color-on-primary: #ffffff;
+  --color-on-primary-container: #7ea5e2;
 
-  --color-surface:                    #f7f9fb;
-  --color-surface-container-lowest:   #ffffff;
-  --color-surface-container-low:      #f2f4f6;
-  --color-surface-container:          #eceef0;
-  --color-surface-container-high:     #e6e8ea;
-  --color-surface-container-highest:  #e0e3e5;
-  --color-on-surface:             #191c1e;
-  --color-on-surface-variant:     #434750;
+  --color-surface: #f7f9fb;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #f2f4f6;
+  --color-surface-container: #eceef0;
+  --color-surface-container-high: #e6e8ea;
+  --color-surface-container-highest: #e0e3e5;
+  --color-on-surface: #191c1e;
+  --color-on-surface-variant: #434750;
 
-  --color-outline:         #737781;
+  --color-outline: #737781;
   --color-outline-variant: #c3c6d1;
 
-  --color-error:              #ba1a1a;
-  --color-error-container:    #ffdad6;
-  --color-on-error:           #ffffff;
+  --color-error: #ba1a1a;
+  --color-error-container: #ffdad6;
+  --color-on-error: #ffffff;
   --color-on-error-container: #93000a;
 
-  --color-tertiary:              #421800;
-  --color-tertiary-container:    #632901;
-  --color-on-tertiary:           #ffffff;
+  --color-tertiary: #421800;
+  --color-tertiary-container: #632901;
+  --color-on-tertiary: #ffffff;
   --color-on-tertiary-container: #e48f60;
 
-  --color-secondary:           #515f77;
+  --color-secondary: #515f77;
   --color-secondary-container: #d2e0fc;
-  --color-on-secondary:        #ffffff;
+  --color-on-secondary: #ffffff;
 
-  --color-background:  #f7f9fb;
-  --color-foreground:  #191c1e;
+  --color-background: #f7f9fb;
+  --color-foreground: #191c1e;
 
   /* Fontes — gera font-outfit e font-body */
-  --font-outfit: 'Outfit', sans-serif;
-  --font-headline: 'Outfit', sans-serif;
+  --font-outfit: "Outfit", sans-serif;
+  --font-headline: "Outfit", sans-serif;
   --font-body: '"Plus Jakarta Sans"', sans-serif;
   --font-label: '"Plus Jakarta Sans"', sans-serif;
 
   /* Tokens semânticos por app — resolvem para as CSS vars definidas em [data-app] */
-  --color-app-primary:         var(--app-primary);
-  --color-app-primary-hover:   var(--app-primary-hover);
-  --color-app-primary-text:    var(--app-primary-text);
-  --color-app-sidebar-bg:      var(--app-sidebar-bg);
-  --color-app-topbar-bg:       var(--app-topbar-bg);
-  --color-app-accent:          var(--app-accent);
-  --color-app-accent-light:    var(--app-accent-light);
+  --color-app-primary: var(--app-primary);
+  --color-app-primary-hover: var(--app-primary-hover);
+  --color-app-primary-text: var(--app-primary-text);
+  --color-app-sidebar-bg: var(--app-sidebar-bg);
+  --color-app-topbar-bg: var(--app-topbar-bg);
+  --color-app-accent: var(--app-accent);
+  --color-app-accent-light: var(--app-accent-light);
 }
 
 /*
@@ -81,30 +81,30 @@
   (não gera novos utilitários, só remapeia variáveis existentes)
 */
 @theme inline {
-  --color-ring:       var(--ring);
-  --color-input:      var(--input);
-  --color-border:     var(--border);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
   --color-destructive: var(--destructive);
-  --color-muted:                var(--muted);
-  --color-muted-foreground:     var(--muted-foreground);
-  --color-accent:               var(--accent);
-  --color-accent-foreground:    var(--accent-foreground);
-  --color-popover:              var(--popover);
-  --color-popover-foreground:   var(--popover-foreground);
-  --color-card:                 var(--card);
-  --color-card-foreground:      var(--card-foreground);
-  --color-sidebar:              var(--sidebar);
-  --color-sidebar-foreground:   var(--sidebar-foreground);
-  --color-sidebar-primary:             var(--sidebar-primary);
-  --color-sidebar-primary-foreground:  var(--sidebar-primary-foreground);
-  --color-sidebar-accent:              var(--sidebar-accent);
-  --color-sidebar-accent-foreground:   var(--sidebar-accent-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-ring:   var(--sidebar-ring);
-  --radius-sm:  calc(var(--radius) * 0.6);
-  --radius-md:  calc(var(--radius) * 0.8);
-  --radius-lg:  var(--radius);
-  --radius-xl:  calc(var(--radius) * 1.4);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
@@ -200,16 +200,24 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-family: 'Plus Jakarta Sans', var(--font-sans), sans-serif;
+    font-family: "Plus Jakarta Sans", var(--font-sans), sans-serif;
   }
 }
 
 /* 10. UTILITIES COMANDO SOLAR */
-.no-scrollbar::-webkit-scrollbar { display: none; }
-.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-.glass-card { background: rgba(255,255,255,0.8); backdrop-filter: blur(20px); }
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.glass-card {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(20px);
+}
 .material-symbols-outlined {
-  font-family: 'Material Symbols Outlined';        /* ← ESSENCIAL */
+  font-family: "Material Symbols Outlined";
   font-weight: normal;
   font-style: normal;
   font-size: 24px;
@@ -221,14 +229,29 @@
   white-space: nowrap;
   direction: ltr;
   vertical-align: middle;
-  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  font-variation-settings:
+    "FILL" 0,
+    "wght" 400,
+    "GRAD" 0,
+    "opsz" 24;
   -webkit-font-smoothing: antialiased;
+
+  /* ← ADICIONAR: esconde até a fonte carregar */
+  visibility: hidden;
+}
+/* Quando a fonte estiver disponível, torna visível */
+body.fonts-loaded .material-symbols-outlined {
+  visibility: visible;
 }
 .authority-gradient {
   background: var(--authority-gradient-app);
 }
 .bg-app-gradient {
-  background: linear-gradient(135deg, var(--app-bg-from) 0%, var(--app-bg-to) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--app-bg-from) 0%,
+    var(--app-bg-to) 100%
+  );
 }
 
 /* =========================================================================
@@ -239,60 +262,60 @@
 
 /* ── Valores padrão (fallback quando nenhum data-app está ativo) ── */
 :root {
-  --app-primary:         #00244a;
-  --app-primary-hover:   #003a70;
-  --app-primary-text:    #ffffff;
-  --app-sidebar-bg:      #00244a;
-  --app-topbar-bg:       #ffffff;
-  --app-accent:          #1B3A6B;
-  --app-accent-light:    #e8eef7;
-  --app-bg-from:         #468BC4;
-  --app-bg-to:           #3F93B8;
-  --app-gradient:        linear-gradient(135deg, #f0f4fa 0%, #e8eef7 100%);
-  --authority-gradient-app: linear-gradient(135deg, #00244a 0%, #1B3A6B 100%);
+  --app-primary: #00244a;
+  --app-primary-hover: #003a70;
+  --app-primary-text: #ffffff;
+  --app-sidebar-bg: #00244a;
+  --app-topbar-bg: #ffffff;
+  --app-accent: #1b3a6b;
+  --app-accent-light: #e8eef7;
+  --app-bg-from: #468bc4;
+  --app-bg-to: #3f93b8;
+  --app-gradient: linear-gradient(135deg, #f0f4fa 0%, #e8eef7 100%);
+  --authority-gradient-app: linear-gradient(135deg, #00244a 0%, #1b3a6b 100%);
 }
 
 /* ── PORTAL ─────────────────────────────────────────────────────── */
 [data-app="PORTAL"] {
-  --app-primary:         #00244a;
-  --app-primary-hover:   #003a70;
-  --app-primary-text:    #ffffff;
-  --app-sidebar-bg:      #00244a;
-  --app-topbar-bg:       #ffffff;
-  --app-accent:          #1B3A6B;
-  --app-accent-light:    #e8eef7;
-  --app-bg-from:         #468BC4;
-  --app-bg-to:           #3F93B8;
-  --app-gradient:        linear-gradient(135deg, #f0f4fa 0%, #e8eef7 100%);
+  --app-primary: #00244a;
+  --app-primary-hover: #003a70;
+  --app-primary-text: #ffffff;
+  --app-sidebar-bg: #00244a;
+  --app-topbar-bg: #ffffff;
+  --app-accent: #1b3a6b;
+  --app-accent-light: #e8eef7;
+  --app-bg-from: #468bc4;
+  --app-bg-to: #3f93b8;
+  --app-gradient: linear-gradient(135deg, #f0f4fa 0%, #e8eef7 100%);
   --authority-gradient-app: linear-gradient(135deg, #00244a 0%, #003a70 100%);
 }
 
 /* ── AÇÕES PNGI ──────────────────────────────────────────────────── */
 [data-app="ACOES_PNGI"] {
-  --app-primary:         #1a5c38;
-  --app-primary-hover:   #144a2d;
-  --app-primary-text:    #ffffff;
-  --app-sidebar-bg:      #1a5c38;
-  --app-topbar-bg:       #ffffff;
-  --app-accent:          #2d7a50;
-  --app-accent-light:    #e6f3ec;
-  --app-bg-from:         #4aad78;
-  --app-bg-to:           #2d8f5e;
-  --app-gradient:        linear-gradient(135deg, #f0f7f3 0%, #e6f3ec 100%);
+  --app-primary: #1a5c38;
+  --app-primary-hover: #144a2d;
+  --app-primary-text: #ffffff;
+  --app-sidebar-bg: #1a5c38;
+  --app-topbar-bg: #ffffff;
+  --app-accent: #2d7a50;
+  --app-accent-light: #e6f3ec;
+  --app-bg-from: #4aad78;
+  --app-bg-to: #2d8f5e;
+  --app-gradient: linear-gradient(135deg, #f0f7f3 0%, #e6f3ec 100%);
   --authority-gradient-app: linear-gradient(135deg, #1a5c38 0%, #2d7a50 100%);
 }
 
 /* ── CARGA ORG/LOT ───────────────────────────────────────────────── */
 [data-app="CARGA_ORG_LOT"] {
-  --app-primary:         #7b2d00;
-  --app-primary-hover:   #5c2200;
-  --app-primary-text:    #ffffff;
-  --app-sidebar-bg:      #7b2d00;
-  --app-topbar-bg:       #ffffff;
-  --app-accent:          #a03d00;
-  --app-accent-light:    #fdf0e8;
-  --app-bg-from:         #c45c20;
-  --app-bg-to:           #a03d00;
-  --app-gradient:        linear-gradient(135deg, #fdf5f0 0%, #fdf0e8 100%);
+  --app-primary: #7b2d00;
+  --app-primary-hover: #5c2200;
+  --app-primary-text: #ffffff;
+  --app-sidebar-bg: #7b2d00;
+  --app-topbar-bg: #ffffff;
+  --app-accent: #a03d00;
+  --app-accent-light: #fdf0e8;
+  --app-bg-from: #c45c20;
+  --app-bg-to: #a03d00;
+  --app-gradient: linear-gradient(135deg, #fdf5f0 0%, #fdf0e8 100%);
   --authority-gradient-app: linear-gradient(135deg, #7b2d00 0%, #a03d00 100%);
 }
