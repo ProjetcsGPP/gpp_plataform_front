@@ -22,6 +22,10 @@
 */
 @theme {
   /* Paleta Comando Solar */
+
+  --color-app-bg-from:           #468BC4;
+  --color-app-bg-to:             #3F93B8;
+
   --color-primary:               #00244a;
   --color-primary-container:     #003a70;
   --color-on-primary:            #ffffff;
@@ -61,6 +65,15 @@
   --font-headline: 'Outfit', sans-serif;
   --font-body: '"Plus Jakarta Sans"', sans-serif;
   --font-label: '"Plus Jakarta Sans"', sans-serif;
+
+  /* Tokens semânticos por app — resolvem para as CSS vars definidas em [data-app] */
+  --color-app-primary:         var(--app-primary);
+  --color-app-primary-hover:   var(--app-primary-hover);
+  --color-app-primary-text:    var(--app-primary-text);
+  --color-app-sidebar-bg:      var(--app-sidebar-bg);
+  --color-app-topbar-bg:       var(--app-topbar-bg);
+  --color-app-accent:          var(--app-accent);
+  --color-app-accent-light:    var(--app-accent-light);
 }
 
 /*
@@ -212,5 +225,74 @@
   -webkit-font-smoothing: antialiased;
 }
 .authority-gradient {
-  background: linear-gradient(135deg, #00244a 0%, #003a70 100%);
+  background: var(--authority-gradient-app);
+}
+.bg-app-gradient {
+  background: linear-gradient(135deg, var(--app-bg-from) 0%, var(--app-bg-to) 100%);
+}
+
+/* =========================================================================
+   11. TOKENS SEMÂNTICOS POR APLICAÇÃO
+   Ativados via [data-app="NOME"] no <body>.
+   Componentes usam var(--app-*) ou as classes Tailwind bg-app-* / text-app-*
+   ========================================================================= */
+
+/* ── Valores padrão (fallback quando nenhum data-app está ativo) ── */
+:root {
+  --app-primary:         #00244a;
+  --app-primary-hover:   #003a70;
+  --app-primary-text:    #ffffff;
+  --app-sidebar-bg:      #00244a;
+  --app-topbar-bg:       #ffffff;
+  --app-accent:          #1B3A6B;
+  --app-accent-light:    #e8eef7;
+  --app-bg-from:         #468BC4;
+  --app-bg-to:           #3F93B8;
+  --app-gradient:        linear-gradient(135deg, #f0f4fa 0%, #e8eef7 100%);
+  --authority-gradient-app: linear-gradient(135deg, #00244a 0%, #1B3A6B 100%);
+}
+
+/* ── PORTAL ─────────────────────────────────────────────────────── */
+[data-app="PORTAL"] {
+  --app-primary:         #00244a;
+  --app-primary-hover:   #003a70;
+  --app-primary-text:    #ffffff;
+  --app-sidebar-bg:      #00244a;
+  --app-topbar-bg:       #ffffff;
+  --app-accent:          #1B3A6B;
+  --app-accent-light:    #e8eef7;
+  --app-bg-from:         #468BC4;
+  --app-bg-to:           #3F93B8;
+  --app-gradient:        linear-gradient(135deg, #f0f4fa 0%, #e8eef7 100%);
+  --authority-gradient-app: linear-gradient(135deg, #00244a 0%, #003a70 100%);
+}
+
+/* ── AÇÕES PNGI ──────────────────────────────────────────────────── */
+[data-app="ACOES_PNGI"] {
+  --app-primary:         #1a5c38;
+  --app-primary-hover:   #144a2d;
+  --app-primary-text:    #ffffff;
+  --app-sidebar-bg:      #1a5c38;
+  --app-topbar-bg:       #ffffff;
+  --app-accent:          #2d7a50;
+  --app-accent-light:    #e6f3ec;
+  --app-bg-from:         #4aad78;
+  --app-bg-to:           #2d8f5e;
+  --app-gradient:        linear-gradient(135deg, #f0f7f3 0%, #e6f3ec 100%);
+  --authority-gradient-app: linear-gradient(135deg, #1a5c38 0%, #2d7a50 100%);
+}
+
+/* ── CARGA ORG/LOT ───────────────────────────────────────────────── */
+[data-app="CARGA_ORG_LOT"] {
+  --app-primary:         #7b2d00;
+  --app-primary-hover:   #5c2200;
+  --app-primary-text:    #ffffff;
+  --app-sidebar-bg:      #7b2d00;
+  --app-topbar-bg:       #ffffff;
+  --app-accent:          #a03d00;
+  --app-accent-light:    #fdf0e8;
+  --app-bg-from:         #c45c20;
+  --app-bg-to:           #a03d00;
+  --app-gradient:        linear-gradient(135deg, #fdf5f0 0%, #fdf0e8 100%);
+  --authority-gradient-app: linear-gradient(135deg, #7b2d00 0%, #a03d00 100%);
 }

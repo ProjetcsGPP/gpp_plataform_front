@@ -16,8 +16,10 @@ import {
 import { getAplicacoesPublicas, login } from '@/lib/auth'
 import type { AplicacaoPublica } from '@/lib/auth'
 import { Loader2, LogIn } from 'lucide-react'
+import Image from "next/image";
 
-// ─── Contrato do tema ───────────────────────────────────────────────────────
+
+// ─── Contrato do tema ───────────────────────────────────────────────
 export interface LoginTheme {
   /** Cor principal (fundo do ícone, botão, foco) — ex: "#00244a" */
   primaryColor: string
@@ -31,6 +33,10 @@ export interface LoginTheme {
   logoSymbol: string
   /** Usa Material Symbol no logo? Se false, trata logoSymbol como texto */
   logoIsMaterialIcon?: boolean
+  /** Símbolo ou texto a exibir dentro do ícone Prodest */
+  logoProdestSymbol: string
+  /** Usa Material Symbol no logo? Se false, trata logoSymbol como texto */
+  logoIsProdestIcon?: boolean
   /** Rodapé */
   footerText?: string
   /** Contexto padrão pré-selecionado no select */
@@ -40,15 +46,16 @@ export interface LoginTheme {
 }
 
 interface LoginPageProps {
-  theme: LoginTheme
+  theme: LoginTheme,
+  sessionExpiredMessage?: string
 }
 
-// ─── Utilitário inline (sem dependência extra) ──────────────────────────────
+// ─── Utilitário inline (sem dependência extra) ───────────────────────────
 function inlineStyle(color: string) {
   return { backgroundColor: color } as React.CSSProperties
 }
 
-// ─── Componente ─────────────────────────────────────────────────────────────
+// ─── Componente ─────────────────────────────────────────────────────────────────────────
 export function LoginPage({ theme }: LoginPageProps) {
   const router = useRouter()
   const [apps, setApps] = useState<AplicacaoPublica[]>([])
@@ -57,6 +64,52 @@ export function LoginPage({ theme }: LoginPageProps) {
   const [appContext, setAppContext] = useState(theme.defaultAppContext ?? 'PORTAL')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const size = 52;
+  let logoElement;
+
+  if (theme.logoIsMaterialIcon) {
+    logoElement = (
+      <div
+        className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-2xl shadow-md"
+        style={inlineStyle(theme.primaryColor)}
+      >
+        <span
+          className="material-symbols-outlined text-white leading-none"
+          style={{
+            fontSize: `${size}px`,
+            fontVariationSettings: `'FILL' 1, 'wght' 400, 'opsz' ${size}`,
+          }}
+        >
+          {theme.logoSymbol}
+        </span>
+      </div>
+    );
+  } else if (theme.logoIsProdestIcon) {
+    logoElement = (
+      <div
+        className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-2xl shadow-md"
+        style={inlineStyle(theme.primaryColor)}
+      >
+        <i
+          className={`${theme.logoProdestSymbol} text-white`}
+          style={{ fontSize: `${size}px` }}
+        />
+      </div>
+    );
+  } else {
+    logoElement = (
+      <Image
+        src="/Logo_GOVES.png"
+        alt="Governo do Estado do Espírito Santo"
+        width={200}
+        height={200}
+        className="mx-auto mb-3 w-32 h-auto"
+        priority
+        loading="eager"
+      />
+    );
+  }
+      
 
   useEffect(() => {
     getAplicacoesPublicas()
@@ -71,7 +124,6 @@ export function LoginPage({ theme }: LoginPageProps) {
     try {
       await login(username, password, appContext as 'PORTAL' | 'ACOES_PNGI' | 'CARGA_ORG_LOT')
 
-      // Tenta rota do redirectMap, fallback para /portal/dashboard
       const redirectMap = theme.redirectMap ?? {}
       const destination = redirectMap[appContext] ?? '/portal/dashboard'
       router.push(destination)
@@ -95,29 +147,49 @@ export function LoginPage({ theme }: LoginPageProps) {
   } as React.CSSProperties
 
   return (
-    <div className="flex min-h-[calc(100vh-64px)] items-center justify-center bg-slate-100 p-4">
+    <div className="flex min-h-[calc(100vh-64px)] items-center justify-center p-4">
       {/* min-h desconta a altura do TopBar (64px) para centralizar visualmente */}
       <div className="w-full max-w-md space-y-6">
 
         {/* Logo + Nome */}
         <div className="text-center">
-          <div
-            className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-2xl shadow-md"
-            style={inlineStyle(theme.primaryColor)}
-          >
-            {theme.logoIsMaterialIcon ? (
+          {/*
+          {theme.logoIsMaterialIcon ? (
+            <div
+              className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-2xl shadow-md"
+              style={inlineStyle(theme.primaryColor)}
+            >
               <span
-                className="material-symbols-outlined text-white text-[28px] leading-none"
-                style={{ fontVariationSettings: "'FILL' 1" }}
+                className="material-symbols-outlined text-white leading-none"
+                style={{
+                  fontSize: `${size}px`,
+                  fontVariationSettings: `'FILL' 1, 'wght' 400, 'opsz' ${size}`,
+                }}
               >
                 {theme.logoSymbol}
               </span>
-            ) : (
-              <span className="text-2xl font-bold text-white">{theme.logoSymbol}</span>
-            )}
-          </div>
-          <h1 className="text-2xl font-bold text-slate-800">{theme.appName}</h1>
-          <p className="text-sm text-slate-500">{theme.subtitle}</p>
+            </div>
+          ) : (
+            <Image
+              src="/Logo_GOVES.png"
+              alt="Governo do Estado do Espírito Santo"
+              width={200}
+              height={200}
+              className="mx-auto mb-3 w-32 h-auto"
+              priority
+              loading="eager"
+            />
+          )}
+            */}
+
+          {logoElement}
+
+          <h1 className="text-2xl font-bold text-slate-800">
+            {theme.appName}
+          </h1>
+          <p className="text-sm text-slate-800">
+            {theme.subtitle}
+          </p>
         </div>
 
         {/* Card de formulário */}
@@ -125,7 +197,7 @@ export function LoginPage({ theme }: LoginPageProps) {
           <CardHeader>
             <CardTitle className="text-lg text-slate-700">Acesso ao Sistema</CardTitle>
             <CardDescription>
-              Informe suas credenciais e selecione a aplicação
+              Informe suas credenciais para fazer login
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -156,31 +228,7 @@ export function LoginPage({ theme }: LoginPageProps) {
                   style={focusRingStyle}
                 />
               </div>
-
-              <div className="space-y-1">
-                <Label htmlFor="app">Aplicação</Label>
-                <select
-                  id="app"
-                  value={appContext}
-                  onChange={(e) => setAppContext(e.target.value)}
-                  className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm focus:outline-none focus:ring-2"
-                  style={focusRingStyle}
-                >
-                  <option value="PORTAL">Portal GPP</option>
-                  {apps.map((app) => (
-                    <option key={app.codigointerno} value={app.codigointerno}>
-                      {app.nomeaplicacao}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {error && (
-                <div className="rounded-md bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-600">
-                  {error}
-                </div>
-              )}
-
+              
               <Button
                 type="submit"
                 disabled={loading}
@@ -201,12 +249,19 @@ export function LoginPage({ theme }: LoginPageProps) {
                   <><LogIn className="mr-2 h-4 w-4" /> Entrar</>
                 )}
               </Button>
+
+              {error && (
+                <div className="rounded-md bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-600">
+                  {error}
+                </div>
+              )}
+                            
             </form>
           </CardContent>
         </Card>
 
         {/* Rodapé */}
-        <p className="text-center text-xs text-slate-400">
+        <p className="text-center text-xs text-slate-800">
           {theme.footerText ?? `GPP Plataform 2.0 © ${new Date().getFullYear()} SEGER/ES`}
         </p>
       </div>

@@ -48,7 +48,7 @@ const config: Config = {
         'tertiary-fixed-dim': '#ffb68f',
         'on-tertiary-fixed': '#331100',
         'on-tertiary-fixed-variant': '#73350c',
-        background: '#f7f9fb',
+        background: '#a5c3f4',
         'on-background': '#191c1e',
         institutional: {
           blue: '#003A70',

@@ -29,6 +29,9 @@ export default function RootLayout({
         {/* Preconnect para performance */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        
+        {/* ìcones do Estado do Espírito Santo */}
+        <link rel="stylesheet" href="https://cdn.es.gov.br/fonts/prodesticons/1.2.0/css/prodesticons.min.css"/>
 
         {/* Material Symbols Outlined — carregado via <link> garante preload pelo Next.js */}
         <link

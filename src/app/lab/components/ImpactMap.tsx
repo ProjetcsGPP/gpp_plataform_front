@@ -1,8 +1,8 @@
-'use client'
+"use client";
 
 export function ImpactMap() {
   return (
-    <div className="bg-surface-container-lowest rounded-lg overflow-hidden shadow-sm flex flex-col h-[500px]">
+    <div className="bg-surface-container-lowest rounded-lg overflow-hidden shadow-sm flex flex-col h-125">
       <div className="p-6 flex justify-between items-center border-b border-surface-container">
         <div>
           <h4 className="text-lg font-bold font-outfit text-primary">
@@ -28,17 +28,21 @@ export function ImpactMap() {
           style={{
             backgroundImage:
               "url('https://lh3.googleusercontent.com/aida-public/AB6AXuA4OIshMGk8kFgMxPt1POP8m8BrbaiaLm1Uwl6GAXRiWVAJsAYIqe25tsrwf-aMybavu-WGyVOsAhb483gsoWrmVO2OAedz8V6Kx28cmisRR8S6m0whGUqip475acVKE71RLzGNGIISQVaZsp-CsQ8nxVUj8nmiJu_Vl_J8S_qJizQk-N_mzOF3rCOjyv2Mc--rggO5tSW5KEFQ0rkLrDm1c9hZMhKZFlBHEZPo-VwTLSkoTuNhUOR2wxGFrifN0UcDZ0liavWdbE4')",
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
+            backgroundSize: "cover",
+            backgroundPosition: "center",
           }}
         />
         <div className="absolute top-1/4 left-1/3 w-4 h-4 bg-primary rounded-full border-2 border-white shadow-xl animate-pulse" />
         <div className="absolute top-1/2 left-1/2 w-4 h-4 bg-primary rounded-full border-2 border-white shadow-xl" />
         <div className="absolute bottom-1/4 right-1/4 w-4 h-4 bg-blue-400 rounded-full border-2 border-white shadow-xl" />
         <div className="absolute top-[20%] left-[36%] glass-card p-3 rounded-lg shadow-lg border border-white/20 z-10">
-          <p className="text-[10px] font-bold text-primary uppercase">Infraestrutura</p>
+          <p className="text-[10px] font-bold text-primary uppercase">
+            Infraestrutura
+          </p>
           <p className="text-xs font-bold mt-1">Complexo Solar Norte</p>
-          <p className="text-[10px] text-green-600 font-bold">R$ 4.2B em execução</p>
+          <p className="text-[10px] text-green-600 font-bold">
+            R$ 4.2B em execução
+          </p>
         </div>
       </div>
 
@@ -54,5 +58,5 @@ export function ImpactMap() {
         <span>Última atualização: Hoje, 14:32</span>
       </div>
     </div>
-  )
+  );
 }

@@ -1,0 +1,27 @@
+{
+  "items": [
+    {
+      "id": "dashboard",
+      "label": "Dashboard",
+      "icon": "dashboard",
+      "href": "/carga-org-lot/dashboard",
+      "order": 1
+    },
+    {
+      "id": "carga",
+      "label": "Carga de Dados",
+      "icon": "upload_file",
+      "href": "/carga-org-lot/carga",
+      "order": 2,
+      "permissionKey": "add_cargaorglot"
+    },
+    {
+      "id": "historico",
+      "label": "Histórico",
+      "icon": "history",
+      "href": "/carga-org-lot/historico",
+      "order": 3,
+      "permissionKey": "view_cargaorglot"
+    }
+  ]
+}
