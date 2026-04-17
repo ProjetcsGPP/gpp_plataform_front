@@ -1,28 +1,29 @@
 // src/lib/resolveNavigation.ts
 
-import type { NavItemDefinition, ResolvedNavItem } from '@/types/navigation'
-
+import type { NavItemDefinition, ResolvedNavItem } from "@/types/navigation";
 export function resolveNavigation(
   items: NavItemDefinition[],
-  granted: string[]
+  granted: string[],
 ): ResolvedNavItem[] {
   return items
     .sort((a, b) => a.order - b.order)
     .map((item): ResolvedNavItem => {
       const hasPermission =
-        !item.permissionKey || granted.includes(item.permissionKey)
+        !item.permissionKey || granted.includes(item.permissionKey);
+
+      const { children, ...rest } = item;
 
       const resolved: ResolvedNavItem = {
-        ...item,
+        ...rest,
         enabled: hasPermission,
         visible: hasPermission || (item.visibleWhenDenied ?? false),
+      };
+
+      if (children?.length) {
+        resolved.children = resolveNavigation(children, granted);
       }
 
-      if (item.children?.length) {
-        resolved.children = resolveNavigation(item.children, granted)
-      }
-
-      return resolved
+      return resolved;
     })
-    .filter((item) => item.visible)
+    .filter((item) => item.visible);
 }

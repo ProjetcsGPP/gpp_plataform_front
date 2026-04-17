@@ -2,14 +2,16 @@
   "editor.formatOnSave": true,
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": "explicit"
+    "source.fixAll.eslint": "always"
   },
   "tailwindCSS.experimental.classRegex": [
     ["clsx\\(([^)]*)\\)", "(?:'|\"|`)([^']*)(?:'|\"|`)"],
     ["cn\\(([^)]*)\\)", "(?:'|\"|`)([^']*)(?:'|\"|`)"]
   ],
+  "tailwindCSS.lint.cssConflict": "ignore",
   "js/ts.preferences.importModuleSpecifier": "non-relative",
   "files.associations": {
     "*.css": "tailwindcss"
-  }
+  },
+  "js/ts.tsdk.path": "node_modules/typescript/lib"
 }

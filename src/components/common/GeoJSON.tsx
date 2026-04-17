@@ -1,112 +1,86 @@
-'use client'
+"use client";
+import type { GeoJsonObject } from "geojson";
+import { MapContainer, TileLayer, GeoJSON } from "react-leaflet";
+import "leaflet/dist/leaflet.css";
 
-import {
-  ComposableMap,
-  Geographies,
-  Geography,
-  ZoomableGroup
-} from "react-simple-maps"
-
-import { motion } from "framer-motion"
-import { useState } from "react"
-import geojson from '@/data/geojs-32-mun.json'
+import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
 
 type Municipio = {
-  id: string
-  name: string
-}
+  id: string;
+  name: string;
+};
 
-export default function MapaES() {
-  const [hovered, setHovered] = useState<Municipio | null>(null)
-  const [selected, setSelected] = useState<Municipio | null>(null)
+export default function MapClient() {
+  const [geojson, setGeojson] = useState<GeoJsonObject | null>(null);
+  const [hovered, setHovered] = useState<Municipio | null>(null);
+  const [selected, setSelected] = useState<Municipio | null>(null);
+
+  useEffect(() => {
+    fetch("/data/geojs-32-mun.json")
+      .then((res) => res.json())
+      .then((data) => setGeojson(data));
+  }, []);
 
   const dados: Record<string, { status: string; valor?: number }> = {
     "3200102": { status: "ok", valor: 120 },
     "3200136": { status: "alerta", valor: 75 },
-  }
+  };
 
   const getColor = (id: string) => {
-    if (selected?.id === id) return "#111827" // selecionado (preto)
+    if (selected?.id === id) return "#111827";
 
-    if (!dados[id]) return "#E5E7EB"
+    if (!dados[id]) return "#E5E7EB";
 
     switch (dados[id].status) {
       case "ok":
-        return "#22C55E"
+        return "#22C55E";
       case "alerta":
-        return "#F59E0B"
+        return "#F59E0B";
       case "erro":
-        return "#EF4444"
+        return "#EF4444";
       default:
-        return "#E5E7EB"
+        return "#E5E7EB";
     }
-  }
+  };
+
+  if (!geojson) return <p>Carregando mapa...</p>;
 
   return (
     <div className="relative w-full">
-
-      {/* 🗺️ MAPA */}
-      <ComposableMap
-        projection="geoMercator"
-        projectionConfig={{
-          scale: 5000,
-          center: [-40.5, -19.5]
-        }}
-        style={{ width: "100%", height: "auto" }}
+      <MapContainer
+        center={[-19.5, -40.5]}
+        zoom={7}
+        style={{ height: "500px", width: "100%" }}
       >
-        {/* 🔍 Zoom + Pan */}
-        <ZoomableGroup zoom={1}>
-          <Geographies geography={geojson}>
-            {({ geographies }) =>
-              geographies.map((geo) => {
-                const id = geo.properties.id
-                const name = geo.properties.name
+        <TileLayer
+          attribution="&copy; OpenStreetMap"
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        />
 
-                return (
-                  <motion.g
-                    key={geo.rsmKey}
-                    whileHover={{ scale: 1.02 }}
-                  >
-                    <Geography
-                      geography={geo}
-                      fill={getColor(id)}
-                      stroke="#FFF"
-                      strokeWidth={0.5}
+        <GeoJSON
+          data={geojson}
+          style={(feature) => ({
+            fillColor: getColor((feature?.properties as any)?.id),
+            color: "#FFF",
+            weight: 0.5,
+            fillOpacity: 1,
+          })}
+          onEachFeature={(feature, layer) => {
+            const props = feature.properties as any;
+            const id = props.id;
+            const name = props.name;
 
-                      onMouseEnter={(e) => {
-                        setHovered({ id, name })
-                      }}
+            layer.on({
+              mouseover: () => setHovered({ id, name }),
+              mouseout: () => setHovered(null),
+              click: () => setSelected({ id, name }),
+            });
+          }}
+        />
+      </MapContainer>
 
-                      onMouseLeave={() => {
-                        setHovered(null)
-                      }}
-
-                      onClick={() => {
-                        setSelected({ id, name })
-                        console.log("Selecionado:", id, name)
-                      }}
-
-                      style={{
-                        default: { outline: "none" },
-                        hover: {
-                          fill: "#3B82F6",
-                          outline: "none"
-                        },
-                        pressed: {
-                          fill: "#1D4ED8",
-                          outline: "none"
-                        }
-                      }}
-                    />
-                  </motion.g>
-                )
-              })
-            }
-          </Geographies>
-        </ZoomableGroup>
-      </ComposableMap>
-
-      {/* 💬 TOOLTIP */}
+      {/* TOOLTIP */}
       {hovered && (
         <div className="absolute bottom-4 left-4 bg-white shadow-xl rounded-2xl p-4 text-sm w-64">
           <h3 className="font-bold text-lg">{hovered.name}</h3>
@@ -122,12 +96,12 @@ export default function MapaES() {
         </div>
       )}
 
-      {/* 📌 SELECIONADO */}
+      {/* SELECIONADO */}
       {selected && (
         <div className="absolute top-4 right-4 bg-black text-white rounded-xl p-3">
           Selecionado: {selected.name}
         </div>
       )}
     </div>
-  )
+  );
 }
