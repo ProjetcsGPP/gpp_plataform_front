@@ -1,6 +1,10 @@
 // src/hooks/__tests__/useMe.test.ts
+// Cada teste usa um SWRConfig com provider isolado (new Map()) para
+// garantir que o cache do SWR não vaze entre testes.
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { renderHook, waitFor } from '@testing-library/react'
+import { SWRConfig } from 'swr'
+import React from 'react'
 import { useMe } from '../useMe'
 import { useAuthStore } from '@/store/authStore'
 import * as apiModule from '@/lib/api'
@@ -13,6 +17,14 @@ const mockMe = {
   app_context: 'ACOES_PNGI' as const,
   apps: ['ACOES_PNGI' as const],
 }
+
+// Wrapper com cache SWR isolado por teste
+const wrapper = ({ children }: { children: React.ReactNode }) =>
+  React.createElement(
+    SWRConfig,
+    { value: { provider: () => new Map() } },
+    children,
+  )
 
 describe('useMe', () => {
   beforeEach(() => {
@@ -28,7 +40,7 @@ describe('useMe', () => {
   it('deve hidratar a store com os dados do usuário após GET /me bem-sucedido', async () => {
     vi.spyOn(apiModule.api, 'get').mockResolvedValue({ data: mockMe })
 
-    renderHook(() => useMe())
+    renderHook(() => useMe(), { wrapper })
 
     await waitFor(() => {
       const state = useAuthStore.getState()
@@ -48,7 +60,7 @@ describe('useMe', () => {
       isLoading: false,
     })
 
-    renderHook(() => useMe())
+    renderHook(() => useMe(), { wrapper })
 
     await waitFor(() => {
       const state = useAuthStore.getState()
@@ -60,7 +72,7 @@ describe('useMe', () => {
   it('deve retornar isLoading=false após a requisição completar', async () => {
     vi.spyOn(apiModule.api, 'get').mockResolvedValue({ data: mockMe })
 
-    const { result } = renderHook(() => useMe())
+    const { result } = renderHook(() => useMe(), { wrapper })
 
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false)
@@ -70,7 +82,7 @@ describe('useMe', () => {
   it('deve retornar isError=true quando a requisição falha', async () => {
     vi.spyOn(apiModule.api, 'get').mockRejectedValue(new Error('Network Error'))
 
-    const { result } = renderHook(() => useMe())
+    const { result } = renderHook(() => useMe(), { wrapper })
 
     await waitFor(() => {
       expect(result.current.isError).toBe(true)

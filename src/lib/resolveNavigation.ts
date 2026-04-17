@@ -16,13 +16,17 @@ export function resolveNavigation(
 ): ResolvedNavItem[] {
   return items
     .map((item): ResolvedNavItem => {
+      const enabled =
+        !item.permissionKey || granted.includes(item.permissionKey);
+
+      // visible = tem permissão OU foi marcado explicitamente como visível mesmo negado
+      // ATENÇÃO: visibleWhenDenied === true (estrito) — undefined não ativa a flag
+      const visible = enabled || item.visibleWhenDenied === true;
+
       return {
         ...item,
-        enabled: !item.permissionKey || granted.includes(item.permissionKey),
-        visible:
-          item.visibleWhenDenied !== false ||
-          !item.permissionKey ||
-          granted.includes(item.permissionKey),
+        enabled,
+        visible,
         children: item.children
           ? resolveNavigation(item.children, granted)
           : undefined,
