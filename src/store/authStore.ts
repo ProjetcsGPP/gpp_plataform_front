@@ -17,7 +17,7 @@ interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
 
-  setUser: (user: MeResponse, appContext: AppContext) => void;
+  setUser: (user: MeResponse, appContext?: AppContext) => void;
   clearAuth: () => void;
   setLoading: (loading: boolean) => void;
 }
@@ -29,7 +29,12 @@ export const useAuthStore = create<AuthState>()(
 
       setUser: (user, appContext) =>
         set(
-          { user, appContext, isAuthenticated: true, isLoading: false },
+          {
+            user,
+            appContext: appContext ?? null,
+            isAuthenticated: true,
+            isLoading: false,
+          },
           false,
           "auth/setUser",
         ),

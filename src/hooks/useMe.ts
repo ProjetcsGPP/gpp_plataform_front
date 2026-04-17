@@ -43,7 +43,7 @@ export function useMe() {
 
   useEffect(() => {
     if (data && !isLoading) {
-      setUser(data, data.app_context);
+      setUser(data); // ← sem data.app_context que não existe
     }
   }, [data, isLoading, setUser]);
 
