@@ -7,9 +7,6 @@ import { useAuthStore } from "@/store/authStore";
 import api from "@/lib/api";
 import type { MeResponse } from "@/types/auth";
 
-/**
- * Fetcher tipado para o SWR — usa a instância Axios configurada do projeto.
- */
 const fetchMe = (url: string): Promise<MeResponse> =>
   api.get<MeResponse>(url).then((res) => res.data);
 
@@ -17,12 +14,9 @@ const fetchMe = (url: string): Promise<MeResponse> =>
  * Hook para buscar e cachear os dados do usuário autenticado.
  *
  * - GET /api/accounts/me/ via SWR
- * - keepPreviousData: true — mantém dados antigos enquanto revalida,
- *   evitando flash de loading/spinner ao navegar ou perder conexão
- * - revalidateOnReconnect: true — re-hidrata a store automaticamente
- *   quando a rede volta após queda de conexão
- * - shouldRetryOnError: false — o interceptor de 401 do api.ts já
- *   trata sessão expirada; retry em loop causaria redirect duplicado
+ * - keepPreviousData: true — mantém dados antigos enquanto revalida
+ * - revalidateOnReconnect: true — re-hidrata store quando rede volta
+ * - shouldRetryOnError: false — interceptor 401 do api.ts trata sessão expirada
  */
 export function useMe() {
   const setUser    = useAuthStore((s) => s.setUser);
@@ -30,11 +24,11 @@ export function useMe() {
   const setLoading = useAuthStore((s) => s.setLoading);
 
   const { data, error, isLoading } = useSWR<MeResponse>("/accounts/me/", fetchMe, {
-    dedupingInterval:      5 * 60 * 1000, // 5 min — evita chamadas duplicadas
-    revalidateOnFocus:     false,          // foco na aba não revalida
-    revalidateOnReconnect: true,           // RECONEXÃO: re-hidrata store quando rede volta
-    shouldRetryOnError:    false,          // interceptor do api.ts trata 401
-    keepPreviousData:      true,           // mantém dado cacheado durante revalidação
+    dedupingInterval:      5 * 60 * 1000,
+    revalidateOnFocus:     false,
+    revalidateOnReconnect: true,
+    shouldRetryOnError:    false,
+    keepPreviousData:      true,
     onError() {
       clearAuth();
     },
@@ -46,7 +40,9 @@ export function useMe() {
 
   useEffect(() => {
     if (data && !isLoading) {
-      setUser(data);
+      // Extrai app_context do payload e repassa como segundo argumento
+      // para que authStore.appContext fique sincronizado
+      setUser(data, data.app_context ?? undefined);
     }
   }, [data, isLoading, setUser]);
 
@@ -68,8 +64,6 @@ const fetchMePermissions = (url: string): Promise<MePermissionsResponse> =>
  *
  * - GET /api/accounts/me/permissions/ via SWR
  * - Só dispara quando isAuthenticated === true
- * - keepPreviousData: true — mesma proteção do useMe
- * - revalidateOnReconnect: true — sincroniza permissões quando rede volta
  */
 export function useMePermissions() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
