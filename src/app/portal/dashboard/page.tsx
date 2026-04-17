@@ -1,10 +1,14 @@
+// src/app/portal/dashboard/page.tsx
+// Migrado para usePortalDashboard (portal_dashboard_retrieve)
+// conforme frontend-ai-contract.md — GET /api/portal/dashboard/
+// retorna { aplicacoes, roles } em uma única chamada autenticada.
 "use client";
 
 import { useRouter } from "next/navigation";
 import { logoutApp, switchApp } from "@/lib/auth";
-import { useAplicacoes } from "@/hooks/useAplicacoes";
+import { usePortalDashboard } from "@/hooks/usePortalDashboard";
 import { useAuthStore } from "@/store/authStore";
-import type { Aplicacao } from "@/lib/auth";
+import type { PortalAplicacao } from "@/hooks/usePortalDashboard";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -20,15 +24,16 @@ import { useState } from "react";
 
 export default function PortalDashboardPage() {
   const router = useRouter();
-  const user = useAuthStore((s) => s.user); // ← usa store, não getMe()
+  const user = useAuthStore((s) => s.user);
   const clearAuth = useAuthStore((s) => s.clearAuth);
   const [switching, setSwitching] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const { apps, isLoading: appsLoading, refresh } = useAplicacoes();
+  // portal_dashboard_retrieve: retorna aplicacoes + roles em uma chamada
+  const { aplicacoes, roles, isLoading, refresh } = usePortalDashboard();
 
-  // Sem user ainda (store ainda hidratando) — loader mínimo, sem min-h-screen
-  if (!user || appsLoading) {
+  // Aguarda store hidratar (useMe no AppThemeProvider) e dados do dashboard
+  if (!user || isLoading) {
     return (
       <div className="flex items-center justify-center h-48">
         <Loader2 className="h-8 w-8 animate-spin text-[#1B3A6B]" />
@@ -36,9 +41,10 @@ export default function PortalDashboardPage() {
     );
   }
 
-  const roleCodigos = new Set(user.roles.map((r) => r.aplicacao_codigo));
-  const appList = apps.filter(
-    (a) => roleCodigos.has(a.codigointerno as any) && a.isshowinportal,
+  // Filtra apps visíveis no portal que o usuário tem role
+  const roleCodigos = new Set(roles.map((r) => r.aplicacao_codigo));
+  const appList = aplicacoes.filter(
+    (a) => roleCodigos.has(a.codigointerno) && a.isshowinportal,
   );
 
   async function handleLogout() {
@@ -62,8 +68,8 @@ export default function PortalDashboardPage() {
     }
   }
 
-  async function handleAppClick(app: Aplicacao) {
-    if (app.isappbloqueada) return;
+  async function handleAppClick(app: PortalAplicacao) {
+    if (app.codigointerno === '') return;
     setSwitching(app.codigointerno);
     try {
       await switchApp(
@@ -78,6 +84,7 @@ export default function PortalDashboardPage() {
       setSwitching(null);
     }
   }
+
   return (
     <div className="mx-auto max-w-6xl px-6 py-10">
       {/* Cabeçalho da seção */}
@@ -118,7 +125,7 @@ export default function PortalDashboardPage() {
             variant="outline"
             size="sm"
             onClick={handleRefresh}
-            disabled={isRefreshing || appsLoading}
+            disabled={isRefreshing || isLoading}
             className="gap-2 text-slate-600 hover:text-[#1B3A6B]"
           >
             <RefreshCw
@@ -129,7 +136,46 @@ export default function PortalDashboardPage() {
         </div>
       </div>
 
-      {/* ... restante do JSX (estado vazio + grid de cards) permanece igual ... */}
+      {/* Estado vazio */}
+      {appList.length === 0 && (
+        <div className="flex flex-col items-center justify-center py-20 text-slate-400">
+          <LayoutGrid className="h-12 w-12 mb-4 opacity-30" />
+          <p className="text-sm">Nenhuma aplicação disponível para o seu perfil.</p>
+        </div>
+      )}
+
+      {/* Grid de cards */}
+      {appList.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {appList.map((app) => (
+            <Card
+              key={app.codigointerno}
+              className="cursor-pointer hover:shadow-md transition-shadow rounded-xl border border-slate-200"
+              onClick={() => handleAppClick(app)}
+            >
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base text-slate-800">
+                  {app.nomeaplicacao}
+                </CardTitle>
+                <CardDescription className="text-xs text-slate-500">
+                  {app.codigointerno}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {switching === app.codigointerno ? (
+                  <div className="flex items-center gap-2 text-sm text-slate-500">
+                    <Loader2 className="h-4 w-4 animate-spin" /> Acessando...
+                  </div>
+                ) : (
+                  <Badge variant="outline" className="text-xs">
+                    Acessar
+                  </Badge>
+                )}
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

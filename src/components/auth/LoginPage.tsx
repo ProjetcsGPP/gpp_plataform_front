@@ -2,7 +2,6 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -16,8 +15,7 @@ import {
 import { getAplicacoesPublicas, login } from '@/lib/auth'
 import type { AplicacaoPublica } from '@/lib/auth'
 import { Loader2, LogIn } from 'lucide-react'
-import Image from "next/image";
-
+import Image from 'next/image'
 
 // ─── Contrato do tema ───────────────────────────────────────────────
 export interface LoginTheme {
@@ -46,27 +44,27 @@ export interface LoginTheme {
 }
 
 interface LoginPageProps {
-  theme: LoginTheme,
+  theme: LoginTheme
   sessionExpiredMessage?: string
 }
 
-// ─── Utilitário inline (sem dependência extra) ───────────────────────────
 function inlineStyle(color: string) {
   return { backgroundColor: color } as React.CSSProperties
 }
 
-// ─── Componente ─────────────────────────────────────────────────────────────────────────
 export function LoginPage({ theme }: LoginPageProps) {
-  const router = useRouter()
+  // Não usa useRouter — navegação pós-login é hard navigation (window.location.href)
+  // para garantir que o cookie gpp_session_{APP} seja persistido pelo browser
+  // antes do AppThemeProvider montar e disparar GET /accounts/me/
   const [apps, setApps] = useState<AplicacaoPublica[]>([])
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [appContext, setAppContext] = useState(theme.defaultAppContext ?? 'PORTAL')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const size = 52;
-  let logoElement;
+  const size = 52
 
+  let logoElement
   if (theme.logoIsMaterialIcon) {
     logoElement = (
       <div
@@ -83,7 +81,7 @@ export function LoginPage({ theme }: LoginPageProps) {
           {theme.logoSymbol}
         </span>
       </div>
-    );
+    )
   } else if (theme.logoIsProdestIcon) {
     logoElement = (
       <div
@@ -95,7 +93,7 @@ export function LoginPage({ theme }: LoginPageProps) {
           style={{ fontSize: `${size}px` }}
         />
       </div>
-    );
+    )
   } else {
     logoElement = (
       <Image
@@ -107,9 +105,8 @@ export function LoginPage({ theme }: LoginPageProps) {
         priority
         loading="eager"
       />
-    );
+    )
   }
-      
 
   useEffect(() => {
     getAplicacoesPublicas()
@@ -126,7 +123,12 @@ export function LoginPage({ theme }: LoginPageProps) {
 
       const redirectMap = theme.redirectMap ?? {}
       const destination = redirectMap[appContext] ?? '/portal/dashboard'
-      router.push(destination)
+
+      // Hard navigation obrigatória: garante que o browser persiste o
+      // Set-Cookie (gpp_session_{APP}) da resposta do POST /login antes
+      // de montar o layout autenticado e disparar GET /accounts/me/.
+      // router.push() (client-side) causaria race condition → 401.
+      window.location.href = destination
     } catch (err: unknown) {
       const e = err as {
         response?: { status?: number; data?: { detail?: string } }
@@ -137,7 +139,6 @@ export function LoginPage({ theme }: LoginPageProps) {
       else if (status === 403) setError(detail ?? 'Sem permissão para esta aplicação.')
       else if (status === 400) setError(detail ?? 'Preencha todos os campos.')
       else setError(detail ?? 'Erro ao realizar login.')
-    } finally {
       setLoading(false)
     }
   }
@@ -146,44 +147,16 @@ export function LoginPage({ theme }: LoginPageProps) {
     '--tw-ring-color': theme.primaryColor,
   } as React.CSSProperties
 
+  // Suprime aviso de 'apps' não utilizado — mantido para uso futuro no seletor
+  void apps
+
   return (
     <div className="flex min-h-[calc(100vh-64px)] items-center justify-center p-4">
-      {/* min-h desconta a altura do TopBar (64px) para centralizar visualmente */}
       <div className="w-full max-w-md space-y-6">
 
         {/* Logo + Nome */}
         <div className="text-center">
-          {/*
-          {theme.logoIsMaterialIcon ? (
-            <div
-              className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-2xl shadow-md"
-              style={inlineStyle(theme.primaryColor)}
-            >
-              <span
-                className="material-symbols-outlined text-white leading-none"
-                style={{
-                  fontSize: `${size}px`,
-                  fontVariationSettings: `'FILL' 1, 'wght' 400, 'opsz' ${size}`,
-                }}
-              >
-                {theme.logoSymbol}
-              </span>
-            </div>
-          ) : (
-            <Image
-              src="/Logo_GOVES.png"
-              alt="Governo do Estado do Espírito Santo"
-              width={200}
-              height={200}
-              className="mx-auto mb-3 w-32 h-auto"
-              priority
-              loading="eager"
-            />
-          )}
-            */}
-
           {logoElement}
-
           <h1 className="text-2xl font-bold text-slate-800">
             {theme.appName}
           </h1>
@@ -228,14 +201,12 @@ export function LoginPage({ theme }: LoginPageProps) {
                   style={focusRingStyle}
                 />
               </div>
-              
+
               <Button
                 type="submit"
                 disabled={loading}
                 className="w-full text-white transition-colors"
-                style={{
-                  backgroundColor: theme.primaryColor,
-                }}
+                style={{ backgroundColor: theme.primaryColor }}
                 onMouseEnter={(e) =>
                   (e.currentTarget.style.backgroundColor = theme.primaryHoverColor)
                 }
@@ -255,7 +226,6 @@ export function LoginPage({ theme }: LoginPageProps) {
                   {error}
                 </div>
               )}
-                            
             </form>
           </CardContent>
         </Card>
