@@ -10,6 +10,7 @@ interface NavItemProps {
   active?: boolean;
   onClick?: () => void;
   trailingIcon?: string;
+  disabled?: boolean;
 }
 
 export function NavItem({
@@ -19,12 +20,13 @@ export function NavItem({
   active = false,
   onClick,
   trailingIcon,
+  disabled,
 }: NavItemProps) {
   return (
     <div
       role="button"
-      tabIndex={0}
-      onClick={onClick}
+      tabIndex={disabled ? -1 : 0}
+      onClick={disabled ? undefined : onClick}
       className={cn(
         "flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer",
         "transition-colors duration-200",
@@ -32,6 +34,7 @@ export function NavItem({
         active
           ? "bg-blue-100 text-blue-900 font-semibold"
           : "text-on-surface-variant hover:text-primary hover:bg-surface-container hover:shadow-sm",
+        disabled && "opacity-40 cursor-not-allowed pointer-events-none",
       )}
     >
       {/* Ícone sempre visível, tamanho fixo para não causar reflow */}

@@ -146,6 +146,7 @@ export default function Sidebar({ appContext }: SidebarProps) {
                 active={
                   pathname === item.href || pathname.startsWith(`${item.href}/`)
                 }
+                disabled={!item.enabled}
                 onClick={
                   item.enabled ? () => router.push(item.href) : undefined
                 }

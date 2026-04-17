@@ -24,8 +24,11 @@ export function resolveNavigation(
 
       return {
         ...item,
-        enabled,
-        visible,
+        enabled: !item.permissionKey || granted.includes(item.permissionKey),
+        visible:
+          item.visibleWhenDenied !== false ||
+          !item.permissionKey ||
+          granted.includes(item.permissionKey),
         children: item.children
           ? resolveNavigation(item.children, granted)
           : undefined,
