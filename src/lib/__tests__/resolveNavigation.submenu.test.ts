@@ -1,6 +1,7 @@
 // src/lib/__tests__/resolveNavigation.submenu.test.ts
-// Complemento de testes para grupos e submenus — adiciona cobertura
-// dos casos de N níveis que não existiam nos testes originais.
+// Testes de grupos e submenus para resolveNavigation.
+// REGRA: um grupo sem permissionKey e' sempre enabled=true.
+// Para testar enabled=false no grupo, o proprio grupo precisa ter permissionKey.
 import { describe, it, expect } from 'vitest'
 import { resolveNavigation }    from '@/lib/resolveNavigation'
 import type { NavItemDefinition } from '@/types/navigation'
@@ -8,13 +9,14 @@ import type { NavItemDefinition } from '@/types/navigation'
 const groupManifest: NavItemDefinition[] = [
   {
     id: 'gestao',
-    label: 'Gestão',
+    label: 'Gestao',
     icon: 'manage_accounts',
     order: 1,
+    // sem permissionKey -> sempre enabled, visible depende dos filhos
     children: [
       {
         id: 'usuarios',
-        label: 'Usuários',
+        label: 'Usuarios',
         href: '/portal/usuarios',
         icon: 'group',
         order: 1,
@@ -33,6 +35,7 @@ const groupManifest: NavItemDefinition[] = [
 ]
 
 describe('resolveNavigation — grupos e submenus', () => {
+
   it('grupo com todos os filhos negados: visible: false em todos os filhos', () => {
     const result = resolveNavigation(groupManifest, [])
     const group  = result[0]
@@ -40,19 +43,32 @@ describe('resolveNavigation — grupos e submenus', () => {
     expect(group.children?.every((c) => c.visible === false)).toBe(true)
   })
 
-  it('grupo com visibleWhenDenied e filhos negados: grupo visível mas enabled: false', () => {
-    const manifest: NavItemDefinition[] = [
-      { ...groupManifest[0], visibleWhenDenied: true },
-    ]
-
-    const result = resolveNavigation(manifest, [])
+  it('grupo SEM permissionKey e filhos negados: grupo enabled=true (sem restricao propria)', () => {
+    // Grupo sem permissionKey nao tem restricao propria — sempre enabled
+    const result = resolveNavigation(groupManifest, [])
     const group  = result[0]
 
-    expect(group.visible).toBe(true)
-    expect(group.enabled).toBe(false)
+    expect(group.enabled).toBe(true)
   })
 
-  it('quando granted inclui permissão de um filho, esse filho fica visible e enabled', () => {
+  it('grupo COM permissionKey negada e visibleWhenDenied: visible=true mas enabled=false', () => {
+    // Grupo com permissionKey propria negada + visibleWhenDenied=true
+    const manifest: NavItemDefinition[] = [
+      {
+        ...groupManifest[0],
+        permissionKey:    'view_role',   // permissao propria do grupo
+        visibleWhenDenied: true,
+      },
+    ]
+
+    const result = resolveNavigation(manifest, []) // granted vazio -> negado
+    const group  = result[0]
+
+    expect(group.visible).toBe(true)   // visibleWhenDenied=true mantem visivel
+    expect(group.enabled).toBe(false)  // mas desabilitado
+  })
+
+  it('quando granted inclui permissao de um filho, esse filho fica visible e enabled', () => {
     const result   = resolveNavigation(groupManifest, ['view_user'])
     const group    = result[0]
     const usuarios = group.children?.find((c) => c.id === 'usuarios')
@@ -63,23 +79,23 @@ describe('resolveNavigation — grupos e submenus', () => {
     expect(perfis?.visible).toBe(false)
   })
 
-  it('submenu N níveis: resolução recursiva preserva visible/enabled em cada nível', () => {
+  it('submenu N niveis: resolucao recursiva preserva visible/enabled em cada nivel', () => {
     const deepManifest: NavItemDefinition[] = [
       {
         id: 'nivel1',
-        label: 'Nível 1',
+        label: 'Nivel 1',
         icon: 'folder',
         order: 1,
         children: [
           {
             id: 'nivel2',
-            label: 'Nível 2',
+            label: 'Nivel 2',
             icon: 'folder_open',
             order: 1,
             children: [
               {
                 id: 'nivel3',
-                label: 'Nível 3',
+                label: 'Nivel 3',
                 href: '/deep',
                 icon: 'description',
                 order: 1,

@@ -29,12 +29,12 @@ export function useMe() {
   const clearAuth  = useAuthStore((s) => s.clearAuth);
   const setLoading = useAuthStore((s) => s.setLoading);
 
-  const { data, isLoading } = useSWR<MeResponse>("/accounts/me/", fetchMe, {
-    dedupingInterval:     5 * 60 * 1000, // 5 min — evita chamadas duplicadas
-    revalidateOnFocus:    false,          // foco na aba não revalida
-    revalidateOnReconnect: true,          // RECONEXÃO: re-hidrata store quando rede volta
-    shouldRetryOnError:   false,          // interceptor do api.ts trata 401
-    keepPreviousData:     true,           // mantém dado cacheado durante revalidação
+  const { data, error, isLoading } = useSWR<MeResponse>("/accounts/me/", fetchMe, {
+    dedupingInterval:      5 * 60 * 1000, // 5 min — evita chamadas duplicadas
+    revalidateOnFocus:     false,          // foco na aba não revalida
+    revalidateOnReconnect: true,           // RECONEXÃO: re-hidrata store quando rede volta
+    shouldRetryOnError:    false,          // interceptor do api.ts trata 401
+    keepPreviousData:      true,           // mantém dado cacheado durante revalidação
     onError() {
       clearAuth();
     },
@@ -50,7 +50,7 @@ export function useMe() {
     }
   }, [data, isLoading, setUser]);
 
-  return { me: data ?? null, isLoading, isError: false };
+  return { me: data ?? null, isLoading, isError: !!error };
 }
 
 // ─── MePermissions ────────────────────────────────────────────────────────────

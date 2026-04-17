@@ -1,13 +1,21 @@
 // src/hooks/__tests__/useMe.test.ts
-// Cada teste usa um SWRConfig com provider isolado (new Map()) para
-// garantir que o cache do SWR não vaze entre testes.
+// vi.mock intercepta o modulo inteiro antes do import — unico modo confiavel
+// de substituir o default export de api.ts em ESM sem spyOn escapar.
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { renderHook, waitFor } from '@testing-library/react'
 import { SWRConfig } from 'swr'
 import React from 'react'
-import { useMe } from '../useMe'
 import { useAuthStore } from '@/store/authStore'
-import * as apiModule from '@/lib/api'
+
+// Mock declarado antes de qualquer import do modulo alvo
+const mockGet = vi.fn()
+vi.mock('@/lib/api', () => ({
+  default: { get: (...args: unknown[]) => mockGet(...args) },
+  api:     { get: (...args: unknown[]) => mockGet(...args) },
+}))
+
+// Import apos o mock para garantir que o hook ja usa a versao mockada
+const { useMe } = await import('../useMe')
 
 const mockMe = {
   id: 1,
@@ -18,7 +26,7 @@ const mockMe = {
   apps: ['ACOES_PNGI' as const],
 }
 
-// Wrapper com cache SWR isolado por teste
+// Cache SWR isolado por teste — evita vazamento entre casos
 const wrapper = ({ children }: { children: React.ReactNode }) =>
   React.createElement(
     SWRConfig,
@@ -37,8 +45,8 @@ describe('useMe', () => {
     vi.clearAllMocks()
   })
 
-  it('deve hidratar a store com os dados do usuário após GET /me bem-sucedido', async () => {
-    vi.spyOn(apiModule.api, 'get').mockResolvedValue({ data: mockMe })
+  it('deve hidratar a store com os dados do usuario apos GET /me bem-sucedido', async () => {
+    mockGet.mockResolvedValueOnce({ data: mockMe })
 
     renderHook(() => useMe(), { wrapper })
 
@@ -52,7 +60,7 @@ describe('useMe', () => {
   })
 
   it('deve chamar clearAuth quando GET /me retorna erro', async () => {
-    vi.spyOn(apiModule.api, 'get').mockRejectedValue(new Error('401'))
+    mockGet.mockRejectedValueOnce(new Error('401'))
     useAuthStore.setState({
       user: mockMe,
       appContext: 'ACOES_PNGI',
@@ -69,8 +77,8 @@ describe('useMe', () => {
     })
   })
 
-  it('deve retornar isLoading=false após a requisição completar', async () => {
-    vi.spyOn(apiModule.api, 'get').mockResolvedValue({ data: mockMe })
+  it('deve retornar isLoading=false apos a requisicao completar', async () => {
+    mockGet.mockResolvedValueOnce({ data: mockMe })
 
     const { result } = renderHook(() => useMe(), { wrapper })
 
@@ -79,8 +87,8 @@ describe('useMe', () => {
     })
   })
 
-  it('deve retornar isError=true quando a requisição falha', async () => {
-    vi.spyOn(apiModule.api, 'get').mockRejectedValue(new Error('Network Error'))
+  it('deve retornar isError=true quando a requisicao falha', async () => {
+    mockGet.mockRejectedValueOnce(new Error('Network Error'))
 
     const { result } = renderHook(() => useMe(), { wrapper })
 
