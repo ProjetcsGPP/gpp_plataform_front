@@ -16,22 +16,25 @@ const fetchMe = (url: string): Promise<MeResponse> =>
 /**
  * Hook para buscar e cachear os dados do usuário autenticado.
  *
- * - Faz GET /api/accounts/me/ usando SWR (cache automático, revalidação em foco)
- * - Hidrata a authStore com os dados recebidos
- * - Limpa a store em caso de erro (401 = sessão inválida)
- * - Cache de 5 minutos (dedupingInterval)
- *
- * @returns { me, isLoading, isError }
+ * - GET /api/accounts/me/ via SWR
+ * - keepPreviousData: true — mantém dados antigos enquanto revalida,
+ *   evitando flash de loading/spinner ao navegar ou perder conexão
+ * - revalidateOnReconnect: true — re-hidrata a store automaticamente
+ *   quando a rede volta após queda de conexão
+ * - shouldRetryOnError: false — o interceptor de 401 do api.ts já
+ *   trata sessão expirada; retry em loop causaria redirect duplicado
  */
 export function useMe() {
-  const setUser = useAuthStore((s) => s.setUser);
-  const clearAuth = useAuthStore((s) => s.clearAuth);
+  const setUser    = useAuthStore((s) => s.setUser);
+  const clearAuth  = useAuthStore((s) => s.clearAuth);
   const setLoading = useAuthStore((s) => s.setLoading);
 
   const { data, isLoading } = useSWR<MeResponse>("/accounts/me/", fetchMe, {
-    dedupingInterval: 5 * 60 * 1000,
-    revalidateOnFocus: false,
-    shouldRetryOnError: false,
+    dedupingInterval:     5 * 60 * 1000, // 5 min — evita chamadas duplicadas
+    revalidateOnFocus:    false,          // foco na aba não revalida
+    revalidateOnReconnect: true,          // RECONEXÃO: re-hidrata store quando rede volta
+    shouldRetryOnError:   false,          // interceptor do api.ts trata 401
+    keepPreviousData:     true,           // mantém dado cacheado durante revalidação
     onError() {
       clearAuth();
     },
@@ -43,7 +46,7 @@ export function useMe() {
 
   useEffect(() => {
     if (data && !isLoading) {
-      setUser(data); // ← sem data.app_context que não existe
+      setUser(data);
     }
   }, [data, isLoading, setUser]);
 
@@ -63,30 +66,30 @@ const fetchMePermissions = (url: string): Promise<MePermissionsResponse> =>
 /**
  * Hook para buscar as permissões do usuário na aplicação atual.
  *
- * - Faz GET /api/accounts/me/permissions/ usando SWR
- * - O backend infere a aplicação a partir do cookie de sessão (app_context)
- * - Não revalida em foco — permissões mudam raramente
- * - Cache de 5 minutos (dedupingInterval)
- *
- * @returns { permissions, isLoading, isError }
+ * - GET /api/accounts/me/permissions/ via SWR
+ * - Só dispara quando isAuthenticated === true
+ * - keepPreviousData: true — mesma proteção do useMe
+ * - revalidateOnReconnect: true — sincroniza permissões quando rede volta
  */
 export function useMePermissions() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
   const { data, error, isLoading } = useSWR<MePermissionsResponse>(
-    isAuthenticated ? "/accounts/me/permissions/" : null, // só busca se autenticado
+    isAuthenticated ? "/accounts/me/permissions/" : null,
     fetchMePermissions,
     {
-      dedupingInterval: 5 * 60 * 1000,
-      revalidateOnFocus: false,
-      shouldRetryOnError: false,
+      dedupingInterval:      5 * 60 * 1000,
+      revalidateOnFocus:     false,
+      revalidateOnReconnect: true,
+      shouldRetryOnError:    false,
+      keepPreviousData:      true,
     },
   );
 
   return {
     permissions: data ?? null,
-    role: data?.role ?? null,
-    granted: data?.granted ?? [],
+    role:        data?.role    ?? null,
+    granted:     data?.granted ?? [],
     isLoading,
     isError: !!error,
   };

@@ -1,3 +1,4 @@
+// src/lib/api.ts
 import axios from 'axios'
 import { APP_CONFIG } from '@/types/auth'
 import { useAuthStore } from '@/store/authStore'
@@ -23,19 +24,29 @@ api.interceptors.request.use((config) => {
   return config
 })
 
-// Redireciona para o login da app correta em caso de 401
+// Redireciona para o login da app correta em caso de 401.
+// GUARD DE REDE: se navigator.onLine === false, o 401 pode ser um
+// falso positivo — a requisição nunca chegou ao servidor porque a
+// rede caiu. Nesse caso NÃO redireciona para login; o SWR vai
+// revalidar automaticamente quando a conexão voltar
+// (revalidateOnReconnect: true em useMe.ts).
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     const isLogout = error.config?.url?.includes('/accounts/logout')
+
     if (!isLogout && error.response?.status === 401) {
+      // Não redireciona se o browser está offline — o cookie ainda é válido
+      if (typeof navigator !== 'undefined' && !navigator.onLine) {
+        return Promise.reject(error)
+      }
+
       // Ler appContext da store fora de hook (Zustand permite acesso direto ao estado)
       const appContext = useAuthStore.getState().appContext
 
       if (appContext) {
         const { loginPath } = APP_CONFIG[appContext]
         useAuthStore.getState().clearAuth()
-        // Redirecionar apenas se não estiver já na página de login
         if (!window.location.pathname.includes('/login')) {
           window.location.href = `${loginPath}?reason=session_expired`
         }
@@ -54,6 +65,7 @@ api.interceptors.response.use(
         }
       }
     }
+
     return Promise.reject(error)
   }
 )
