@@ -4,6 +4,7 @@
       "id": "dashboard",
       "label": "Dashboard",
       "icon": "layout-dashboard",
+      "app": "CARGA_ORG_LOT",
       "href": "/carga-org-lot/dashboard",
       "order": 1
     },
@@ -11,6 +12,7 @@
       "id": "cargas",
       "label": "Cargas",
       "icon": "upload",
+      "app": "CARGA_ORG_LOT",
       "href": "/carga-org-lot/cargas",
       "order": 2,
       "permissionKey": "cargas.view"
@@ -19,6 +21,7 @@
       "id": "lotes",
       "label": "Lotes",
       "icon": "layers",
+      "app": "CARGA_ORG_LOT",
       "href": "/carga-org-lot/lotes",
       "order": 3,
       "permissionKey": "lotes.view"
@@ -27,6 +30,7 @@
       "id": "validacao",
       "label": "Validação",
       "icon": "shield-check",
+      "app": "CARGA_ORG_LOT",
       "href": "/carga-org-lot/validacao",
       "order": 4,
       "permissionKey": "validacao.view",
@@ -36,6 +40,7 @@
       "id": "historico",
       "label": "Histórico",
       "icon": "history",
+      "app": "CARGA_ORG_LOT",
       "href": "/carga-org-lot/historico",
       "order": 5,
       "permissionKey": "historico.view"

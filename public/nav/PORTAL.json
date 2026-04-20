@@ -4,6 +4,7 @@
       "id": "dashboard",
       "label": "Dashboard",
       "icon": "dashboard",
+      "app": "PORTAL",
       "href": "/portal/dashboard",
       "order": 1
     },
@@ -11,6 +12,7 @@
       "id": "aplicacoes",
       "label": "Aplicações",
       "icon": "grid_view",
+      "app": "PORTAL",
       "href": "/portal/aplicacoes",
       "order": 2,
       "permissionKey": "view_aplicacao"
@@ -19,6 +21,7 @@
       "id": "admin",
       "label": "Administração",
       "icon": "admin_panel_settings",
+      "app": "PORTAL",
       "href": "/portal/admin",
       "order": 3,
       "permissionKey": "view_user",
@@ -27,6 +30,7 @@
           "id": "usuarios",
           "label": "Usuários",
           "icon": "group",
+          "app": "PORTAL",
           "href": "/portal/usuarios",
           "order": 1,
           "permissionKey": "view_user"
@@ -35,6 +39,7 @@
           "id": "acesso",
           "label": "Controle de Acesso",
           "icon": "security",
+          "app": "PORTAL",
           "href": "/portal/acesso",
           "order": 2,
           "permissionKey": "view_role",
@@ -43,6 +48,7 @@
               "id": "roles",
               "label": "Perfis e Roles",
               "icon": "shield",
+              "app": "PORTAL",
               "href": "/portal/roles",
               "order": 1,
               "permissionKey": "view_role"
@@ -51,6 +57,7 @@
               "id": "permissoes",
               "label": "Permissões",
               "icon": "key",
+              "app": "PORTAL",
               "href": "/portal/permissoes",
               "order": 2,
               "permissionKey": "view_permission",

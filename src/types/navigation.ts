@@ -60,3 +60,21 @@ export function isMultiAppResponse(
 ): r is PermissionsResponseMultiApp {
   return "apps" in r && Array.isArray((r as PermissionsResponseMultiApp).apps);
 }
+
+export interface NavItemDefinition {
+  id: string;
+  label: string;
+  icon: string;
+  app: AppContext;
+  href?: string;
+  order: number;
+  permissionKey?: string;
+  visibleWhenDenied?: boolean;
+  children?: NavItemDefinition[];
+}
+
+export interface ResolvedNavItem extends Omit<NavItemDefinition, "children"> {
+  enabled: boolean;
+  visible: boolean;
+  children?: ResolvedNavItem[];
+}

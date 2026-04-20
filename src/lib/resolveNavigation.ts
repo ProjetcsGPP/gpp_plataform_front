@@ -1,26 +1,17 @@
-// src/lib/resolveNavigation.ts
-// Transforma NavItemDefinition[] + granted[] em ResolvedNavItem[].
-//
-// Regras:
-//   enabled = granted.includes(permissionKey) (ou true se sem permissionKey)
-//   visible = enabled || visibleWhenDenied === true
-//
-// Frontend NÃO decide regra de negócio. Apenas aplica:
-//   UI = f(grantedPermissions)
-
+import type { AppContext } from "@/types/auth";
 import type { NavItemDefinition, ResolvedNavItem } from "@/types/navigation";
 
 export function resolveNavigation(
   items: NavItemDefinition[],
   granted: string[],
+  appContext: AppContext,
 ): ResolvedNavItem[] {
   return items
+    .filter((item) => item.app === appContext)
     .map((item): ResolvedNavItem => {
       const enabled =
         !item.permissionKey || granted.includes(item.permissionKey);
 
-      // visible = tem permissão OU foi marcado explicitamente como visível mesmo negado
-      // ATENÇÃO: visibleWhenDenied === true (estrito) — undefined não ativa a flag
       const visible = enabled || item.visibleWhenDenied === true;
 
       return {
@@ -28,7 +19,7 @@ export function resolveNavigation(
         enabled,
         visible,
         children: item.children
-          ? resolveNavigation(item.children, granted)
+          ? resolveNavigation(item.children, granted, appContext)
           : undefined,
       };
     })
