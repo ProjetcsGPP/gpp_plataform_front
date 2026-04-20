@@ -1,11 +1,10 @@
 // src/app/portal/dashboard/layout.tsx
-// Shell visual das rotas autenticadas do portal.
-// AuthHydrator deve estar ANTES do LoadingGuard para que a hidratação
-// comece enquanto o spinner está visível.
-import { AuthHydrator }  from "@/components/common/AuthHydrator";
-import { LoadingGuard }  from "@/components/common/LoadingGuard";
-import Sidebar           from "@/components/layout/Sidebar";
-import TopBar            from "@/components/layout/TopBar";
+import { AuthProvider } from "@/components/common/AuthProvider";
+import { NavigationProvider } from "@/components/common/NavigationProvider";
+import { AuthHydrator } from "@/components/common/AuthHydrator";
+import { LoadingGuard } from "@/components/common/LoadingGuard";
+import Sidebar from "@/components/layout/Sidebar";
+import TopBar from "@/components/layout/TopBar";
 
 export default function PortalDashboardLayout({
   children,
@@ -13,21 +12,23 @@ export default function PortalDashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <>
+    <AuthProvider>
       <AuthHydrator />
-      <LoadingGuard>
-        <div className="min-h-screen flex bg-app-gradient">
-          <Sidebar appContext="PORTAL" />
-          <div className="flex flex-col flex-1 pl-18">
-            <TopBar
-              title="Portal de Aplicações"
-              titleMinor="SEGER/SUBGES/GPP"
-              appContext="PORTAL"
-            />
-            <main className="flex-1">{children}</main>
+      <NavigationProvider>
+        <LoadingGuard>
+          <div className="min-h-screen flex bg-app-gradient">
+            <Sidebar appContext="PORTAL" />
+            <div className="flex flex-col flex-1 pl-18">
+              <TopBar
+                title="Portal de Aplicações"
+                titleMinor="SEGER/SUBGES/GPP"
+                appContext="PORTAL"
+              />
+              <main className="flex-1">{children}</main>
+            </div>
           </div>
-        </div>
-      </LoadingGuard>
-    </>
+        </LoadingGuard>
+      </NavigationProvider>
+    </AuthProvider>
   );
 }

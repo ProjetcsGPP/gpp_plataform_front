@@ -2,16 +2,6 @@
 // act() warning ocorre quando um useEffect atualiza estado/DOM apos o render.
 // A solucao e usar waitFor() nas assertivas — ele envolve act() internamente
 // e aguarda o efeito ser aplicado antes de verificar o DOM.
-import { vi } from "vitest";
-
-vi.mock("@/hooks/useMe", () => ({
-  useMe: () => ({}),
-}));
-
-vi.mock("@/hooks/useNavigation", () => ({
-  useNavigation: () => ({}),
-}));
-
 import { describe, it, expect, afterEach } from "vitest";
 import { render, cleanup, waitFor } from "@testing-library/react";
 import { AppThemeProvider } from "../AppThemeProvider";
