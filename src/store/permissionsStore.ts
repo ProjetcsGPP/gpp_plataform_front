@@ -1,28 +1,29 @@
 // src/store/permissionsStore.ts
 // Store central de permissões RBAC.
 // Fonte de verdade: GET /api/accounts/me/permissions/?app={APP}
-// O frontend NUNCA calcula permissões — apenas consome granted[] do backend.
+//
+// REGRA ARQUITETURAL:
+//   Store = APENAS DADOS (role, granted, flags de estado)
+//   PROIBIDO: qualquer método de lógica de permissão aqui
+//   Use buildPermissionContext (domain service) ou usePermissions (hook)
 
-import { create } from 'zustand'
-import { devtools } from 'zustand/middleware'
+import { create } from "zustand";
+import { devtools } from "zustand/middleware";
 
-interface PermissionsState {
-  role: string | null
-  granted: string[]
-  isLoading: boolean
-  isHydrated: boolean
+export interface PermissionsState {
+  role: string | null;
+  granted: string[];
+  isLoading: boolean;
+  isHydrated: boolean;
 
-  setPermissions: (role: string, granted: string[]) => void
-  clearPermissions: () => void
-  setLoading: (loading: boolean) => void
-
-  // Helper central: verificar se uma permissão está concedida
-  can: (permission: string) => boolean
+  setPermissions: (role: string, granted: string[]) => void;
+  clearPermissions: () => void;
+  setLoading: (loading: boolean) => void;
 }
 
 export const usePermissionsStore = create<PermissionsState>()(
   devtools(
-    (set, get) => ({
+    (set) => ({
       role: null,
       granted: [],
       isLoading: true,
@@ -32,25 +33,23 @@ export const usePermissionsStore = create<PermissionsState>()(
         set(
           { role, granted, isLoading: false, isHydrated: true },
           false,
-          'permissions/set'
+          "permissions/set",
         ),
 
       clearPermissions: () =>
         set(
           { role: null, granted: [], isLoading: true, isHydrated: false },
           false,
-          'permissions/clear'
+          "permissions/clear",
         ),
 
       setLoading: (isLoading) =>
-        set({ isLoading }, false, 'permissions/setLoading'),
-
-      can: (permission) => get().granted.includes(permission),
+        set({ isLoading }, false, "permissions/setLoading"),
     }),
     {
-      name: 'gpp-permissions-store',
-      enabled: process.env.NODE_ENV === 'development',
+      name: "gpp-permissions-store",
+      enabled: process.env.NODE_ENV === "development",
       serialize: true,
-    }
-  )
-)
+    },
+  ),
+);
