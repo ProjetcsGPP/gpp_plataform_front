@@ -1,15 +1,16 @@
 // src/components/common/AppThemeProvider.tsx
-'use client'
+"use client";
 
-import { useEffect } from 'react'
-import { useMe } from '@/hooks/useMe'
-import { useNavigation } from '@/hooks/useNavigation'
-import type { AppContext } from '@/types/auth'
+import { useEffect } from "react";
+import { useMe } from "@/hooks/useMe";
+import { useNavigation } from "@/hooks/useNavigation";
+import { useAuthStore } from "@/store/authStore";
+import type { AppContext } from "@/types/auth";
 
 interface AppThemeProviderProps {
   /** Contexto da app — define qual bloco [data-app] será aplicado no <body> */
-  appContext: AppContext
-  children: React.ReactNode
+  appContext: AppContext;
+  children: React.ReactNode;
 }
 
 /**
@@ -18,21 +19,27 @@ interface AppThemeProviderProps {
  * Carrega e resolve a navegação via useNavigation().
  * Deve envolver o conteúdo do layout de cada app.
  */
-export function AppThemeProvider({ appContext, children }: AppThemeProviderProps) {
+export function AppThemeProvider({
+  appContext,
+  children,
+}: AppThemeProviderProps) {
+  // No corpo do componente:
+  const setAppContext = useAuthStore((s) => s.setAppContext);
   // Hidrata a store com os dados do usuário autenticado
-  useMe()
+  useMe();
 
   // Carrega manifest de navegação + permissões e popula navigationStore
-  useNavigation(appContext)
+  useNavigation(appContext);
 
   useEffect(() => {
-    document.body.setAttribute('data-app', appContext)
+    setAppContext(appContext); // appContext vem da prop do provider
+    document.body.setAttribute("data-app", appContext);
 
     // Cleanup: remove o atributo ao desmontar (ex: navegação entre apps no dev)
     return () => {
-      document.body.removeAttribute('data-app')
-    }
-  }, [appContext])
+      document.body.removeAttribute("data-app");
+    };
+  }, [appContext, setAppContext]);
 
-  return <>{children}</>
+  return <>{children}</>;
 }

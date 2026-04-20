@@ -1,5 +1,4 @@
 // src/store/authStore.ts
-
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 import type { AppContext, MeResponse } from "@/types/auth";
@@ -18,6 +17,7 @@ interface AuthState {
   isLoading: boolean;
 
   setUser: (user: MeResponse, appContext?: AppContext) => void;
+  setAppContext: (ctx: AppContext) => void; // NOVO
   clearAuth: () => void;
   setLoading: (loading: boolean) => void;
 }
@@ -39,10 +39,13 @@ export const useAuthStore = create<AuthState>()(
           "auth/setUser",
         ),
 
+      // NOVO — permite atualizar o contexto ativo sem re-setar o usuário
+      setAppContext: (ctx) =>
+        set({ appContext: ctx }, false, "auth/setAppContext"),
+
       clearAuth: () => set(initialState, false, "auth/clearAuth"),
 
-      setLoading: (isLoading) =>
-        set({ isLoading: isLoading }, false, "auth/setLoading"),
+      setLoading: (isLoading) => set({ isLoading }, false, "auth/setLoading"),
     }),
     {
       name: "gpp-auth-store",

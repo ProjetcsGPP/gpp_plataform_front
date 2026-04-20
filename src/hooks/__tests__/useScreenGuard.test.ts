@@ -12,9 +12,10 @@ import { usePermissions } from "@/hooks/usePermissions";
 
 const mockUsePermissions = usePermissions as ReturnType<typeof vi.fn>;
 
-function makeCtx(granted: string[]) {
+function makeCtx(granted: string[], appContext = "PORTAL") {
   const set = new Set(granted);
   return {
+    appContext,
     can: (p: string) => set.has(p),
     hasAny: (ps: string[]) => ps.some((p) => set.has(p)),
     hasAll: (ps: string[]) => ps.every((p) => set.has(p)),

@@ -1,28 +1,33 @@
 // src/hooks/usePermissions.ts
-// Hook central de autorização RBAC.
+// Hook central de autorização RBAC — consciente de AppContext.
 //
-// Composição React sobre buildPermissionContext (domain service).
-// Único ponto de entrada para verificação de permissões em componentes.
+// Fluxo:
+//   1. Lê appContext do authStore
+//   2. Seleciona permissionsByApp[appContext] da permissionsStore
+//   3. Passa role+granted para buildPermissionContext (service inalterado)
 //
-// Uso:
-//   const { can, hasAny, hasAll, role, isLoading } = usePermissions()
-//   can(PERMISSIONS.USER_CHANGE)                          // boolean
-//   hasAny([PERMISSIONS.USER_VIEW, PERMISSIONS.USER_ADD]) // boolean
-//   hasAll([PERMISSIONS.USER_VIEW, PERMISSIONS.USER_ADD]) // boolean
-//
-// PROIBIDO: acessar usePermissionsStore diretamente para verificar permissão.
-// PROIBIDO: duplicar lógica de has/hasAny/hasAll em componentes.
+// Fallback seguro: appContext null → role=null, granted=[] → can() = false
 "use client";
 
 import { useMemo } from "react";
+import { useAuthStore } from "@/store/authStore";
+import { type PermissionKey } from "@/lib/permissions";
 import { usePermissionsStore } from "@/store/permissionsStore";
 import { buildPermissionContext } from "@/domain/permissions/permissions.service";
 
 export function usePermissions() {
-  const role = usePermissionsStore((s) => s.role);
-  const granted = usePermissionsStore((s) => s.granted);
+  const appContext = useAuthStore((s) => s.appContext);
+  const permissionsByApp = usePermissionsStore((s) => s.permissionsByApp);
   const isLoading = usePermissionsStore((s) => s.isLoading);
   const isHydrated = usePermissionsStore((s) => s.isHydrated);
+
+  // Seleciona o slice do app ativo — fallback seguro se contexto ausente
+  const { role, granted } = useMemo(() => {
+    if (!appContext) return { role: null, granted: [] as PermissionKey[] };
+    const slice = permissionsByApp[appContext];
+
+    return slice ?? { role: null, granted: [] as PermissionKey[] };
+  }, [appContext, permissionsByApp]);
 
   const ctx = useMemo(
     () => buildPermissionContext(role, granted),
@@ -36,20 +41,10 @@ export function usePermissions() {
     granted: ctx.granted,
     isLoading,
     isHydrated,
-    /**
-     * Verifica se UMA permissão específica está concedida.
-     * @example can(PERMISSIONS.USER_CHANGE)
-     */
+    /** Contexto de app ativo */
+    appContext,
     can: ctx.can,
-    /**
-     * Verifica se AO MENOS UMA das permissões está concedida.
-     * @example hasAny([PERMISSIONS.USER_VIEW, PERMISSIONS.USER_ADD])
-     */
     hasAny: ctx.hasAny,
-    /**
-     * Verifica se TODAS as permissões estão concedidas.
-     * @example hasAll([PERMISSIONS.USER_VIEW, PERMISSIONS.USER_ADD])
-     */
     hasAll: ctx.hasAll,
   };
 }
