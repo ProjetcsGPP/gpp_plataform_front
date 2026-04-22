@@ -19,9 +19,10 @@ const fetchMe = (url: string): Promise<MeResponse> =>
  * - shouldRetryOnError: false — interceptor 401 do api.ts trata sessão expirada
  */
 export function useMe() {
-  const setUser    = useAuthStore((s) => s.setUser);
-  const clearAuth  = useAuthStore((s) => s.clearAuth);
-  const setLoading = useAuthStore((s) => s.setLoading);
+  const setUser         = useAuthStore((s) => s.setUser);
+  const clearAuth       = useAuthStore((s) => s.clearAuth);
+  const setLoading      = useAuthStore((s) => s.setLoading);
+  const setAuthzVersion = useAuthStore((s) => s.setAuthzVersion);
 
   const { data, error, isLoading } = useSWR<MeResponse>("/accounts/me/", fetchMe, {
     dedupingInterval:      5 * 60 * 1000,
@@ -40,11 +41,16 @@ export function useMe() {
 
   useEffect(() => {
     if (data && !isLoading) {
-      // Extrai app_context do payload e repassa como segundo argumento
-      // para que authStore.appContext fique sincronizado
+      // Hidrata authStore com dados do usuário e app_context
       setUser(data, data.app_context ?? undefined);
+
+      // Persiste authz_version quando o backend enviar o campo.
+      // Fallback seguro: se não vier, mantém o valor anterior.
+      if (typeof data.authz_version === "number") {
+        setAuthzVersion(data.authz_version);
+      }
     }
-  }, [data, isLoading, setUser]);
+  }, [data, isLoading, setUser, setAuthzVersion]);
 
   return { me: data ?? null, isLoading, isError: !!error };
 }
