@@ -3,14 +3,10 @@
 //
 // Fluxo:
 //   GET /api/system/version/ a cada POLLING_INTERVAL ms
-//   Se authz_version ou user_version mudou → revalida permissões e navegação
+//   Se authz_version mudou (comparado com authStore) → revalida /me e /permissions
 //
-// Efeitos suportados:
-//   - Usuário perdeu role
-//   - Usuário recebeu revoke de permissão
-//   - Usuário foi desativado
-//   - Mudança em grupo/permissão
-//   - Logout forçado pelo admin
+// Nota: usa validateStatus para aceitar 404 silenciosamente enquanto
+//   o endpoint ainda não está implementado no backend.
 'use client'
 
 import { useEffect, useRef, useCallback } from 'react'
@@ -20,61 +16,70 @@ import { useAuthStore } from '@/store/authStore'
 import { useNavigationStore } from '@/store/navigationStore'
 import api from '@/lib/api'
 
-/** Intervalo de polling em ms (15 segundos) */
-const POLLING_INTERVAL = 15_000
+/** Intervalo de polling em ms (30 segundos) */
+const POLLING_INTERVAL = 30_000
 
 interface VersionResponse {
-  authz_version: number
-  user_version: number
+  authz_version?: number
+  user_version?: number
 }
 
-/**
- * Hook de polling de versão RBAC.
- *
- * Deve ser montado no layout autenticado, junto com usePermissionsHydrator.
- * Automaticamente pausa quando a aba está em background (visibilitychange).
- *
- * @example
- *   // Em um layout autenticado:
- *   useVersionPolling()
- */
 export function useVersionPolling() {
-  const isAuthenticated   = useAuthStore((s) => s.isAuthenticated)
+  const isAuthenticated     = useAuthStore((s) => s.isAuthenticated)
+  const authzVersion        = useAuthStore((s) => s.authzVersion)
   const bumpManifestVersion = useNavigationStore((s) => s.bumpManifestVersion)
 
-  // Referências mutáveis para evitar re-renders desnecessários
   const lastAuthzVersion = useRef<number | null>(null)
   const lastUserVersion  = useRef<number | null>(null)
   const timerRef         = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isActiveRef      = useRef(true)
+  const isCheckingRef    = useRef(false)
 
   const checkVersion = useCallback(async () => {
-    if (!isAuthenticated || !isActiveRef.current) return
+    if (!isAuthenticated || !isActiveRef.current || isCheckingRef.current) return
+
+    isCheckingRef.current = true
 
     try {
-      const { data } = await api.get<VersionResponse>('/system/version/')
+      // validateStatus: aceita qualquer status HTTP sem lançar erro de rede.
+      // Isso impede que o interceptor de 401/404 poluam o console enquanto
+      // o endpoint /system/version/ ainda não está disponível no backend.
+      const { data, status } = await api.get<VersionResponse>('/system/version/', {
+        validateStatus: () => true,
+      })
 
-      const authzChanged = lastAuthzVersion.current !== null &&
-                           lastAuthzVersion.current !== data.authz_version
+      // Endpoint ainda não implementado — ignora silenciosamente
+      if (status !== 200 || typeof data?.authz_version !== 'number') {
+        return
+      }
 
-      const userChanged  = lastUserVersion.current !== null &&
-                           lastUserVersion.current !== data.user_version
+      const authzChanged =
+        lastAuthzVersion.current !== null &&
+        lastAuthzVersion.current !== data.authz_version
 
-      // Atualiza referência local
+      const userChanged =
+        lastUserVersion.current !== null &&
+        data.user_version !== undefined &&
+        lastUserVersion.current !== data.user_version
+
       lastAuthzVersion.current = data.authz_version
-      lastUserVersion.current  = data.user_version
+      if (data.user_version !== undefined) {
+        lastUserVersion.current = data.user_version
+      }
 
       if (authzChanged || userChanged) {
-        // Revalida permissões do usuário atual
-        await globalMutate('/accounts/me/permissions/')
-        // Força re-resolução da navegação
+        await Promise.all([
+          globalMutate('/accounts/me/'),
+          globalMutate('/accounts/me/permissions/'),
+        ])
         bumpManifestVersion()
       }
     } catch {
-      // Erros de rede não devem interromper o ciclo de polling
-      // 401 será tratado pelo interceptor do axios (api.ts)
+      // Erros de rede não interrompem o ciclo
+    } finally {
+      isCheckingRef.current = false
     }
-  }, [isAuthenticated, bumpManifestVersion])
+  }, [isAuthenticated, authzVersion, bumpManifestVersion])
 
   useEffect(() => {
     if (!isAuthenticated) return
@@ -82,15 +87,13 @@ export function useVersionPolling() {
     const schedule = () => {
       timerRef.current = setTimeout(async () => {
         await checkVersion()
-        if (isActiveRef.current) schedule() // agenda próximo ciclo
+        if (isActiveRef.current) schedule()
       }, POLLING_INTERVAL)
     }
 
-    // Pausa polling quando aba está em background
     const handleVisibility = () => {
       if (document.visibilityState === 'visible') {
         isActiveRef.current = true
-        // Verifica imediatamente ao retornar para a aba
         checkVersion().then(() => {
           if (isActiveRef.current) schedule()
         })
@@ -104,7 +107,6 @@ export function useVersionPolling() {
     }
 
     document.addEventListener('visibilitychange', handleVisibility)
-    // Inicia o ciclo com primeira verificação após o intervalo
     schedule()
 
     return () => {
