@@ -8,6 +8,7 @@ const initialState = {
   appContext: null,
   isAuthenticated: false,
   isLoading: false,
+  authzVersion: null,
 };
 
 interface AuthState {
@@ -15,9 +16,11 @@ interface AuthState {
   appContext: AppContext | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  authzVersion: number | null;
 
   setUser: (user: MeResponse, appContext?: AppContext) => void;
-  setAppContext: (ctx: AppContext) => void; // NOVO
+  setAppContext: (ctx: AppContext) => void;
+  setAuthzVersion: (version: number | null) => void;
   clearAuth: () => void;
   setLoading: (loading: boolean) => void;
 }
@@ -39,9 +42,11 @@ export const useAuthStore = create<AuthState>()(
           "auth/setUser",
         ),
 
-      // NOVO — permite atualizar o contexto ativo sem re-setar o usuário
       setAppContext: (ctx) =>
         set({ appContext: ctx }, false, "auth/setAppContext"),
+
+      setAuthzVersion: (authzVersion) =>
+        set({ authzVersion }, false, "auth/setAuthzVersion"),
 
       clearAuth: () => set(initialState, false, "auth/clearAuth"),
 
