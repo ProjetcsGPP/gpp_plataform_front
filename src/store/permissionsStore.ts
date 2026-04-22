@@ -41,7 +41,7 @@ export interface PermissionsState {
   setPermissions: (role: string | null, granted: PermissionKey[]) => void;
   clearPermissions: () => void;
   setLoading: (loading: boolean) => void;
-  /** NOVO — grava permissões para uma app específica */
+  /** Grava permissões para uma app específica e finaliza o estado de loading */
   setPermissionsForApp: (
     app: AppContext,
     role: string | null,
@@ -84,7 +84,9 @@ export const usePermissionsStore = create<PermissionsState>()(
       setLoading: (isLoading) =>
         set({ isLoading }, false, "permissions/setLoading"),
 
-      // NOVO
+      // FIX: além de gravar no mapa multi-app, baixa isLoading e sobe isHydrated
+      // para que LoadingGuard seja liberado mesmo quando setPermissions legado
+      // não for chamado (ex.: appContext === null no closure do onSuccess).
       setPermissionsForApp: (app, role, granted) =>
         set(
           (state) => ({
@@ -92,6 +94,8 @@ export const usePermissionsStore = create<PermissionsState>()(
               ...state.permissionsByApp,
               [app]: { role, granted },
             },
+            isLoading: false,
+            isHydrated: true,
           }),
           false,
           `permissions/setForApp/${app}`,

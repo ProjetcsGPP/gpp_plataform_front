@@ -38,7 +38,8 @@ export function usePermissionsHydrator() {
       shouldRetryOnError: false,
       onSuccess(data) {
         if (isMultiAppResponse(data)) {
-          // Formato novo: itera todos os apps
+          // Formato novo: itera todos os apps.
+          // setPermissionsForApp já baixa isLoading + sobe isHydrated em cada chamada.
           for (const entry of data.apps) {
             setPermissionsForApp(
               entry.codigo,
@@ -46,9 +47,19 @@ export function usePermissionsHydrator() {
               toPermissionKeys(entry.permissions),
             );
           }
-          // Compatibilidade legada: preenche role/granted do app atual
-          if (appContext) {
-            const current = data.apps.find((a) => a.codigo === appContext);
+
+          // FIX: usa appContext do store OU o app_context que vem dentro de cada
+          // entry para determinar o app "atual" sem depender do closure.
+          // Prioridade: appContext do store > primeiro entry com codigo === app_context
+          // embutido na resposta (se o backend o incluir) > primeiro entry da lista.
+          const resolvedContext: AppContext | null =
+            appContext ??
+            (data.apps.length > 0 ? data.apps[0].codigo : null);
+
+          if (resolvedContext) {
+            const current = data.apps.find(
+              (a) => a.codigo === resolvedContext,
+            );
             if (current) {
               setPermissions(
                 current.role ?? null,
@@ -57,7 +68,8 @@ export function usePermissionsHydrator() {
             }
           }
         } else {
-          // Formato legado: popula apenas o app atual
+          // Formato legado: popula apenas o app atual.
+          // setPermissions já baixa isLoading + sobe isHydrated.
           setPermissions(data.role, toPermissionKeys(data.granted));
           if (appContext) {
             setPermissionsForApp(

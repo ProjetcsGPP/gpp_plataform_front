@@ -24,22 +24,28 @@ const fetcher = (url: string): Promise<NavManifestFile> =>
   });
 
 export function useNavigation() {
-  const appContext    = useAuthStore((s) => s.appContext);
+  const appContext      = useAuthStore((s) => s.appContext);
   const manifestVersion = useNavigationStore((s) => s.manifestVersion);
-  const setNavigation = useNavigationStore((s) => s.setNavigation);
-  const setLoading    = useNavigationStore((s) => s.setLoading);
+  const setNavigation   = useNavigationStore((s) => s.setNavigation);
+  const setLoading      = useNavigationStore((s) => s.setLoading);
 
   // ── Lê permissões de permissionsByApp[appContext] ─────────────────────────
-  // Motivo: o slice legado (granted/role planos) só é preenchido quando
-  // appContext já está no closure do onSuccess de usePermissionsHydrator.
-  // permissionsByApp é sempre populado por setPermissionsForApp
-  // independentemente do timing do appContext.
+  // permissionsByApp é populado por setPermissionsForApp independentemente
+  // do timing do appContext no closure do onSuccess.
+  // FIX: não depende mais de permLoading para resolver os itens — se
+  // permissionsByApp[appContext] já está populado, resolve imediatamente.
+  // permLoading só bloqueia quando os dados ainda não chegaram de fato.
   const permissionsByApp = usePermissionsStore((s) => s.permissionsByApp);
   const permLoading      = usePermissionsStore((s) => s.isLoading);
 
   const currentAppPerms = appContext ? (permissionsByApp[appContext] ?? null) : null;
   const granted = currentAppPerms?.granted ?? [];
   const role    = currentAppPerms?.role    ?? null;
+
+  // Os dados de permissão estão prontos quando:
+  //   (a) o slice do appContext atual já foi populado em permissionsByApp, OU
+  //   (b) permLoading é false (hidratação concluída pelo caminho legado)
+  const permsReady = currentAppPerms !== null || !permLoading;
 
   const manifestUrl = appContext ? APP_NAV_MAP[appContext] : null;
 
@@ -57,7 +63,11 @@ export function useNavigation() {
       return;
     }
 
-    const loading = manifestLoading || permLoading;
+    // FIX: loading da navegação depende do manifest E de permsReady,
+    // não mais de permLoading diretamente.
+    // Isso evita que um isLoading=true travado no store bloqueie o menu
+    // quando permissionsByApp[appContext] já está disponível.
+    const loading = manifestLoading || !permsReady;
     setLoading(loading);
 
     if (loading || !manifest) return;
@@ -70,7 +80,7 @@ export function useNavigation() {
     manifestLoading,
     granted,
     role,
-    permLoading,
+    permsReady,
     setNavigation,
     setLoading,
   ]);

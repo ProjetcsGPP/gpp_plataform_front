@@ -23,6 +23,7 @@ export interface MeResponse {
   app_context: AppContext;
   apps: AppContext[];
   roles: UserRole[];
+  authz_version?: number; // FASE 5 — versão de autorização para polling
 }
 
 export const APP_CONFIG: Record<
