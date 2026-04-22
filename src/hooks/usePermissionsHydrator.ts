@@ -17,7 +17,6 @@ const fetchPermissions = (url: string): Promise<AnyPermissionsResponse> =>
 
 export function usePermissionsHydrator() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
-  const appContext = useAuthStore((s) => s.appContext);
   const setPermissions = usePermissionsStore((s) => s.setPermissions);
   const clearPermissions = usePermissionsStore((s) => s.clearPermissions);
   const setLoading = usePermissionsStore((s) => s.setLoading);
@@ -37,9 +36,15 @@ export function usePermissionsHydrator() {
       revalidateOnFocus: false,
       shouldRetryOnError: false,
       onSuccess(data) {
+        // FIX: lê appContext diretamente do store no momento da execução,
+        // não do closure React. Isso garante o valor correto mesmo quando
+        // /me/permissions/ resolve antes de /me/ (chamadas SWR paralelas).
+        const appContext: AppContext | null =
+          useAuthStore.getState().appContext;
+
         if (isMultiAppResponse(data)) {
-          // Formato novo: itera todos os apps.
-          // setPermissionsForApp já baixa isLoading + sobe isHydrated em cada chamada.
+          // Formato multi-app: itera todos os apps.
+          // setPermissionsForApp já baixa isLoading + sobe isHydrated.
           for (const entry of data.apps) {
             setPermissionsForApp(
               entry.codigo,
@@ -48,10 +53,8 @@ export function usePermissionsHydrator() {
             );
           }
 
-          // FIX: usa appContext do store OU o app_context que vem dentro de cada
-          // entry para determinar o app "atual" sem depender do closure.
-          // Prioridade: appContext do store > primeiro entry com codigo === app_context
-          // embutido na resposta (se o backend o incluir) > primeiro entry da lista.
+          // Fallback para o slice legado: usa appContext do store ou
+          // o primeiro app da lista caso appContext ainda seja null.
           const resolvedContext: AppContext | null =
             appContext ??
             (data.apps.length > 0 ? data.apps[0].codigo : null);
@@ -68,9 +71,12 @@ export function usePermissionsHydrator() {
             }
           }
         } else {
-          // Formato legado: popula apenas o app atual.
-          // setPermissions já baixa isLoading + sobe isHydrated.
+          // Formato legado: setPermissions baixa isLoading + sobe isHydrated.
           setPermissions(data.role, toPermissionKeys(data.granted));
+
+          // Popula permissionsByApp para que useNavigation encontre o slice
+          // via permissionsByApp[appContext] sem depender do slice legado plano.
+          // FIX: usa getState() — valor atual, não o do closure.
           if (appContext) {
             setPermissionsForApp(
               appContext,
