@@ -1,7 +1,4 @@
 // src/hooks/useNavigation.ts
-// P1 FIX: lê permissões direto da permissionsStore (fonte única).
-// Antes usava useMePermissions() do useMe.ts — SWR independente que não
-// reagia ao globalMutate disparado pelo version polling.
 "use client";
 
 import { useEffect } from "react";
@@ -27,15 +24,22 @@ const fetcher = (url: string): Promise<NavManifestFile> =>
   });
 
 export function useNavigation() {
-  const appContext = useAuthStore((s) => s.appContext);
+  const appContext    = useAuthStore((s) => s.appContext);
   const manifestVersion = useNavigationStore((s) => s.manifestVersion);
   const setNavigation = useNavigationStore((s) => s.setNavigation);
-  const setLoading = useNavigationStore((s) => s.setLoading);
+  const setLoading    = useNavigationStore((s) => s.setLoading);
 
-  // Lê da permissionsStore diretamente — reage ao globalMutate do version polling
-  const granted = usePermissionsStore((s) => s.granted);
-  const role = usePermissionsStore((s) => s.role);
-  const permLoading = usePermissionsStore((s) => s.isLoading);
+  // ── Lê permissões de permissionsByApp[appContext] ─────────────────────────
+  // Motivo: o slice legado (granted/role planos) só é preenchido quando
+  // appContext já está no closure do onSuccess de usePermissionsHydrator.
+  // permissionsByApp é sempre populado por setPermissionsForApp
+  // independentemente do timing do appContext.
+  const permissionsByApp = usePermissionsStore((s) => s.permissionsByApp);
+  const permLoading      = usePermissionsStore((s) => s.isLoading);
+
+  const currentAppPerms = appContext ? (permissionsByApp[appContext] ?? null) : null;
+  const granted = currentAppPerms?.granted ?? [];
+  const role    = currentAppPerms?.role    ?? null;
 
   const manifestUrl = appContext ? APP_NAV_MAP[appContext] : null;
 
@@ -49,7 +53,7 @@ export function useNavigation() {
   useEffect(() => {
     if (!appContext) {
       setLoading(false);
-      setNavigation(role ?? "", []);
+      setNavigation("", []);
       return;
     }
 
