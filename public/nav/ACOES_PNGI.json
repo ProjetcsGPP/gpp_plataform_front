@@ -1,0 +1,36 @@
+{
+  "items": [
+    {
+      "id": "dashboard",
+      "label": "Dashboard",
+      "icon": "dashboard",
+      "href": "/acoes-pngi/dashboard",
+      "order": 1
+    },
+    {
+      "id": "acoes",
+      "label": "Ações",
+      "icon": "assignment",
+      "href": "/acoes-pngi/acoes",
+      "order": 2,
+      "permissionKey": "view_acao"
+    },
+    {
+      "id": "programas",
+      "label": "Programas",
+      "icon": "folder",
+      "href": "/acoes-pngi/programas",
+      "order": 3,
+      "permissionKey": "view_programa"
+    },
+    {
+      "id": "relatorios",
+      "label": "Relatórios",
+      "icon": "bar_chart",
+      "href": "/acoes-pngi/relatorios",
+      "order": 4,
+      "permissionKey": "view_relatorio",
+      "visibleWhenDenied": false
+    }
+  ]
+}

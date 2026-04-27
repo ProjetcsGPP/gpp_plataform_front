@@ -1,13 +1,21 @@
-/** @type {import('next').NextConfig} */
-const nextConfig = {
+import type { NextConfig } from "next";
+
+const nextConfig: NextConfig = {
+  turbopack: {
+    root: "/home/gppusrubuntu/gpp_frontend",
+  },
   async rewrites() {
     return [
       {
+        source: "/api/:path*/",
+        destination: "http://172.22.176.1:8000/api/:path*/",
+      },
+      {
         source: "/api/:path*",
-        destination: "http://localhost:8000/api/:path*",
+        destination: "http://172.22.176.1:8000/api/:path*/",
       },
     ];
   },
 };
 
-module.exports = nextConfig;
+export default nextConfig;
