@@ -69,18 +69,23 @@ export default function PortalDashboardPage() {
   }
 
   async function handleAppClick(app: PortalAplicacao) {
-    if (app.codigointerno === '') return;
+    if (app.codigointerno === "") return;
     setSwitching(app.codigointerno);
     try {
+      // 1. Faz o handshake silencioso e seguro com a nossa nova SwitchAppView no Django
       await switchApp(
         app.codigointerno as "PORTAL" | "ACOES_PNGI" | "CARGA_ORG_LOT",
       );
+
+      // 2. Abre o sistema correspondente em uma NOVA ABA (_blank) de forma transparente
       if (app.codigointerno === "ACOES_PNGI")
-        router.push("/acoes-pngi/dashboard");
+        window.open("/acoes-pngi/dashboard", "_blank");
       else if (app.codigointerno === "CARGA_ORG_LOT")
-        router.push("/carga-org-lot/dashboard");
+        window.open("/carga-org-lot/dashboard", "_blank");
     } catch (err) {
       await logError(err, "portal/dashboard/switchApp");
+    } finally {
+      // Limpa o estado de carregamento do card após abrir
       setSwitching(null);
     }
   }
@@ -140,7 +145,9 @@ export default function PortalDashboardPage() {
       {appList.length === 0 && (
         <div className="flex flex-col items-center justify-center py-20 text-slate-400">
           <LayoutGrid className="h-12 w-12 mb-4 opacity-30" />
-          <p className="text-sm">Nenhuma aplicação disponível para o seu perfil.</p>
+          <p className="text-sm">
+            Nenhuma aplicação disponível para o seu perfil.
+          </p>
         </div>
       )}
 

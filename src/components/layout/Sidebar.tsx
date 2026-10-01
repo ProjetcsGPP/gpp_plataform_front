@@ -109,8 +109,10 @@ export default function Sidebar({ appContext }: SidebarProps) {
             Carregando navegação...
           </div>
         ) : items.length > 0 ? (
-          items.map((item) =>
-            item.children?.length ? (
+          items.map((item) => {
+            const href = item.href;
+
+            return item.children?.length ? (
               <NavItemGroup
                 key={item.id}
                 item={item}
@@ -125,15 +127,16 @@ export default function Sidebar({ appContext }: SidebarProps) {
                 label={item.label}
                 isExpanded={expanded}
                 active={
-                  pathname === item.href || pathname.startsWith(`${item.href}/`)
+                  !!href &&
+                  (pathname === href || pathname.startsWith(`${href}/`))
                 }
                 disabled={!item.enabled}
                 onClick={
-                  item.enabled ? () => router.push(item.href) : undefined
+                  item.enabled && href ? () => router.push(href) : undefined
                 }
               />
-            ),
-          )
+            );
+          })
         ) : (
           <div className="px-3 py-2 text-xs text-on-surface-variant">
             Nenhum item de navegação disponível

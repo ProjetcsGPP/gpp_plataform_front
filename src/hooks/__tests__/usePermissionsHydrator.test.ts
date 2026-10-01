@@ -3,6 +3,7 @@ import { renderHook, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import React from "react";
 import { SWRConfig } from "swr";
+import { debugLog } from "@/lib/debug";
 
 const mockSetPermissions = vi.fn();
 const mockClearPermissions = vi.fn();
@@ -12,8 +13,19 @@ let mockIsAuthenticated = true;
 let mockAppContext = "PORTAL";
 
 vi.mock("@/store/authStore", () => ({
-  useAuthStore: (sel: (s: object) => unknown) =>
-    sel({ isAuthenticated: mockIsAuthenticated, appContext: mockAppContext }),
+  useAuthStore: Object.assign(
+    (sel: (s: object) => unknown) =>
+      sel({
+        isAuthenticated: mockIsAuthenticated,
+        appContext: mockAppContext,
+      }),
+    {
+      getState: () => ({
+        isAuthenticated: mockIsAuthenticated,
+        appContext: mockAppContext,
+      }),
+    },
+  ),
 }));
 
 vi.mock("@/store/permissionsStore", () => ({
@@ -27,8 +39,14 @@ vi.mock("@/store/permissionsStore", () => ({
 }));
 
 const mockApiGet = vi.fn();
+
 vi.mock("@/lib/api", () => ({
-  default: { get: (...args: unknown[]) => mockApiGet(...args) },
+  default: {
+    get: (...args: unknown[]) => {
+      debugLog("test-permissions", "api.get chamado", { args });
+      return mockApiGet(...args);
+    },
+  },
 }));
 
 const wrapper = ({ children }: { children: React.ReactNode }) =>
@@ -43,6 +61,11 @@ describe("usePermissionsHydrator", () => {
     vi.clearAllMocks();
     mockIsAuthenticated = true;
     mockAppContext = "PORTAL";
+
+    debugLog("test-permissions", "beforeEach", {
+      isAuthenticated: mockIsAuthenticated,
+      appContext: mockAppContext,
+    });
   });
 
   describe("formato legado", () => {
@@ -51,9 +74,23 @@ describe("usePermissionsHydrator", () => {
         data: { role: "PORTAL_ADMIN", granted: ["view_user"] },
       });
 
+      debugLog("test-permissions", "legado: mockApiGet configurado", {
+        response: {
+          role: "PORTAL_ADMIN",
+          granted: ["view_user"],
+        },
+      });
+
       const { usePermissionsHydrator } =
         await import("@/hooks/usePermissionsHydrator");
       renderHook(() => usePermissionsHydrator(), { wrapper });
+
+      debugLog("test-permissions", "legado: após renderHook", {
+        apiCalls: mockApiGet.mock.calls,
+        setPermissionsCalls: mockSetPermissions.mock.calls,
+        setPermissionsForAppCalls: mockSetPermissionsForApp.mock.calls,
+        clearPermissionsCalls: mockClearPermissions.mock.calls,
+      });
 
       await waitFor(() => {
         expect(mockSetPermissions).toHaveBeenCalledWith("PORTAL_ADMIN", [
@@ -124,6 +161,13 @@ describe("usePermissionsHydrator", () => {
       renderHook(() => usePermissionsHydrator(), { wrapper });
 
       await waitFor(() => {
+        debugLog("test-permissions", "legado: dentro do waitFor", {
+          apiCalls: mockApiGet.mock.calls,
+          setPermissionsCalls: mockSetPermissions.mock.calls,
+          setPermissionsForAppCalls: mockSetPermissionsForApp.mock.calls,
+          clearPermissionsCalls: mockClearPermissions.mock.calls,
+        });
+
         expect(mockSetPermissions).toHaveBeenCalledWith("PORTAL_ADMIN", [
           "view_user",
         ]);

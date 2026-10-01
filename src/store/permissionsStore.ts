@@ -10,6 +10,7 @@ import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 import type { AppContext } from "@/types/auth";
 import type { PermissionKey } from "@/lib/permissions";
+import { debugLog } from "@/lib/debug";
 
 /** Estado por aplicação — usado pela estrutura multi-app */
 export interface AppPermissionsSlice {
@@ -61,33 +62,50 @@ export const usePermissionsStore = create<PermissionsState>()(
       // multi-app
       permissionsByApp: { ...initialPermissionsByApp },
 
-      setPermissions: (role, granted) =>
+      setPermissions: (role, granted) => {
+        debugLog("permissions-store", "permissões definidas", {
+          role,
+          count: granted.length,
+        });
+
         set(
           { role, granted, isLoading: false, isHydrated: true },
           false,
           "permissions/set",
-        ),
+        );
+      },
 
       clearPermissions: () =>
         set(
           {
             role: null,
-            granted: [] as PermissionKey[],
-            isLoading: true,
-            isHydrated: false,
+            granted: [], // as PermissionKey[],
+            isLoading: false,
+            isHydrated: true,
             permissionsByApp: { ...initialPermissionsByApp },
           },
           false,
           "permissions/clear",
         ),
 
-      setLoading: (isLoading) =>
-        set({ isLoading }, false, "permissions/setLoading"),
+      setLoading: (isLoading) => {
+        debugLog("permissions-store", "loading alterado", {
+          isLoading,
+        });
+
+        set({ isLoading }, false, "permissions/setLoading");
+      },
 
       // FIX: além de gravar no mapa multi-app, baixa isLoading e sobe isHydrated
       // para que LoadingGuard seja liberado mesmo quando setPermissions legado
       // não for chamado (ex.: appContext === null no closure do onSuccess).
-      setPermissionsForApp: (app, role, granted) =>
+      setPermissionsForApp: (app, role, granted) => {
+        debugLog("permissions-store", "permissões por app definidas", {
+          app,
+          role,
+          count: granted.length,
+        });
+
         set(
           (state) => ({
             permissionsByApp: {
@@ -99,7 +117,8 @@ export const usePermissionsStore = create<PermissionsState>()(
           }),
           false,
           `permissions/setForApp/${app}`,
-        ),
+        );
+      },
     }),
     {
       name: "gpp-permissions-store",

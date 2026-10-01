@@ -11,9 +11,19 @@ import type { AnyPermissionsResponse } from "@/types/navigation";
 import { isMultiAppResponse } from "@/types/navigation";
 import type { AppContext } from "@/types/auth";
 import type { PermissionKey } from "@/lib/permissions";
+import { debugError, debugLog } from "@/lib/debug";
 
-const fetchPermissions = (url: string): Promise<AnyPermissionsResponse> =>
-  api.get<AnyPermissionsResponse>(url).then((res) => res.data);
+const fetchPermissions = (url: string): Promise<AnyPermissionsResponse> => {
+  debugLog("permissions", "buscando permissões", { url });
+
+  return api.get<AnyPermissionsResponse>(url).then((res) => {
+    debugLog("permissions", "permissões recebidas", {
+      status: res.status,
+    });
+
+    return res.data;
+  });
+};
 
 export function usePermissionsHydrator() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
@@ -39,8 +49,12 @@ export function usePermissionsHydrator() {
         // FIX: lê appContext diretamente do store no momento da execução,
         // não do closure React. Isso garante o valor correto mesmo quando
         // /me/permissions/ resolve antes de /me/ (chamadas SWR paralelas).
-        const appContext: AppContext | null =
-          useAuthStore.getState().appContext;
+        const appContext = useAuthStore.getState().appContext;
+
+        debugLog("permissions", "hidratação concluída", {
+          appContext,
+          multiApp: isMultiAppResponse(data),
+        });
 
         if (isMultiAppResponse(data)) {
           // Formato multi-app: itera todos os apps.
@@ -56,13 +70,10 @@ export function usePermissionsHydrator() {
           // Fallback para o slice legado: usa appContext do store ou
           // o primeiro app da lista caso appContext ainda seja null.
           const resolvedContext: AppContext | null =
-            appContext ??
-            (data.apps.length > 0 ? data.apps[0].codigo : null);
+            appContext ?? (data.apps.length > 0 ? data.apps[0].codigo : null);
 
           if (resolvedContext) {
-            const current = data.apps.find(
-              (a) => a.codigo === resolvedContext,
-            );
+            const current = data.apps.find((a) => a.codigo === resolvedContext);
             if (current) {
               setPermissions(
                 current.role ?? null,
@@ -86,7 +97,11 @@ export function usePermissionsHydrator() {
           }
         }
       },
-      onError() {
+      onError(error) {
+        debugError("permissions", "erro ao carregar permissões", {
+          status: error?.response?.status,
+          data: error?.response?.data,
+        });
         clearPermissions();
       },
     },

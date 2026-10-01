@@ -1,74 +1,131 @@
 // src/lib/api.ts
-import axios from 'axios'
-import { APP_CONFIG } from '@/types/auth'
-import { useAuthStore } from '@/store/authStore'
+import axios from "axios";
+import { APP_CONFIG } from "@/types/auth";
+import { useAuthStore } from "@/store/authStore";
+import { debugError, debugLog } from "@/lib/debug";
 
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: "/api",
   withCredentials: true,
-  headers: { 'Content-Type': 'application/json' },
-})
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
 
-// Garante barra final em toda URL (Django exige APPEND_SLASH)
-api.interceptors.request.use((config) => {
-  if (config.url && !config.url.endsWith('/') && !config.url.includes('?')) {
-    config.url = config.url + '/'
-  }
-  if (['post', 'put', 'patch', 'delete'].includes(config.method ?? '')) {
-    const csrf = document.cookie
-      .split('; ')
-      .find((c) => c.startsWith('csrftoken='))
-      ?.split('=')[1]
-    if (csrf) config.headers['X-CSRFToken'] = csrf
-  }
-  return config
-})
+// Garante barra final em toda URL
+api.interceptors.request.use(
+  (config) => {
+    if (config.url && !config.url.endsWith("/") && !config.url.includes("?")) {
+      config.url += "/";
+    }
+
+    const method = config.method?.toUpperCase();
+    const url = config.url;
+
+    debugLog("api", "request", {
+      method,
+      url,
+      withCredentials: config.withCredentials,
+    });
+
+    if (
+      method &&
+      ["POST", "PUT", "PATCH", "DELETE"].includes(method) &&
+      typeof document !== "undefined"
+    ) {
+      const csrf = document.cookie
+        .split("; ")
+        .find((cookie) => cookie.startsWith("csrftoken="))
+        ?.split("=")
+        .slice(1)
+        .join("=");
+
+      debugLog("api", "csrf", {
+        present: Boolean(csrf),
+      });
+
+      if (csrf) {
+        config.headers["X-CSRFToken"] = decodeURIComponent(csrf);
+      }
+    }
+
+    return config;
+  },
+  (error) => {
+    debugError("api", "request interceptor error", error);
+    return Promise.reject(error);
+  },
+);
 
 // Redireciona para o login da app correta em caso de 401.
-// GUARD DE REDE: se navigator.onLine === false, o 401 pode ser um
-// falso positivo — a requisição nunca chegou ao servidor porque a
-// rede caiu. Nesse caso NÃO redireciona para login; o SWR vai
-// revalidar automaticamente quando a conexão voltar
-// (revalidateOnReconnect: true em useMe.ts).
 api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    const isLogout = error.config?.url?.includes('/accounts/logout')
+  (response) => {
+    debugLog("api", "response", {
+      method: response.config.method?.toUpperCase(),
+      url: response.config.url,
+      status: response.status,
+    });
 
-    if (!isLogout && error.response?.status === 401) {
-      // Não redireciona se o browser está offline — o cookie ainda é válido
-      if (typeof navigator !== 'undefined' && !navigator.onLine) {
-        return Promise.reject(error)
+    return response;
+  },
+  (error) => {
+    const status = error.response?.status;
+    const url = error.config?.url;
+    const isLogout = url?.includes("/accounts/logout");
+
+    debugError("api", "response error", {
+      method: error.config?.method?.toUpperCase(),
+      url,
+      status,
+      data: error.response?.data,
+      online: typeof navigator !== "undefined" ? navigator.onLine : undefined,
+    });
+
+    if (!isLogout && status === 401) {
+      if (typeof navigator !== "undefined" && !navigator.onLine) {
+        debugLog("auth", "401 ignorado porque o navegador está offline");
+        return Promise.reject(error);
       }
 
-      // Ler appContext da store fora de hook (Zustand permite acesso direto ao estado)
-      const appContext = useAuthStore.getState().appContext
+      const appContext = useAuthStore.getState().appContext;
+
+      debugLog("auth", "sessão não autorizada", {
+        appContext,
+        path:
+          typeof window !== "undefined" ? window.location.pathname : undefined,
+      });
 
       if (appContext) {
-        const { loginPath } = APP_CONFIG[appContext]
-        useAuthStore.getState().clearAuth()
-        if (!window.location.pathname.includes('/login')) {
-          window.location.href = `${loginPath}?reason=session_expired`
+        const { loginPath } = APP_CONFIG[appContext];
+
+        useAuthStore.getState().clearAuth();
+
+        if (
+          typeof window !== "undefined" &&
+          !window.location.pathname.includes("/login")
+        ) {
+          window.location.href = `${loginPath}?reason=session_expired`;
         }
-      } else {
-        // Fallback: appContext ainda não estava na store (ex: erro na própria chamada /me)
-        // Detecta o app pelo pathname atual
-        const pathname = window.location.pathname
+      } else if (typeof window !== "undefined") {
+        const pathname = window.location.pathname;
+
         const match = Object.entries(APP_CONFIG).find(([, cfg]) =>
-          pathname.startsWith(`/${cfg.slug}`)
-        )
+          pathname.startsWith(`/${cfg.slug}`),
+        );
+
         if (match) {
-          const [, cfg] = match
-          if (!pathname.includes('/login')) {
-            window.location.href = `${cfg.loginPath}?reason=session_expired`
+          const [, cfg] = match;
+
+          if (!pathname.includes("/login")) {
+            window.location.href = `${cfg.loginPath}?reason=session_expired`;
           }
         }
       }
     }
 
-    return Promise.reject(error)
-  }
-)
+    return Promise.reject(error);
+  },
+);
 
-export default api
-export { api }
+export default api;
+export { api };

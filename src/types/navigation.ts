@@ -6,15 +6,10 @@ export interface NavItemDefinition {
   id: string;
   label: string;
   icon: string;
-  /** Opcional: grupos de expansão pura não têm rota própria (P6c) */
+  app: AppContext;
   href?: string;
   order: number;
-  /** Se presente, o backend deve incluir esta chave em `granted` para o item ser habilitado */
   permissionKey?: string;
-  /**
-   * true  -> item aparece desabilitado (cinza + tooltip) quando sem permissão
-   * false -> item é completamente oculto quando sem permissão (padrão)
-   */
   visibleWhenDenied?: boolean;
   children?: NavItemDefinition[];
 }
@@ -59,22 +54,4 @@ export function isMultiAppResponse(
   r: AnyPermissionsResponse,
 ): r is PermissionsResponseMultiApp {
   return "apps" in r && Array.isArray((r as PermissionsResponseMultiApp).apps);
-}
-
-export interface NavItemDefinition {
-  id: string;
-  label: string;
-  icon: string;
-  app: AppContext;
-  href?: string;
-  order: number;
-  permissionKey?: string;
-  visibleWhenDenied?: boolean;
-  children?: NavItemDefinition[];
-}
-
-export interface ResolvedNavItem extends Omit<NavItemDefinition, "children"> {
-  enabled: boolean;
-  visible: boolean;
-  children?: ResolvedNavItem[];
 }
