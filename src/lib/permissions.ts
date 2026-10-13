@@ -97,6 +97,18 @@ export const PERMISSIONS = {
   USERPERMISSIONOVERRIDE_ADD: "add_userpermissionoverride",
   USERPERMISSIONOVERRIDE_CHANGE: "change_userpermissionoverride",
   USERPERMISSIONOVERRIDE_DELETE: "delete_userpermissionoverride",
+
+  // ── Eixos PNGI (model: eixo) ──────────────────────────────────────────
+  EIXO_VIEW: "view_eixo",
+  EIXO_ADD: "add_eixo",
+  EIXO_CHANGE: "change_eixo",
+  EIXO_DELETE: "delete_eixo",
+
+  // ── Situações de Ação PNGI (model: situacaoacao) ──────────────────────
+  SITUACAOACAO_VIEW: "view_situacaoacao",
+  SITUACAOACAO_ADD: "add_situacaoacao",
+  SITUACAOACAO_CHANGE: "change_situacaoacao",
+  SITUACAOACAO_DELETE: "delete_situacaoacao",
 } as const;
 
 export type PermissionKey = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];

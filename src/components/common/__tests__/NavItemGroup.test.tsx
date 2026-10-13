@@ -176,4 +176,50 @@ describe("NavItemGroup", () => {
     fireEvent.click(btn);
     expect(onNavigate).not.toHaveBeenCalled();
   });
+
+  it("renderiza os filhos de Configurações em um grupo visualmente indentado", async () => {
+    const { NavItemGroup } = await import("@/components/common/NavItemGroup");
+    const labels = [
+      "Eixos",
+      "Situações",
+      "Tipos de Entrave/Alerta",
+      "Tipos de Anotação/Alinhamento",
+      "Vigências",
+    ];
+    const item = makeGroup({
+      id: "configuracoes",
+      codigo: "CONFIGURACOES",
+      label: "Configurações",
+      children: labels.map((label, index) => ({
+        id: `config-${index}`,
+        codigo: `CONFIG_${index}`,
+        label,
+        href: `/acoes-pngi/configuracoes/${index}`,
+        icon: "settings",
+        app: "ACOES_PNGI",
+        order: 301 + index,
+        enabled: true,
+        visible: true,
+      })),
+    });
+
+    render(
+      <NavItemGroup
+        item={{ ...item, app: "ACOES_PNGI" }}
+        isExpanded={true}
+        pathname="/acoes-pngi/dashboard"
+        onNavigate={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId("nav-Configurações"));
+
+    const submenu = screen.getByRole("group", {
+      name: "Submenu de Configurações",
+    });
+    expect(submenu).toHaveClass("ml-4", "border-l", "pl-2");
+    for (const label of labels) {
+      expect(screen.getByTestId(`nav-${label}`)).toBeInTheDocument();
+    }
+  });
 });

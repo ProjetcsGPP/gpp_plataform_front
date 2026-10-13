@@ -86,13 +86,13 @@ export function proxy(request: NextRequest) {
 export const config = {
   /**
    * Matcher expandido para cobrir /portal/* durante modo manutencao.
-   * O guard de cookie so atua nas rotas de dashboard (definido pela logica acima).
+   * O guard de cookie atua nas áreas autenticadas definidas pela lógica acima.
    * Arquivos estaticos e _next sao excluidos automaticamente pelo Next.js
    * quando o path nao bate com os padroes abaixo.
    */
   matcher: [
     '/portal/:path*',
-    '/acoes-pngi/dashboard/:path*',
+    '/acoes-pngi/:path*',
     '/carga-org-lot/dashboard/:path*',
   ],
 }

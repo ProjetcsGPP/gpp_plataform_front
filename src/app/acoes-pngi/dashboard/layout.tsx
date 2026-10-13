@@ -1,9 +1,5 @@
 // src/app/acoes-pngi/dashboard/layout.tsx
-import { AppThemeProvider } from "@/components/common/AppThemeProvider";
-import { AuthHydrator }     from "@/components/common/AuthHydrator";
-import { LoadingGuard }     from "@/components/common/LoadingGuard";
-import TopBar               from "@/components/layout/TopBar";
-import Sidebar              from "@/components/layout/Sidebar";
+import AppShell from "@/components/layout/AppShell";
 
 export default function AcoesPngiDashboardLayout({
   children,
@@ -11,21 +7,12 @@ export default function AcoesPngiDashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <AppThemeProvider appContext="ACOES_PNGI">
-      <AuthHydrator />
-      <LoadingGuard>
-        <div className="min-h-screen flex bg-app-gradient">
-          <Sidebar appContext="ACOES_PNGI" />
-          <div className="flex flex-col flex-1 pl-18">
-            <TopBar
-              title="Ações PNGI"
-              titleMinor="SEGER/SUBGES/GPP"
-              appContext="ACOES_PNGI"
-            />
-            <main className="flex-1">{children}</main>
-          </div>
-        </div>
-      </LoadingGuard>
-    </AppThemeProvider>
+    <AppShell
+      appContext="ACOES_PNGI"
+      title="Ações PNGI"
+      titleMinor="SEGER/SUBGES/GPP"
+    >
+      {children}{" "}
+    </AppShell>
   );
 }

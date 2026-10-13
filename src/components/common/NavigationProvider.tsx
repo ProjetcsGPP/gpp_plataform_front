@@ -1,3 +1,4 @@
+// src/components/common/NavigationProvider.tsx
 "use client";
 
 import { useNavigation } from "@/hooks/useNavigation";

@@ -3,6 +3,10 @@ import axios from "axios";
 import { APP_CONFIG } from "@/types/auth";
 import { useAuthStore } from "@/store/authStore";
 import { debugError, debugLog } from "@/lib/debug";
+import type {
+  Capability,
+  NavigationMenusResponse,
+} from "@/types/navigation";
 
 const api = axios.create({
   baseURL: "/api",
@@ -73,13 +77,22 @@ api.interceptors.response.use(
     const url = error.config?.url;
     const isLogout = url?.includes("/accounts/logout");
 
-    debugError("api", "response error", {
+    const diagnostic = {
       method: error.config?.method?.toUpperCase(),
       url,
       status,
       data: error.response?.data,
       online: typeof navigator !== "undefined" ? navigator.onLine : undefined,
-    });
+    };
+
+    // Respostas 4xx fazem parte do fluxo esperado da aplicação e são tratadas
+    // pelas telas. console.error faz o Next exibir um overlay vermelho mesmo
+    // quando a rejeição foi capturada corretamente.
+    if (status && status >= 400 && status < 500) {
+      debugLog("api", "response rejected", diagnostic);
+    } else {
+      debugError("api", "response error", diagnostic);
+    }
 
     if (!isLogout && status === 401) {
       if (typeof navigator !== "undefined" && !navigator.onLine) {
@@ -129,3 +142,13 @@ api.interceptors.response.use(
 
 export default api;
 export { api };
+
+export async function getCapabilities(): Promise<Capability[]> {
+  const response = await api.get<Capability[]>("/accounts/capabilities/");
+  return response.data;
+}
+
+export async function getNavigationMenus(): Promise<NavigationMenusResponse> {
+  const response = await api.get<NavigationMenusResponse>("/accounts/menus/");
+  return response.data;
+}

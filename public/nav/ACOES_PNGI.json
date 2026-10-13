@@ -2,14 +2,16 @@
   "items": [
     {
       "id": "dashboard",
+      "codigo": "DASHBOARD",
       "label": "Dashboard",
-      "icon": "layout-dashboard",
+      "icon": "dashboard",
       "app": "ACOES_PNGI",
       "href": "/acoes-pngi/dashboard",
       "order": 1
     },
     {
       "id": "programas",
+      "codigo": "PROGRAMAS",
       "label": "Programas",
       "icon": "folder-open",
       "app": "ACOES_PNGI",
@@ -19,15 +21,17 @@
     },
     {
       "id": "acoes",
+      "codigo": "ACOES",
       "label": "Ações",
-      "icon": "list-checks",
+      "icon": "checklist",
       "app": "ACOES_PNGI",
       "href": "/acoes-pngi/acoes",
       "order": 3,
-      "permissionKey": "acoes.view"
+      "permissionKey": "view_acoes"
     },
     {
       "id": "relatorios",
+      "codigo": "RELATORIOS",
       "label": "Relatórios",
       "icon": "bar-chart-2",
       "app": "ACOES_PNGI",
@@ -38,6 +42,7 @@
     },
     {
       "id": "usuarios",
+      "codigo": "USUARIOS",
       "label": "Usuários",
       "icon": "users",
       "app": "ACOES_PNGI",
@@ -45,6 +50,39 @@
       "order": 5,
       "permissionKey": "usuarios.manage",
       "visibleWhenDenied": false
+    },
+    {
+      "id": "configuracoes",
+      "codigo": "CONFIGURACOES",
+      "label": "Configurações",
+      "icon": "settings",
+      "app": "ACOES_PNGI",
+      "order": 6,
+      "capabilityControlled": true,
+      "children": [
+        {
+          "id": "eixos",
+          "codigo": "EIXOS",
+          "label": "Eixos",
+          "icon": "category",
+          "app": "ACOES_PNGI",
+          "href": "/acoes-pngi/configuracoes/eixos",
+          "order": 1,
+          "permissionKey": "view_eixo",
+          "visibleWhenDenied": true
+        },
+        {
+          "id": "situacoes",
+          "codigo": "SITUACOES",
+          "label": "Situações",
+          "icon": "flag",
+          "app": "ACOES_PNGI",
+          "href": "/acoes-pngi/configuracoes/situacoes",
+          "order": 2,
+          "permissionKey": "view_situacaoacao",
+          "visibleWhenDenied": true
+        }
+      ]
     }
   ]
 }

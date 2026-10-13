@@ -1,3 +1,4 @@
+// src/components/common/AppThemeProvider.tsx
 "use client";
 
 import { useEffect } from "react";

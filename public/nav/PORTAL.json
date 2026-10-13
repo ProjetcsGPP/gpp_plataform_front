@@ -2,6 +2,7 @@
   "items": [
     {
       "id": "dashboard",
+      "codigo": "DASHBOARD",
       "label": "Dashboard",
       "icon": "dashboard",
       "app": "PORTAL",
@@ -10,6 +11,7 @@
     },
     {
       "id": "aplicacoes",
+      "codigo": "APLICACOES",
       "label": "Aplicações",
       "icon": "grid_view",
       "app": "PORTAL",
@@ -19,6 +21,7 @@
     },
     {
       "id": "admin",
+      "codigo": "ADMIN",
       "label": "Administração",
       "icon": "admin_panel_settings",
       "app": "PORTAL",
@@ -28,6 +31,7 @@
       "children": [
         {
           "id": "usuarios",
+          "codigo": "USUARIOS",
           "label": "Usuários",
           "icon": "group",
           "app": "PORTAL",
@@ -37,6 +41,7 @@
         },
         {
           "id": "acesso",
+          "codigo": "ACESSO",
           "label": "Controle de Acesso",
           "icon": "security",
           "app": "PORTAL",
@@ -46,6 +51,7 @@
           "children": [
             {
               "id": "roles",
+              "codigo": "ROLES",
               "label": "Perfis e Roles",
               "icon": "shield",
               "app": "PORTAL",
@@ -55,6 +61,7 @@
             },
             {
               "id": "permissoes",
+              "codigo": "PERMISSOES",
               "label": "Permissões",
               "icon": "key",
               "app": "PORTAL",

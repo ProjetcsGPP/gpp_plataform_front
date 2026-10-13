@@ -6,7 +6,12 @@ import useSWR from "swr";
 
 import { useNavigationStore } from "@/store/navigationStore";
 import { usePermissionsStore } from "@/store/permissionsStore";
-import { resolveNavigation } from "@/lib/resolveNavigation";
+import { adaptNavigationMenus } from "@/lib/adaptNavigationMenus";
+import {
+  getNavigationFallback,
+  resolveNavigation,
+} from "@/lib/resolveNavigation";
+import { useNavigationMenus } from "@/hooks/useNavigationMenus";
 import type { AppContext } from "@/types/auth";
 import type { NavManifestFile } from "@/types/navigation";
 import { useAuthStore } from "@/store/authStore";
@@ -16,6 +21,8 @@ const APP_NAV_MAP: Record<AppContext, string> = {
   PORTAL: "/nav/PORTAL.json",
   CARGA_ORG_LOT: "/nav/CARGA_ORG_LOT.json",
 };
+
+const EMPTY_GRANTED: string[] = [];
 
 const fetcher = (url: string): Promise<NavManifestFile> =>
   fetch(url).then((r) => {
@@ -27,7 +34,8 @@ export function useNavigation() {
   const appContext      = useAuthStore((s) => s.appContext);
   const manifestVersion = useNavigationStore((s) => s.manifestVersion);
   const setNavigation   = useNavigationStore((s) => s.setNavigation);
-  const setLoading      = useNavigationStore((s) => s.setLoading);
+  const beginLoading    = useNavigationStore((s) => s.beginLoading);
+  const clearNavigation = useNavigationStore((s) => s.clearNavigation);
 
   // ── Lê permissões de permissionsByApp[appContext] ─────────────────────────
   // permissionsByApp é populado por setPermissionsForApp independentemente
@@ -39,7 +47,7 @@ export function useNavigation() {
   const permLoading      = usePermissionsStore((s) => s.isLoading);
 
   const currentAppPerms = appContext ? (permissionsByApp[appContext] ?? null) : null;
-  const granted = currentAppPerms?.granted ?? [];
+  const granted = currentAppPerms?.granted ?? EMPTY_GRANTED;
   const role    = currentAppPerms?.role    ?? null;
 
   // Os dados de permissão estão prontos quando:
@@ -49,7 +57,17 @@ export function useNavigation() {
 
   const manifestUrl = appContext ? APP_NAV_MAP[appContext] : null;
 
-  const { data: manifest, isLoading: manifestLoading } =
+  const {
+    data: apiMenus,
+    error: apiError,
+    isLoading: apiLoading,
+  } = useNavigationMenus(appContext, manifestVersion);
+
+  const {
+    data: manifest,
+    error: manifestError,
+    isLoading: manifestLoading,
+  } =
     useSWR<NavManifestFile>(
       manifestUrl ? [manifestUrl, manifestVersion] : null,
       ([url]) => fetcher(url as string),
@@ -58,30 +76,47 @@ export function useNavigation() {
 
   useEffect(() => {
     if (!appContext) {
-      setLoading(false);
-      setNavigation("", []);
+      clearNavigation();
       return;
     }
 
-    // FIX: loading da navegação depende do manifest E de permsReady,
-    // não mais de permLoading diretamente.
-    // Isso evita que um isLoading=true travado no store bloqueie o menu
-    // quando permissionsByApp[appContext] já está disponível.
-    const loading = manifestLoading || !permsReady;
-    setLoading(loading);
+    // Limpa o conteúdo lógico da aplicação anterior assim que o contexto/chave
+    // muda. A Sidebar também valida o contexto do store durante a renderização.
+    beginLoading(appContext);
+  }, [appContext, manifestVersion, beginLoading, clearNavigation]);
 
-    if (loading || !manifest) return;
+  useEffect(() => {
+    if (!appContext) return;
 
-    const resolved = resolveNavigation(manifest.items, granted, appContext);
-    setNavigation(role ?? "", resolved);
+    const apiPending = apiLoading && !apiMenus && !apiError;
+    if (!permsReady || manifestLoading || apiPending) return;
+
+    // Sem manifest não há como preservar a autorização técnica nem oferecer
+    // o fallback de migração. Falha fechada: nenhum item é publicado.
+    if (!manifest || manifestError) {
+      setNavigation(appContext, role ?? "", []);
+      return;
+    }
+
+    const responseMatchesContext = apiMenus?.app_context === appContext;
+    const sourceItems =
+      apiMenus && responseMatchesContext
+        ? adaptNavigationMenus(apiMenus, manifest.items)
+        : getNavigationFallback(manifest.items);
+
+    const resolved = resolveNavigation(sourceItems, granted, appContext);
+    setNavigation(appContext, role ?? "", resolved);
   }, [
     appContext,
+    apiMenus,
+    apiError,
+    apiLoading,
     manifest,
+    manifestError,
     manifestLoading,
     granted,
     role,
     permsReady,
     setNavigation,
-    setLoading,
   ]);
 }

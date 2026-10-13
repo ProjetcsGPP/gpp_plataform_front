@@ -169,7 +169,8 @@ describe("buildPermissionContext", () => {
       const ctx = buildPermissionContext("ADMIN", ["view_user"]);
 
       expect(() => {
-        (ctx as any).has = () => false;
+        const mutableContext = ctx as unknown as { has: typeof ctx.has };
+        mutableContext.has = () => false;
       }).toThrow();
     });
   });

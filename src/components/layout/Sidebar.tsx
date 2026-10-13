@@ -27,8 +27,10 @@ export default function Sidebar({ appContext }: SidebarProps) {
 
   const clearAuth = useAuthStore((s) => s.clearAuth);
 
-  const items = useNavigationStore((s) => s.items);
+  const storedAppContext = useNavigationStore((s) => s.appContext);
+  const storedItems = useNavigationStore((s) => s.items);
   const isLoading = useNavigationStore((s) => s.isLoading);
+  const items = storedAppContext === appContext ? storedItems : [];
 
   const handleMouseEnter = () => {
     if (collapseTimer.current) clearTimeout(collapseTimer.current);
@@ -55,11 +57,11 @@ export default function Sidebar({ appContext }: SidebarProps) {
         "fixed left-0 top-0 h-full flex flex-col",
         "bg-surface-container-lowest border-r border-outline-variant shadow-sm z-50",
         "transition-[width] duration-300 ease-in-out",
-        expanded ? "w-64" : "w-18",
+        expanded ? "w-77" : "w-18",
       )}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      aria-expanded={expanded}
+      data-expanded={expanded}
     >
       <div className="px-4 py-6 flex items-center gap-3 min-h-18">
         <button
@@ -109,34 +111,36 @@ export default function Sidebar({ appContext }: SidebarProps) {
             Carregando navegação...
           </div>
         ) : items.length > 0 ? (
-          items.map((item) => {
-            const href = item.href;
+          items
+            .filter((item) => item.visible)
+            .map((item) => {
+              const href = item.href;
 
-            return item.children?.length ? (
-              <NavItemGroup
-                key={item.id}
-                item={item}
-                isExpanded={expanded}
-                pathname={pathname}
-                onNavigate={(href) => router.push(href)}
-              />
-            ) : (
-              <NavItem
-                key={item.id}
-                icon={item.icon}
-                label={item.label}
-                isExpanded={expanded}
-                active={
-                  !!href &&
-                  (pathname === href || pathname.startsWith(`${href}/`))
-                }
-                disabled={!item.enabled}
-                onClick={
-                  item.enabled && href ? () => router.push(href) : undefined
-                }
-              />
-            );
-          })
+              return item.children?.length ? (
+                <NavItemGroup
+                  key={item.id}
+                  item={item}
+                  isExpanded={expanded}
+                  pathname={pathname}
+                  onNavigate={(href) => router.push(href)}
+                />
+              ) : (
+                <NavItem
+                  key={item.id}
+                  icon={item.icon}
+                  label={item.label}
+                  isExpanded={expanded}
+                  active={
+                    !!href &&
+                    (pathname === href || pathname.startsWith(`${href}/`))
+                  }
+                  disabled={!item.enabled}
+                  onClick={
+                    item.enabled && href ? () => router.push(href) : undefined
+                  }
+                />
+              );
+            })
         ) : (
           <div className="px-3 py-2 text-xs text-on-surface-variant">
             Nenhum item de navegação disponível

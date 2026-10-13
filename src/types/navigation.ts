@@ -4,6 +4,8 @@ import type { AppContext } from "@/types/auth";
 /** Estrutura de um item de menu conforme definido nos JSONs de public/nav/ */
 export interface NavItemDefinition {
   id: string;
+  /** Chave funcional estável, compartilhada com Menu.codigo no backend. */
+  codigo?: string;
   label: string;
   icon: string;
   app: AppContext;
@@ -11,7 +13,42 @@ export interface NavItemDefinition {
   order: number;
   permissionKey?: string;
   visibleWhenDenied?: boolean;
+  /** Só fica disponível quando o endpoint de menus o entrega por capability. */
+  capabilityControlled?: boolean;
   children?: NavItemDefinition[];
+}
+
+/** Capability funcional distribuída às roles do usuário na aplicação atual. */
+export interface Capability {
+  id: number;
+  codigo: string;
+  nome: string;
+  descricao: string;
+  ativo: boolean;
+  aplicacao_id: number;
+  aplicacao_codigo: AppContext;
+}
+
+/** Item hierárquico retornado por GET /api/accounts/menus/. */
+export interface Menu {
+  id: number;
+  codigo: string;
+  nome: string;
+  descricao: string;
+  rota: string | null;
+  icone: string;
+  ordem: number;
+  ativo: boolean;
+  aplicacao_codigo: AppContext;
+  parent: number | null;
+  capability: Capability | string | number | null;
+  children: Menu[];
+}
+
+/** Resposta de navegação já limitada ao app_context da sessão. */
+export interface NavigationMenusResponse {
+  app_context: AppContext;
+  items: Menu[];
 }
 
 /** Formato do JSON em public/nav/{APP}.json */

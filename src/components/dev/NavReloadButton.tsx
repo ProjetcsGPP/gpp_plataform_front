@@ -7,12 +7,12 @@ import { useNavigationStore } from '@/store/navigationStore'
  * APENAS em development — removido automaticamente em produção pelo tree-shaking.
  */
 export function NavReloadButton() {
-  // Guard de produção: garantia dupla além do tree-shaking
-  if (process.env.NODE_ENV !== 'development') return null
-
   const bumpManifestVersion = useNavigationStore((s) => s.bumpManifestVersion)
   const isLoading = useNavigationStore((s) => s.isLoading)
   const manifestVersion = useNavigationStore((s) => s.manifestVersion)
+
+  // Guard de produção: garantia dupla além do tree-shaking
+  if (process.env.NODE_ENV !== 'development') return null
 
   return (
     <button

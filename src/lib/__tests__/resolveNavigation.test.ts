@@ -1,5 +1,8 @@
 import { describe, it, expect } from "vitest";
-import { resolveNavigation } from "@/lib/resolveNavigation";
+import {
+  getNavigationFallback,
+  resolveNavigation,
+} from "@/lib/resolveNavigation";
 import type { NavItemDefinition } from "@/types/navigation";
 
 const items: NavItemDefinition[] = [
@@ -121,5 +124,22 @@ describe("resolveNavigation", () => {
   it("não inclui itens de outro app", () => {
     const result = resolveNavigation(items, [], "PORTAL");
     expect(result.some((i) => i.id === "acoes-dashboard")).toBe(false);
+  });
+
+  it("remove itens controlados por capability do fallback local", () => {
+    const fallback = getNavigationFallback([
+      ...items,
+      {
+        id: "settings",
+        label: "Configurações",
+        icon: "settings",
+        app: "PORTAL",
+        order: 6,
+        capabilityControlled: true,
+      },
+    ]);
+
+    expect(fallback.some((item) => item.id === "settings")).toBe(false);
+    expect(fallback.some((item) => item.id === "dashboard")).toBe(true);
   });
 });
