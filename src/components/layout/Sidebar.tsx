@@ -27,8 +27,10 @@ export default function Sidebar({ appContext }: SidebarProps) {
 
   const clearAuth = useAuthStore((s) => s.clearAuth);
 
-  const items = useNavigationStore((s) => s.items);
+  const storedAppContext = useNavigationStore((s) => s.appContext);
+  const storedItems = useNavigationStore((s) => s.items);
   const isLoading = useNavigationStore((s) => s.isLoading);
+  const items = storedAppContext === appContext ? storedItems : [];
 
   const handleMouseEnter = () => {
     if (collapseTimer.current) clearTimeout(collapseTimer.current);
@@ -55,11 +57,11 @@ export default function Sidebar({ appContext }: SidebarProps) {
         "fixed left-0 top-0 h-full flex flex-col",
         "bg-surface-container-lowest border-r border-outline-variant shadow-sm z-50",
         "transition-[width] duration-300 ease-in-out",
-        expanded ? "w-64" : "w-18",
+        expanded ? "w-77" : "w-18",
       )}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      aria-expanded={expanded}
+      data-expanded={expanded}
     >
       <div className="px-4 py-6 flex items-center gap-3 min-h-18">
         <button
@@ -100,25 +102,6 @@ export default function Sidebar({ appContext }: SidebarProps) {
         </div>
       </div>
 
-      <div
-        className={cn(
-          "px-4 mb-4 grid transition-[grid-template-rows,opacity] duration-300 ease-in-out",
-          expanded
-            ? "grid-rows-[1fr] opacity-100"
-            : "grid-rows-[0fr] opacity-0",
-        )}
-        aria-hidden={!expanded}
-      >
-        <div className="overflow-hidden">
-          <button className="authority-gradient text-white rounded-lg py-3 px-4 flex items-center justify-center gap-2 font-semibold text-sm hover:opacity-90 transition-opacity w-full active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">
-            <span className="material-symbols-outlined text-white text-[18px] leading-none">
-              add
-            </span>
-            Nova Solicitação
-          </button>
-        </div>
-      </div>
-
       <nav
         className="px-2 space-y-1 mt-2 flex-1"
         aria-label="Navegação principal"
@@ -128,30 +111,36 @@ export default function Sidebar({ appContext }: SidebarProps) {
             Carregando navegação...
           </div>
         ) : items.length > 0 ? (
-          items.map((item) =>
-            item.children?.length ? (
-              <NavItemGroup
-                key={item.id}
-                item={item}
-                isExpanded={expanded}
-                pathname={pathname}
-                onNavigate={(href) => router.push(href)}
-              />
-            ) : (
-              <NavItem
-                key={item.id}
-                icon={item.icon}
-                label={item.label}
-                isExpanded={expanded}
-                active={
-                  pathname === item.href || pathname.startsWith(`${item.href}/`)
-                }
-                onClick={
-                  item.enabled ? () => router.push(item.href) : undefined
-                }
-              />
-            ),
-          )
+          items
+            .filter((item) => item.visible)
+            .map((item) => {
+              const href = item.href;
+
+              return item.children?.length ? (
+                <NavItemGroup
+                  key={item.id}
+                  item={item}
+                  isExpanded={expanded}
+                  pathname={pathname}
+                  onNavigate={(href) => router.push(href)}
+                />
+              ) : (
+                <NavItem
+                  key={item.id}
+                  icon={item.icon}
+                  label={item.label}
+                  isExpanded={expanded}
+                  active={
+                    !!href &&
+                    (pathname === href || pathname.startsWith(`${href}/`))
+                  }
+                  disabled={!item.enabled}
+                  onClick={
+                    item.enabled && href ? () => router.push(href) : undefined
+                  }
+                />
+              );
+            })
         ) : (
           <div className="px-3 py-2 text-xs text-on-surface-variant">
             Nenhum item de navegação disponível

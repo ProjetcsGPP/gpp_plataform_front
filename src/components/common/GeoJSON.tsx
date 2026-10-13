@@ -3,10 +3,14 @@ import type { GeoJsonObject } from "geojson";
 import { MapContainer, TileLayer, GeoJSON } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 
-import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 
 type Municipio = {
+  id: string;
+  name: string;
+};
+
+type MunicipioProperties = {
   id: string;
   name: string;
 };
@@ -61,13 +65,15 @@ export default function MapClient() {
         <GeoJSON
           data={geojson}
           style={(feature) => ({
-            fillColor: getColor((feature?.properties as any)?.id),
+            fillColor: getColor(
+              (feature?.properties as MunicipioProperties | undefined)?.id ?? "",
+            ),
             color: "#FFF",
             weight: 0.5,
             fillOpacity: 1,
           })}
           onEachFeature={(feature, layer) => {
-            const props = feature.properties as any;
+            const props = feature.properties as MunicipioProperties;
             const id = props.id;
             const name = props.name;
 

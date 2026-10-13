@@ -51,6 +51,18 @@ describe('proxy — FASE 4', () => {
     expect(res.status).toBe(200)
   })
 
+  it('deve proteger as páginas de Configurações da ACOES_PNGI', () => {
+    const path = '/acoes-pngi/configuracoes/eixos'
+    const denied = proxy(makeRequest(path))
+    const allowed = proxy(makeRequest(path, {
+      'gpp_session_ACOES_PNGI': 'valid-session-token',
+    }))
+
+    expect(denied.status).toBe(307)
+    expect(denied.headers.get('location')).toContain('/acoes-pngi/login')
+    expect(allowed.status).toBe(200)
+  })
+
   // ── CARGA ORG LOT ─────────────────────────────────────────────────
   it('deve redirecionar /carga-org-lot/dashboard sem cookie correto', () => {
     const req = makeRequest('/carga-org-lot/dashboard')

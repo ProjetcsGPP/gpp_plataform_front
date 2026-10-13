@@ -1,14 +1,17 @@
 // src/components/common/NavigationLoader.tsx
-'use client'
+"use client";
 
-import { useNavigation } from '@/hooks/useNavigation'
-import type { AppContext } from '@/types/auth'
+import { useNavigation } from "@/hooks/useNavigation";
+import type { AppContext } from "@/types/auth";
 
 interface NavigationLoaderProps {
-  appContext: AppContext
+  appContext: AppContext;
 }
 
 export function NavigationLoader({ appContext }: NavigationLoaderProps) {
-  useNavigation(appContext)
-  return null
+  // comentei, nesse momento, não recebe mais parâmetros
+  // useNavigation(appContext)
+  useNavigation();
+
+  return null;
 }

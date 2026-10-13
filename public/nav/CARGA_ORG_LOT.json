@@ -2,26 +2,53 @@
   "items": [
     {
       "id": "dashboard",
+      "codigo": "DASHBOARD",
       "label": "Dashboard",
       "icon": "dashboard",
+      "app": "CARGA_ORG_LOT",
       "href": "/carga-org-lot/dashboard",
       "order": 1
     },
     {
-      "id": "carga",
-      "label": "Carga de Dados",
-      "icon": "upload_file",
-      "href": "/carga-org-lot/carga",
+      "id": "cargas",
+      "codigo": "CARGAS",
+      "label": "Cargas",
+      "icon": "upload",
+      "app": "CARGA_ORG_LOT",
+      "href": "/carga-org-lot/cargas",
       "order": 2,
-      "permissionKey": "add_cargaorglot"
+      "permissionKey": "cargas.view"
+    },
+    {
+      "id": "lotes",
+      "codigo": "LOTES",
+      "label": "Lotes",
+      "icon": "layers",
+      "app": "CARGA_ORG_LOT",
+      "href": "/carga-org-lot/lotes",
+      "order": 3,
+      "permissionKey": "lotes.view"
+    },
+    {
+      "id": "validacao",
+      "codigo": "VALIDACAO",
+      "label": "Validação",
+      "icon": "shield",
+      "app": "CARGA_ORG_LOT",
+      "href": "/carga-org-lot/validacao",
+      "order": 4,
+      "permissionKey": "validacao.view",
+      "visibleWhenDenied": true
     },
     {
       "id": "historico",
+      "codigo": "HISTORICO",
       "label": "Histórico",
       "icon": "history",
+      "app": "CARGA_ORG_LOT",
       "href": "/carga-org-lot/historico",
-      "order": 3,
-      "permissionKey": "view_cargaorglot"
+      "order": 5,
+      "permissionKey": "historico.view"
     }
   ]
 }

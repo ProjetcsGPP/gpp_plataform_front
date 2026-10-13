@@ -1,29 +1,46 @@
 // src/lib/resolveNavigation.ts
-
+import type { AppContext } from "@/types/auth";
 import type { NavItemDefinition, ResolvedNavItem } from "@/types/navigation";
+
+/**
+ * Remove do fallback local itens cuja disponibilidade é definida pelo backend.
+ * Isso impede que uma falha no endpoint de menus transforme o manifest em uma
+ * concessão implícita de capability.
+ */
+export function getNavigationFallback(
+  items: NavItemDefinition[],
+): NavItemDefinition[] {
+  return items
+    .filter((item) => !item.capabilityControlled)
+    .map((item) => ({
+      ...item,
+      children: item.children
+        ? getNavigationFallback(item.children)
+        : undefined,
+    }));
+}
+
 export function resolveNavigation(
   items: NavItemDefinition[],
   granted: string[],
+  appContext: AppContext,
 ): ResolvedNavItem[] {
   return items
-    .sort((a, b) => a.order - b.order)
+    .filter((item) => item.app === appContext)
     .map((item): ResolvedNavItem => {
-      const hasPermission =
+      const enabled =
         !item.permissionKey || granted.includes(item.permissionKey);
 
-      const { children, ...rest } = item;
+      const visible = enabled || item.visibleWhenDenied === true;
 
-      const resolved: ResolvedNavItem = {
-        ...rest,
-        enabled: hasPermission,
-        visible: hasPermission || (item.visibleWhenDenied ?? false),
+      return {
+        ...item,
+        enabled,
+        visible,
+        children: item.children
+          ? resolveNavigation(item.children, granted, appContext)
+          : undefined,
       };
-
-      if (children?.length) {
-        resolved.children = resolveNavigation(children, granted);
-      }
-
-      return resolved;
     })
-    .filter((item) => item.visible);
+    .sort((a, b) => a.order - b.order);
 }

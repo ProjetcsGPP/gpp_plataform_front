@@ -1,25 +1,28 @@
 // src/store/authStore.ts
-
-import { create } from 'zustand'
-import { devtools } from 'zustand/middleware'
-import type { AppContext, MeResponse } from '@/types/auth'
+import { create } from "zustand";
+import { devtools } from "zustand/middleware";
+import type { AppContext, MeResponse } from "@/types/auth";
 
 const initialState = {
   user: null,
   appContext: null,
   isAuthenticated: false,
-  isLoading: true,
-}
+  isLoading: false,
+  authzVersion: null,
+};
 
 interface AuthState {
-  user: MeResponse | null
-  appContext: AppContext | null
-  isAuthenticated: boolean
-  isLoading: boolean
+  user: MeResponse | null;
+  appContext: AppContext | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  authzVersion: number | null;
 
-  setUser: (user: MeResponse, appContext: AppContext) => void
-  clearAuth: () => void
-  setLoading: (loading: boolean) => void
+  setUser: (user: MeResponse, appContext?: AppContext) => void;
+  setAppContext: (ctx: AppContext) => void;
+  setAuthzVersion: (version: number | null) => void;
+  clearAuth: () => void;
+  setLoading: (loading: boolean) => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -29,21 +32,30 @@ export const useAuthStore = create<AuthState>()(
 
       setUser: (user, appContext) =>
         set(
-          { user, appContext, isAuthenticated: true, isLoading: false },
+          {
+            user,
+            appContext: appContext ?? null,
+            isAuthenticated: true,
+            isLoading: false,
+          },
           false,
-          'auth/setUser'
+          "auth/setUser",
         ),
 
-      clearAuth: () =>
-        set(initialState, false, 'auth/clearAuth'),
+      setAppContext: (ctx) =>
+        set({ appContext: ctx }, false, "auth/setAppContext"),
 
-      setLoading: (isLoading) =>
-        set({ isLoading: isLoading }, false, 'auth/setLoading'),
+      setAuthzVersion: (authzVersion) =>
+        set({ authzVersion }, false, "auth/setAuthzVersion"),
+
+      clearAuth: () => set(initialState, false, "auth/clearAuth"),
+
+      setLoading: (isLoading) => set({ isLoading }, false, "auth/setLoading"),
     }),
     {
-      name: 'gpp-auth-store',
-      enabled: process.env.NODE_ENV === 'development',
+      name: "gpp-auth-store",
+      enabled: process.env.NODE_ENV === "development",
       serialize: true,
-    }
-  )
-)
+    },
+  ),
+);
