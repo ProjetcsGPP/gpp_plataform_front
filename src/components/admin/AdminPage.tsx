@@ -16,7 +16,7 @@ export function AdminPage({
   children,
 }: AdminPageProps) {
   return (
-    <div className="mx-auto w-full max-w-7xl px-5 py-8 sm:px-8">
+    <div className="w-full py-8">
       <header className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-app-primary">

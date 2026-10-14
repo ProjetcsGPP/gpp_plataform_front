@@ -91,7 +91,7 @@ export default function PortalDashboardPage() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-6 py-10">
+    <div className="w-full py-10">
       {/* Cabeçalho da seção */}
       <div className="mb-8 flex items-center justify-between">
         <div className="flex items-center gap-4">

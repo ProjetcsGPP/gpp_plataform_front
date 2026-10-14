@@ -28,7 +28,12 @@ export interface MeResponse {
 
 export const APP_CONFIG: Record<
   AppContext,
-  { slug: string; loginPath: string; label: string }
+  {
+    slug: string;
+    loginPath: string;
+    label: string;
+    topBarContext?: { label: string; href: string };
+  }
 > = {
   PORTAL: { slug: "portal", loginPath: "/portal/login", label: "Portal GPP" },
   ACOES_PNGI: {
@@ -40,5 +45,9 @@ export const APP_CONFIG: Record<
     slug: "carga-org-lot",
     loginPath: "/carga-org-lot/login",
     label: "Carga Org/Lot",
+    topBarContext: {
+      label: "Patriarca",
+      href: "/carga-org-lot/patriarcas",
+    },
   },
 };

@@ -61,4 +61,27 @@ describe("TopBar", () => {
     );
     expect(screen.getByText("Maria")).toBeInTheDocument();
   });
+
+  it("exibe o contexto apenas para aplicações configuradas", () => {
+    const { rerender } = render(
+      <TopBar
+        title="Carga Org/Lot"
+        titleMinor="SEGER"
+        appContext="CARGA_ORG_LOT"
+        contextValue="PMBG - Prefeitura Municipal"
+      />,
+    );
+    expect(screen.getByText("Patriarca")).toBeInTheDocument();
+    expect(screen.getByText("PMBG - Prefeitura Municipal")).toBeInTheDocument();
+
+    rerender(
+      <TopBar
+        title="Portal"
+        titleMinor="SEGER"
+        appContext="PORTAL"
+        contextValue="PMBG - Prefeitura Municipal"
+      />,
+    );
+    expect(screen.queryByText("Patriarca")).not.toBeInTheDocument();
+  });
 });

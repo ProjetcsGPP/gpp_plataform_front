@@ -40,5 +40,6 @@ describe("AppShell", () => {
     expect(screen.getByText("Sidebar")).toBeInTheDocument();
     expect(screen.getByText("TopBar")).toBeInTheDocument();
     expect(screen.getByText("Conteúdo")).toBeInTheDocument();
+    expect(screen.getByText("Conteúdo").parentElement).toHaveClass("xl:w-[85%]");
   });
 });

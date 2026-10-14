@@ -34,6 +34,17 @@ describe("AppThemeProvider", () => {
     });
   });
 
+  it('deve aplicar data-app="CARGA_ORG_LOT" no body', async () => {
+    render(
+      <AppThemeProvider appContext="CARGA_ORG_LOT">
+        <div>conteúdo</div>
+      </AppThemeProvider>,
+    );
+    await waitFor(() => {
+      expect(document.body.getAttribute("data-app")).toBe("CARGA_ORG_LOT");
+    });
+  });
+
   it("deve remover data-app do body ao desmontar", async () => {
     const { unmount } = render(
       <AppThemeProvider appContext="PORTAL">

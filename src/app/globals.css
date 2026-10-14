@@ -26,9 +26,10 @@
   --color-app-bg-from: #468bc4;
   --color-app-bg-to: #3f93b8;
 
-  --color-primary: #00244a;
-  --color-primary-container: #003a70;
-  --color-on-primary: #ffffff;
+  --color-primary: var(--app-primary);
+  --color-primary-foreground: var(--app-primary-text);
+  --color-primary-container: var(--app-primary-hover);
+  --color-on-primary: var(--app-primary-text);
   --color-on-primary-container: #7ea5e2;
 
   --color-surface: #f7f9fb;
@@ -307,15 +308,16 @@ body.fonts-loaded .material-symbols-outlined {
 
 /* ── CARGA ORG/LOT ───────────────────────────────────────────────── */
 [data-app="CARGA_ORG_LOT"] {
-  --app-primary: #7b2d00;
-  --app-primary-hover: #5c2200;
+  /* Comando Solar: a aplicação usa a paleta importada do Google. */
+  --app-primary: #00244a;
+  --app-primary-hover: #003a70;
   --app-primary-text: #ffffff;
-  --app-sidebar-bg: #7b2d00;
+  --app-sidebar-bg: #00244a;
   --app-topbar-bg: #ffffff;
-  --app-accent: #a03d00;
-  --app-accent-light: #fdf0e8;
-  --app-bg-from: #c45c20;
-  --app-bg-to: #a03d00;
-  --app-gradient: linear-gradient(135deg, #fdf5f0 0%, #fdf0e8 100%);
-  --authority-gradient-app: linear-gradient(135deg, #7b2d00 0%, #a03d00 100%);
+  --app-accent: #1b3a6b;
+  --app-accent-light: #e8eef7;
+  --app-bg-from: #f7f9fb;
+  --app-bg-to: #e8eef7;
+  --app-gradient: linear-gradient(135deg, #f7f9fb 0%, #e8eef7 100%);
+  --authority-gradient-app: linear-gradient(135deg, #00244a 0%, #1b3a6b 100%);
 }

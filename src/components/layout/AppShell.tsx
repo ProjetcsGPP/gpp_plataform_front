@@ -11,6 +11,7 @@ interface AppShellProps {
   appContext: AppContext;
   title: string;
   titleMinor: string;
+  contextValue?: string;
   children: React.ReactNode;
 }
 
@@ -18,6 +19,7 @@ export default function AppShell({
   appContext,
   title,
   titleMinor,
+  contextValue,
   children,
 }: AppShellProps) {
   return (
@@ -33,9 +35,14 @@ export default function AppShell({
                   title={title}
                   titleMinor={titleMinor}
                   appContext={appContext}
+                  contextValue={contextValue}
                 />
 
-                <main className="flex-1">{children}</main>
+                <main className="flex-1">
+                  <div className="mx-auto w-full px-5 sm:px-8 xl:w-[85%] xl:px-0">
+                    {children}
+                  </div>
+                </main>
               </div>
             </div>
           </LoadingGuard>

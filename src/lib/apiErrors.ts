@@ -2,9 +2,14 @@ import axios from "axios";
 
 type ErrorPayload = unknown;
 
+function looksLikeHtml(value: string): boolean {
+  const normalized = value.trim().toLowerCase();
+  return normalized.startsWith("<!doctype html") || normalized.startsWith("<html");
+}
+
 function firstMessage(payload: unknown): string | null {
   if (!payload) return null;
-  if (typeof payload === "string") return payload;
+  if (typeof payload === "string") return looksLikeHtml(payload) ? null : payload;
   if (Array.isArray(payload)) {
     for (const value of payload) {
       const message = firstMessage(value);

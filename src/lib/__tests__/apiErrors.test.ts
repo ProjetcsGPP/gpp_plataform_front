@@ -25,4 +25,23 @@ describe("getApiErrorMessage", () => {
 
     expect(getApiErrorMessage(error)).toBe("Esta descrição já existe.");
   });
+
+  it("não exibe uma página HTML de depuração no card de erro", () => {
+    const error = new axios.AxiosError(
+      "Internal Server Error",
+      "ERR_BAD_RESPONSE",
+      undefined,
+      undefined,
+      {
+        status: 500,
+        statusText: "Internal Server Error",
+        headers: new AxiosHeaders({ "content-type": "text/html" }),
+        config: { headers: new AxiosHeaders() },
+        data: "<!DOCTYPE html><html><body>ProgrammingError</body></html>",
+      },
+    );
+
+    expect(getApiErrorMessage(error, "Não foi possível carregar os arquivos."))
+      .toBe("Não foi possível carregar os arquivos.");
+  });
 });

@@ -11,14 +11,16 @@ interface TopBarProps {
   titleMinor: string;
   title: string;
   appContext: AppContext;
+  contextValue?: string;
 }
 
-export default function TopBar({ titleMinor, title, appContext }: TopBarProps) {
+export default function TopBar({ titleMinor, title, appContext, contextValue }: TopBarProps) {
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
   const clearAuth = useAuthStore((s) => s.clearAuth);
 
   const firstName = user?.name?.split(" ")[0] ?? user?.username ?? "";
+  const contextConfig = APP_CONFIG[appContext].topBarContext;
 
   async function handleLogout() {
     const { loginPath } = APP_CONFIG[appContext];
@@ -31,16 +33,31 @@ export default function TopBar({ titleMinor, title, appContext }: TopBarProps) {
     <header className="flex justify-between items-center w-full px-8 py-4 sticky top-0 z-40 bg-surface-container-lowest/80 backdrop-blur-md border-b border-outline-variant/50 shadow-sm transition-all duration-200 ease-in-out">
       {/* Título + Nav */}
       <div className="flex flex-col gap-1">
-        <span className="text-xs font-bold text-blue-900/60 uppercase tracking-[0.2em] font-outfit">
+        <span className="text-xs font-bold text-app-primary/60 uppercase tracking-[0.2em] font-outfit">
           {titleMinor}
         </span>
-        <h2 className="text-xl font-extrabold text-blue-900 font-outfit tracking-tight">
+        <h2 className="text-xl font-extrabold text-app-primary font-outfit tracking-tight">
           {title}
         </h2>
       </div>
 
       {/* Busca + Ícones + Perfil */}
       <div className="flex items-center gap-6">
+        {contextConfig && contextValue && (
+          <button
+            type="button"
+            onClick={() => router.push(contextConfig.href)}
+            className="block max-w-40 rounded-lg border border-app-primary/20 bg-app-accent-light px-3 py-2 text-left sm:max-w-md"
+            title="Trocar patriarca"
+          >
+            <span className="block text-[10px] font-semibold uppercase tracking-wider text-app-primary/70">
+              {contextConfig.label}
+            </span>
+            <span className="block truncate text-sm font-semibold text-app-primary">
+              {contextValue}
+            </span>
+          </button>
+        )}
         {/* Busca */}
         <div className="relative hidden sm:block">
           <span
@@ -90,7 +107,7 @@ export default function TopBar({ titleMinor, title, appContext }: TopBarProps) {
               </span>
             </div>
             {firstName && (
-              <span className="hidden md:block text-sm font-medium text-blue-900">
+              <span className="hidden md:block text-sm font-medium text-app-primary">
                 {firstName}
               </span>
             )}

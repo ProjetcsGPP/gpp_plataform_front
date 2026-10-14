@@ -3,7 +3,7 @@ import type { AppContext, MeResponse } from "@/types/auth";
 import { APP_CONFIG } from "@/types/auth";
 import { useAuthStore } from "@/store/authStore";
 import { debugLog } from "@/lib/debug";
-import { dataTagSymbol } from "@tanstack/react-query";
+import { usePatriarcaSelectionStore } from "@/store/patriarcaSelectionStore";
 
 // Dados mínimos retornados pelo endpoint público (sem autenticação)
 export interface AplicacaoPublica {
@@ -35,6 +35,12 @@ const loginRoutes: Record<AppContext, string> = {
   CARGA_ORG_LOT: "/accounts/login/",
 };
 
+function clearSessionSelection(appContext: AppContext) {
+  if (appContext === "CARGA_ORG_LOT") {
+    usePatriarcaSelectionStore.getState().clear();
+  }
+}
+
 /**
  * Lista aplicações públicas — não requer autenticação.
  * Usada na tela de login para popular o seletor de aplicação.
@@ -63,6 +69,7 @@ export async function login(
   password: string,
   app_context: AppContext,
 ): Promise<void> {
+  clearSessionSelection(app_context);
   debugLog("auth", "login iniciado", {
     identifier,
     app_context,
@@ -110,10 +117,13 @@ export async function logoutApp(appContext: AppContext): Promise<void> {
       `[logoutApp] Falha ao chamar endpoint de logout para ${slug}:`,
       error,
     );
+  } finally {
+    clearSessionSelection(appContext);
   }
 }
 
 export async function switchApp(app_context: AppContext): Promise<void> {
+  clearSessionSelection(app_context);
   // Pega o usuário logado na store do Zustand para enviar ao backend
   const user = useAuthStore.getState().user;
   const username = user?.username || "";

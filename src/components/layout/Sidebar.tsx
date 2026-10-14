@@ -93,7 +93,7 @@ export default function Sidebar({ appContext }: SidebarProps) {
           )}
           aria-hidden={!expanded}
         >
-          <h1 className="text-base font-bold tracking-tight text-blue-900 font-outfit leading-tight">
+          <h1 className="text-base font-bold tracking-tight text-app-primary font-outfit leading-tight">
             SUBGES/SEGER
           </h1>
           <p className="text-[10px] uppercase tracking-widest text-on-surface-variant font-semibold">

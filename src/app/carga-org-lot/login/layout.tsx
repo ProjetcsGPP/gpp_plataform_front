@@ -11,7 +11,7 @@ export default function PortalLayout({
       <TopBarNoLogin
           title="Carga de Organograma e Lotações"
           titleMinor="SEGER/SUBGES/GPP"
-          primaryColor="#7d5457" 
+          primaryColor="#00244a"
       />
       <main className="flex-1">
         {children}

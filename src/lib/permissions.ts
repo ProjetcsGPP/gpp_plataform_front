@@ -109,6 +109,19 @@ export const PERMISSIONS = {
   SITUACAOACAO_ADD: "add_situacaoacao",
   SITUACAOACAO_CHANGE: "change_situacaoacao",
   SITUACAOACAO_DELETE: "delete_situacaoacao",
+
+  // ── Carga de Organograma e Lotação ────────────────────────────────
+  PATRIARCA_VIEW: "view_patriarca",
+  PATRIARCA_ADD: "add_patriarca",
+  PATRIARCA_CHANGE: "change_patriarca",
+  IMPORTACAOPLANILHA_VIEW: "view_importacaoplanilha",
+  IMPORTACAOPLANILHA_ADD: "add_importacaoplanilha",
+  IMPORTACAOPLANILHA_CHANGE: "change_importacaoplanilha",
+  IMPORTACAOPLANILHA_DELETE: "delete_importacaoplanilha",
+  ITEMORGANOGRAMA_VIEW: "view_itemorganograma",
+  ITEMORGANOGRAMA_ADD: "add_itemorganograma",
+  ITEMORGANOGRAMA_CHANGE: "change_itemorganograma",
+  ITEMORGANOGRAMA_DELETE: "delete_itemorganograma",
 } as const;
 
 export type PermissionKey = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];

@@ -7,48 +7,40 @@
       "icon": "dashboard",
       "app": "CARGA_ORG_LOT",
       "href": "/carga-org-lot/dashboard",
-      "order": 1
+      "order": 100
     },
     {
-      "id": "cargas",
-      "codigo": "CARGAS",
-      "label": "Cargas",
-      "icon": "upload",
+      "id": "patriarca",
+      "codigo": "PATRIARCA",
+      "label": "Patriarcas",
+      "icon": "other_houses",
       "app": "CARGA_ORG_LOT",
-      "href": "/carga-org-lot/cargas",
-      "order": 2,
-      "permissionKey": "cargas.view"
+      "href": "/carga-org-lot/patriarcas",
+      "order": 200,
+      "permissionKey": "view_patriarca",
+      "capabilityControlled": true
     },
     {
-      "id": "lotes",
-      "codigo": "LOTES",
-      "label": "Lotes",
-      "icon": "layers",
+      "id": "organograma",
+      "codigo": "ORGANOGRAMA",
+      "label": "Organogramas",
+      "icon": "account_tree",
       "app": "CARGA_ORG_LOT",
-      "href": "/carga-org-lot/lotes",
-      "order": 3,
-      "permissionKey": "lotes.view"
+      "href": "/carga-org-lot/organogramas",
+      "order": 300,
+      "permissionKey": "view_importacaoplanilha",
+      "capabilityControlled": true
     },
     {
-      "id": "validacao",
-      "codigo": "VALIDACAO",
-      "label": "Validação",
-      "icon": "shield",
+      "id": "lotacao",
+      "codigo": "LOTACAO",
+      "label": "Lotações",
+      "icon": "group_add",
       "app": "CARGA_ORG_LOT",
-      "href": "/carga-org-lot/validacao",
-      "order": 4,
-      "permissionKey": "validacao.view",
-      "visibleWhenDenied": true
-    },
-    {
-      "id": "historico",
-      "codigo": "HISTORICO",
-      "label": "Histórico",
-      "icon": "history",
-      "app": "CARGA_ORG_LOT",
-      "href": "/carga-org-lot/historico",
-      "order": 5,
-      "permissionKey": "historico.view"
+      "href": "/carga-org-lot/lotacoes",
+      "order": 400,
+      "permissionKey": "view_importacaoplanilha",
+      "capabilityControlled": true
     }
   ]
 }
