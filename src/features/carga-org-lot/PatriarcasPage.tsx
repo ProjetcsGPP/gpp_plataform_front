@@ -55,13 +55,14 @@ export function PatriarcasPage() {
       <Button
         variant={selected?.idpatriarca === row.idpatriarca ? "secondary" : "outline"}
         size="sm"
+        className="table-action-button"
         disabled={selected?.idpatriarca === row.idpatriarca}
         onClick={() => select(row)}
       >
         {selected?.idpatriarca === row.idpatriarca && <Check />}
         {selected?.idpatriarca === row.idpatriarca ? "Selecionado" : "Selecionar"}
       </Button>
-      {selected?.idpatriarca === row.idpatriarca && can(PERMISSIONS.PATRIARCA_CHANGE) && <Button variant="ghost" size="sm" asChild><Link href={`/carga-org-lot/patriarcas/${row.idpatriarca}/editar`}><Pencil /> Editar</Link></Button>}
+      {selected?.idpatriarca === row.idpatriarca && can(PERMISSIONS.PATRIARCA_CHANGE) && <Button variant="ghost" size="sm" className="table-action-button" asChild><Link href={`/carga-org-lot/patriarcas/${row.idpatriarca}/editar`}><Pencil /> Editar</Link></Button>}
     </div> },
   ];
 

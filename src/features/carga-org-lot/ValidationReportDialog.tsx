@@ -5,6 +5,7 @@ import { X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import type { ValidationReport } from "@/features/carga-org-lot/model";
+import { formatOrganogramaValidationMessage } from "@/features/carga-org-lot/validationMessages";
 
 export function ValidationReportDialog({
   report,
@@ -39,8 +40,9 @@ export function ValidationReportDialog({
         <header className="flex items-start justify-between border-b border-slate-200 px-6 py-4">
           <div>
             <h2 id="validation-report-title" className="text-lg font-bold text-slate-900">
-              Relatório de validação
+              Importação rejeitada
             </h2>
+            {report.idimportacaoplanilha && <p className="mt-1 text-sm font-medium text-slate-700">A tentativa foi registrada como importação #{report.idimportacaoplanilha}.</p>}
             <p className="mt-1 text-sm text-red-700">{report.mensagem}</p>
           </div>
           <Button variant="ghost" size="icon" onClick={onClose} aria-label="Fechar relatório">
@@ -59,6 +61,12 @@ export function ValidationReportDialog({
             <Summary label="Abas lidas" value={report.total_abas_lidas} />
             <Summary label="Linhas lidas" value={report.total_linhas_lidas} />
             <Summary label="Erros" value={report.total_erros} />
+            {report.total_unidades_espelho_criadas !== undefined && (
+              <Summary
+                label="Unidades criadas automaticamente"
+                value={report.total_unidades_espelho_criadas}
+              />
+            )}
           </dl>
 
           <div className="mb-3 flex justify-end">
@@ -87,7 +95,12 @@ export function ValidationReportDialog({
                     <td className="px-4 py-2">{issue.linha ?? "—"}</td>
                     <td className="px-4 py-2">{issue.campo || "—"}</td>
                     <td className="px-4 py-2 font-mono text-xs">{issue.codigo}</td>
-                    <td className="min-w-72 px-4 py-2">{issue.mensagem}</td>
+                    <td className="min-w-72 px-4 py-2">
+                      {formatOrganogramaValidationMessage(
+                        issue.codigo,
+                        issue.mensagem,
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>

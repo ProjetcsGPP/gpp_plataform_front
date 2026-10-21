@@ -16,7 +16,9 @@ vi.mock("@/components/common/AppThemeProvider", () => ({
   AppThemeProvider: ({ children }: { children: React.ReactNode }) => children,
 }));
 vi.mock("@/components/common/AuthHydrator", () => ({
-  AuthHydrator: () => <div data-testid="auth-hydrator" />,
+  AuthHydrator: ({ appContext }: { appContext: string }) => (
+    <div data-testid="auth-hydrator" data-app-context={appContext} />
+  ),
 }));
 vi.mock("@/components/common/LoadingGuard", () => ({
   LoadingGuard: ({ children }: { children: React.ReactNode }) => children,
@@ -37,9 +39,13 @@ describe("AppShell", () => {
     );
 
     expect(useNavigationMock).toHaveBeenCalledOnce();
+    expect(screen.getByTestId("auth-hydrator")).toHaveAttribute(
+      "data-app-context",
+      "PORTAL",
+    );
     expect(screen.getByText("Sidebar")).toBeInTheDocument();
     expect(screen.getByText("TopBar")).toBeInTheDocument();
     expect(screen.getByText("Conteúdo")).toBeInTheDocument();
-    expect(screen.getByText("Conteúdo").parentElement).toHaveClass("xl:w-[85%]");
+    expect(screen.getByText("Conteúdo").parentElement).toHaveClass("xl:w-[90%]");
   });
 });

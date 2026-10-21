@@ -5,9 +5,10 @@ import useSWR from "swr";
 import { useEffect } from "react";
 import { useAuthStore } from "@/store/authStore";
 import api from "@/lib/api";
-import type { MeResponse } from "@/types/auth";
+import { meCacheKey, permissionsCacheKey } from "@/lib/authCacheKeys";
+import type { AppContext, MeResponse } from "@/types/auth";
 
-const fetchMe = (url: string): Promise<MeResponse> =>
+const fetchMe = ([url]: ReturnType<typeof meCacheKey>): Promise<MeResponse> =>
   api.get<MeResponse>(url).then((res) => res.data);
 
 /**
@@ -18,13 +19,13 @@ const fetchMe = (url: string): Promise<MeResponse> =>
  * - revalidateOnReconnect: true — re-hidrata store quando rede volta
  * - shouldRetryOnError: false — interceptor 401 do api.ts trata sessão expirada
  */
-export function useMe() {
+export function useMe(appContext: AppContext) {
   const setUser         = useAuthStore((s) => s.setUser);
   const clearAuth       = useAuthStore((s) => s.clearAuth);
   const setLoading      = useAuthStore((s) => s.setLoading);
   const setAuthzVersion = useAuthStore((s) => s.setAuthzVersion);
 
-  const { data, error, isLoading } = useSWR<MeResponse>("/accounts/me/", fetchMe, {
+  const { data, error, isLoading } = useSWR<MeResponse>(meCacheKey(appContext), fetchMe, {
     dedupingInterval:      5 * 60 * 1000,
     revalidateOnFocus:     false,
     revalidateOnReconnect: true,
@@ -71,12 +72,12 @@ const fetchMePermissions = (url: string): Promise<MePermissionsResponse> =>
  * - GET /api/accounts/me/permissions/ via SWR
  * - Só dispara quando isAuthenticated === true
  */
-export function useMePermissions() {
+export function useMePermissions(appContext: AppContext) {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
   const { data, error, isLoading } = useSWR<MePermissionsResponse>(
-    isAuthenticated ? "/accounts/me/permissions/" : null,
-    fetchMePermissions,
+    isAuthenticated ? permissionsCacheKey(appContext) : null,
+    ([url]) => fetchMePermissions(url),
     {
       dedupingInterval:      5 * 60 * 1000,
       revalidateOnFocus:     false,

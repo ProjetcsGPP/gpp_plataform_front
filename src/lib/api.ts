@@ -3,6 +3,7 @@ import axios from "axios";
 import { APP_CONFIG } from "@/types/auth";
 import { useAuthStore } from "@/store/authStore";
 import { debugError, debugLog } from "@/lib/debug";
+import { useNetworkActivityStore } from "@/store/networkActivityStore";
 import type {
   Capability,
   NavigationMenusResponse,
@@ -13,9 +14,34 @@ const api = axios.create({
   withCredentials: true,
 });
 
+function diagnosticResponseData(data: unknown): unknown {
+  if (!data || typeof data !== "object" || Array.isArray(data)) return data;
+  const payload = data as Record<string, unknown>;
+  const errors = payload.errors;
+  if (!errors || typeof errors !== "object" || Array.isArray(errors)) {
+    return data;
+  }
+  const record = errors as Record<string, unknown>;
+  if (
+    typeof record.code !== "string"
+    || !record.code.startsWith("envio_organograma_")
+  ) {
+    return data;
+  }
+  return {
+    success: payload.success,
+    errors: {
+      code: record.code,
+      message: record.message,
+      idenvioorganograma: record.idenvioorganograma,
+    },
+  };
+}
+
 // Garante barra final em toda URL
 api.interceptors.request.use(
   (config) => {
+    useNetworkActivityStore.getState().beginRequest();
     if (config.url && !config.url.endsWith("/") && !config.url.includes("?")) {
       config.url += "/";
     }
@@ -61,6 +87,7 @@ api.interceptors.request.use(
 // Redireciona para o login da app correta em caso de 401.
 api.interceptors.response.use(
   (response) => {
+    useNetworkActivityStore.getState().endRequest();
     debugLog("api", "response", {
       method: response.config.method?.toUpperCase(),
       url: response.config.url,
@@ -70,6 +97,7 @@ api.interceptors.response.use(
     return response;
   },
   (error) => {
+    useNetworkActivityStore.getState().endRequest();
     const status = error.response?.status;
     const url = error.config?.url;
     const isLogout = url?.includes("/accounts/logout");
@@ -78,14 +106,19 @@ api.interceptors.response.use(
       method: error.config?.method?.toUpperCase(),
       url,
       status,
-      data: error.response?.data,
+      data: diagnosticResponseData(error.response?.data),
       online: typeof navigator !== "undefined" ? navigator.onLine : undefined,
     };
 
     // Respostas 4xx fazem parte do fluxo esperado da aplicação e são tratadas
     // pelas telas. console.error faz o Next exibir um overlay vermelho mesmo
     // quando a rejeição foi capturada corretamente.
-    if (status && status >= 400 && status < 500) {
+    const errorCode = error.response?.data?.errors?.code;
+    const isHandledProdestFailure = (
+      status === 502 || status === 503
+    ) && typeof errorCode === "string"
+      && errorCode.startsWith("envio_organograma_");
+    if ((status && status >= 400 && status < 500) || isHandledProdestFailure) {
       debugLog("api", "response rejected", diagnostic);
     } else {
       debugError("api", "response error", diagnostic);

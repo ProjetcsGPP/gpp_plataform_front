@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
@@ -54,21 +55,34 @@ export function AdminPanel({
 export function AdminAlert({
   children,
   variant = "error",
+  onClose,
 }: {
   children: ReactNode;
   variant?: "error" | "success";
+  onClose?: () => void;
 }) {
   return (
     <div
       role={variant === "error" ? "alert" : "status"}
       className={cn(
-        "rounded-lg border px-4 py-3 text-sm",
+        "relative rounded-lg border px-4 py-3 text-sm",
+        onClose && "pr-11",
         variant === "error"
           ? "border-red-200 bg-red-50 text-red-800"
           : "border-emerald-200 bg-emerald-50 text-emerald-800",
       )}
     >
       {children}
+      {onClose && (
+        <button
+          type="button"
+          aria-label="Fechar mensagem"
+          className="absolute right-2 top-1/2 inline-flex size-7 -translate-y-1/2 items-center justify-center rounded-md transition-colors hover:bg-black/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-current"
+          onClick={onClose}
+        >
+          <X className="size-4" aria-hidden="true" />
+        </button>
+      )}
     </div>
   );
 }

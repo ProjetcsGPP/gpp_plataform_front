@@ -13,7 +13,7 @@ vi.mock("@/features/carga-org-lot/api", async (importOriginal) => {
   return { ...original, listStatusProgresso: vi.fn(), createPatriarca: vi.fn(), updatePatriarca: vi.fn() };
 });
 
-const record = { idpatriarca: 1, idexternopatriarca: "uuid-1", strsiglapatriarca: "PMBG", strnome: "Prefeitura", datcriacao: "2026-10-01T12:00:00Z", datalteracao: null, idstatusprogresso_id: 1, status: { idstatusprogresso: 1, strdescricao: "Novo" }, organograma_download_url: "/download/" };
+const record = { idpatriarca: 1, idexternopatriarca: "uuid-1", strsiglapatriarca: "PMBG", strnome: "Prefeitura", datcriacao: "2026-10-01T12:00:00Z", datalteracao: null, idstatusprogresso_id: 1, status: { idstatusprogresso: 1, strdescricao: "Novo" }, organograma_download_url: "/download/", processo_ativo: null };
 
 function setup(recordValue?: typeof record) {
   return render(<SWRConfig value={{ provider: () => new Map(), dedupingInterval: 0 }}><PatriarcaForm record={recordValue} /></SWRConfig>);

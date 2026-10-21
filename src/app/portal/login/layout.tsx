@@ -7,11 +7,10 @@ export default function PortalLayout({
   children: React.ReactNode
 }) {
   return (
-    <div className="min-h-screen flex flex-col bg-app-gradient">
+    <div data-app="PORTAL" className="min-h-screen flex flex-col bg-app-gradient">
       <TopBarNoLogin
           title="Orquestrador de Aplicações"
           titleMinor="SEGER/SUBGES/GPP"
-          primaryColor="#00244a"
       />
       <main className="flex-1">
         {children}

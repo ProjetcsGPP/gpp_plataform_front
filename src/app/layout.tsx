@@ -2,6 +2,7 @@
 import type { Metadata } from "next";
 import { Inter, Manrope } from "next/font/google";
 import "./globals.css";
+import { GlobalInteractionBlocker } from "@/components/common/GlobalInteractionBlocker";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -54,7 +55,10 @@ export default function RootLayout({
         />
         {/* resto... */}
       </head>
-      <body suppressHydrationWarning>{children}</body>
+      <body suppressHydrationWarning>
+        {children}
+        <GlobalInteractionBlocker />
+      </body>
     </html>
   );
 }

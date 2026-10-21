@@ -3,8 +3,6 @@ import { LoginPage } from '@/components/auth/LoginPage'
 import type { LoginTheme } from '@/components/auth/LoginPage'
 
 const portalTheme: LoginTheme = {
-  primaryColor:      '#00244a',
-  primaryHoverColor: '#003a70',
   appName:           'Orquestrador de Aplicações',
   subtitle:          'SEGER — Governo do Espírito Santo',
   logoSymbol:        'view_apps',

@@ -15,6 +15,8 @@ import { mutate as globalMutate } from "swr";
 import { useAuthStore } from "@/store/authStore";
 import { useNavigationStore } from "@/store/navigationStore";
 import api from "@/lib/api";
+import { meCacheKey, permissionsCacheKey } from "@/lib/authCacheKeys";
+import type { AppContext } from "@/types/auth";
 
 /** Intervalo de polling em ms (30 segundos) */
 const POLLING_INTERVAL = 30_000;
@@ -24,7 +26,7 @@ interface VersionResponse {
   user_version?: number;
 }
 
-export function useVersionPolling() {
+export function useVersionPolling(appContext: AppContext) {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const authzVersion = useAuthStore((s) => s.authzVersion);
   const bumpManifestVersion = useNavigationStore((s) => s.bumpManifestVersion);
@@ -73,8 +75,8 @@ export function useVersionPolling() {
 
       if (authzChanged || userChanged) {
         await Promise.all([
-          globalMutate("/accounts/me/"),
-          globalMutate("/accounts/me/permissions/"),
+          globalMutate(meCacheKey(appContext)),
+          globalMutate(permissionsCacheKey(appContext)),
         ]);
         bumpManifestVersion();
       }
@@ -83,7 +85,7 @@ export function useVersionPolling() {
     } finally {
       isCheckingRef.current = false;
     }
-  }, [isAuthenticated, authzVersion, bumpManifestVersion]);
+  }, [appContext, isAuthenticated, authzVersion, bumpManifestVersion]);
 
   useEffect(() => {
     if (!isAuthenticated) return;

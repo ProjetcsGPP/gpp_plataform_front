@@ -51,7 +51,7 @@ describe("useVersionPolling", () => {
       });
 
     const { useVersionPolling } = await import("@/hooks/useVersionPolling");
-    renderHook(() => useVersionPolling());
+    renderHook(() => useVersionPolling("PORTAL"));
 
     await act(async () => {
       await vi.advanceTimersByTimeAsync(30_000);
@@ -60,7 +60,10 @@ describe("useVersionPolling", () => {
       await vi.advanceTimersByTimeAsync(30_000);
     });
 
-    expect(mockGlobalMutate).toHaveBeenCalledWith("/accounts/me/permissions/");
+    expect(mockGlobalMutate).toHaveBeenCalledWith([
+      "/accounts/me/permissions/",
+      "PORTAL",
+    ]);
   });
 
   it("chama bumpManifestVersion quando user_version muda", async () => {
@@ -75,7 +78,7 @@ describe("useVersionPolling", () => {
       });
 
     const { useVersionPolling } = await import("@/hooks/useVersionPolling");
-    renderHook(() => useVersionPolling());
+    renderHook(() => useVersionPolling("PORTAL"));
 
     await act(async () => {
       await vi.advanceTimersByTimeAsync(30_000);
@@ -99,7 +102,7 @@ describe("useVersionPolling", () => {
       });
 
     const { useVersionPolling } = await import("@/hooks/useVersionPolling");
-    renderHook(() => useVersionPolling());
+    renderHook(() => useVersionPolling("PORTAL"));
 
     await act(async () => {
       await vi.advanceTimersByTimeAsync(15_000);
@@ -116,7 +119,7 @@ describe("useVersionPolling", () => {
     mockIsAuthenticated = false;
 
     const { useVersionPolling } = await import("@/hooks/useVersionPolling");
-    renderHook(() => useVersionPolling());
+    renderHook(() => useVersionPolling("PORTAL"));
 
     await act(async () => {
       await vi.advanceTimersByTimeAsync(15_000);

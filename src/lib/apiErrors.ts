@@ -22,6 +22,8 @@ function firstMessage(payload: unknown): string | null {
   const record = payload as Record<string, unknown>;
   const detail = firstMessage(record.detail);
   if (detail) return detail;
+  const message = firstMessage(record.message);
+  if (message) return message;
   const errors = firstMessage(record.errors);
   if (errors) return errors;
 
@@ -30,6 +32,34 @@ function firstMessage(payload: unknown): string | null {
     if (message) return message;
   }
   return null;
+}
+
+function messagesFrom(payload: unknown): string[] {
+  if (typeof payload === "string") {
+    return looksLikeHtml(payload) ? [] : [payload];
+  }
+  if (!Array.isArray(payload)) return [];
+  return payload.flatMap(messagesFrom);
+}
+
+export function getApiFieldErrors(error: unknown): Record<string, string[]> {
+  if (!axios.isAxiosError<ErrorPayload>(error)) return {};
+  const payload = error.response?.data;
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+    return {};
+  }
+
+  const record = payload as Record<string, unknown>;
+  const source = record.errors;
+  if (!source || typeof source !== "object" || Array.isArray(source)) {
+    return {};
+  }
+
+  return Object.fromEntries(
+    Object.entries(source)
+      .map(([field, value]) => [field, messagesFrom(value)] as const)
+      .filter(([, messages]) => messages.length > 0),
+  );
 }
 
 export function getApiErrorMessage(

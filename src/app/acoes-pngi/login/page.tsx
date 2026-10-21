@@ -3,8 +3,6 @@ import { LoginPage } from '@/components/auth/LoginPage'
 import type { LoginTheme } from '@/components/auth/LoginPage'
 
 const acoes_pngiTheme: LoginTheme = {
-  primaryColor:      '#00244a',
-  primaryHoverColor: '#003a70',
   appName:           'Dashboard de Ações PNGI',
   subtitle:          'SEGER — Governo do Espírito Santo',
   logoSymbol:        'move_down',

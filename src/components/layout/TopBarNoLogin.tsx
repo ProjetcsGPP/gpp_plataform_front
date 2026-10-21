@@ -2,20 +2,18 @@
 type TopBarNoLoginProps = {
   titleMinor: string
   title: string
-  primaryColor?: string  // ← novo
 }
 
-export default function TopBarNoLogin({ titleMinor, title, primaryColor }: TopBarNoLoginProps) {
+export default function TopBarNoLogin({ titleMinor, title }: TopBarNoLoginProps) {
   return (
     <header
-      className="flex justify-between items-center w-full px-8 py-4 sticky top-0 z-40 backdrop-blur-md border-b border-outline-variant/50 shadow-sm transition-all duration-200 ease-in-out"
-      style={primaryColor ? { backgroundColor: primaryColor } : undefined}
+      className="sticky top-0 z-40 flex w-full items-center justify-between border-b border-app-accent/40 bg-app-primary px-8 py-4 text-app-primary-text shadow-sm transition-colors duration-200 ease-in-out"
     >
       <div className="flex flex-col gap-1">
-        <span className="text-xs font-bold text-white/70 uppercase tracking-[0.2em] font-outfit">
+        <span className="font-outfit text-xs font-bold uppercase tracking-[0.2em] opacity-70">
           {titleMinor}
         </span>
-        <h2 className="text-xl font-extrabold text-white font-outfit tracking-tight">
+        <h2 className="font-outfit text-xl font-extrabold tracking-tight">
           {title}
         </h2>
       </div>

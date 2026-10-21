@@ -3,8 +3,6 @@ import { LoginPage } from '@/components/auth/LoginPage'
 import type { LoginTheme } from '@/components/auth/LoginPage'
 
 const carga_org_lotTheme: LoginTheme = {
-  primaryColor:      '#00244a',
-  primaryHoverColor: '#003a70',
   appName:           'Carga de Organograma e Lotações',
   subtitle:          'SEGER — Governo do Espírito Santo',
   logoSymbol:        'flowchart',

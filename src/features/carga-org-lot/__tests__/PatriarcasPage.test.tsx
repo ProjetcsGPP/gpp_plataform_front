@@ -27,6 +27,7 @@ const patriarca = {
   idstatusprogresso_id: 1,
   status: { idstatusprogresso: 1, strdescricao: "Novo" },
   organograma_download_url: "/download/",
+  processo_ativo: null,
 };
 
 describe("lista de patriarcas", () => {

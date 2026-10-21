@@ -17,13 +17,10 @@ import type { AplicacaoPublica } from "@/lib/auth";
 import { Loader2, LogIn } from "lucide-react";
 import Image from "next/image";
 import { debugError, debugLog } from "@/lib/debug";
+import type { AppContext } from "@/types/auth";
 
 // ─── Contrato do tema ───────────────────────────────────────────────
 export interface LoginTheme {
-  /** Cor principal (fundo do ícone, botão, foco) — ex: "#00244a" */
-  primaryColor: string;
-  /** Cor do hover do botão — ex: "#003a70" */
-  primaryHoverColor: string;
   /** Texto exibido como nome da aplicação */
   appName: string;
   /** Subtítulo abaixo do nome */
@@ -39,7 +36,7 @@ export interface LoginTheme {
   /** Rodapé */
   footerText?: string;
   /** Contexto padrão pré-selecionado no select */
-  defaultAppContext?: string;
+  defaultAppContext: AppContext;
   /** Rota de redirect após login bem-sucedido para cada contexto */
   redirectMap?: Record<string, string>;
 }
@@ -49,10 +46,6 @@ interface LoginPageProps {
   sessionExpiredMessage?: string;
 }
 
-function inlineStyle(color: string) {
-  return { backgroundColor: color } as React.CSSProperties;
-}
-
 export function LoginPage({ theme }: LoginPageProps) {
   // Não usa useRouter — navegação pós-login é hard navigation (window.location.href)
   // para garantir que o cookie gpp_session_{APP} seja persistido pelo browser
@@ -60,9 +53,7 @@ export function LoginPage({ theme }: LoginPageProps) {
   const [apps, setApps] = useState<AplicacaoPublica[]>([]);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [appContext, setAppContext] = useState(
-    theme.defaultAppContext ?? "PORTAL",
-  );
+  const appContext = theme.defaultAppContext;
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const size = 52;
@@ -71,11 +62,10 @@ export function LoginPage({ theme }: LoginPageProps) {
   if (theme.logoIsMaterialIcon) {
     logoElement = (
       <div
-        className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-2xl shadow-md"
-        style={inlineStyle(theme.primaryColor)}
+        className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-2xl bg-app-primary text-app-primary-text shadow-md"
       >
         <span
-          className="material-symbols-outlined text-white leading-none"
+          className="material-symbols-outlined leading-none"
           style={{
             fontSize: `${size}px`,
             fontVariationSettings: `'FILL' 1, 'wght' 400, 'opsz' ${size}`,
@@ -88,11 +78,10 @@ export function LoginPage({ theme }: LoginPageProps) {
   } else if (theme.logoIsProdestIcon) {
     logoElement = (
       <div
-        className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-2xl shadow-md"
-        style={inlineStyle(theme.primaryColor)}
+        className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-2xl bg-app-primary text-app-primary-text shadow-md"
       >
         <i
-          className={`${theme.logoProdestSymbol} text-white`}
+          className={theme.logoProdestSymbol}
           style={{ fontSize: `${size}px` }}
         />
       </div>
@@ -225,36 +214,26 @@ export function LoginPage({ theme }: LoginPageProps) {
     }
   }
 
-  function handleAppContextChange(value: string): void {
-    debugLog("login-page", "contexto alterado", {
-      from: appContext,
-      to: value,
-    });
-
-    setAppContext(value);
-  }
-
-  const focusRingStyle = {
-    "--tw-ring-color": theme.primaryColor,
-  } as React.CSSProperties;
-
   // Suprime aviso de 'apps' não utilizado — mantido para uso futuro no seletor
   void apps;
 
   return (
-    <div className="flex min-h-[calc(100vh-64px)] items-center justify-center p-4">
+    <div
+      data-app={theme.defaultAppContext}
+      className="flex min-h-[calc(100vh-64px)] items-center justify-center bg-app-gradient p-4"
+    >
       <div className="w-full max-w-md space-y-6">
         {/* Logo + Nome */}
         <div className="text-center">
           {logoElement}
-          <h1 className="text-2xl font-bold text-slate-800">{theme.appName}</h1>
-          <p className="text-sm text-slate-800">{theme.subtitle}</p>
+          <h1 className="text-2xl font-bold text-app-primary">{theme.appName}</h1>
+          <p className="text-sm text-on-surface-variant">{theme.subtitle}</p>
         </div>
 
         {/* Card de formulário */}
-        <Card className="shadow-md rounded-2xl">
+        <Card className="rounded-2xl border-app-accent/20 shadow-md">
           <CardHeader>
-            <CardTitle className="text-lg text-slate-700">
+            <CardTitle className="text-lg text-app-primary">
               Acesso ao Sistema
             </CardTitle>
             <CardDescription>
@@ -273,7 +252,7 @@ export function LoginPage({ theme }: LoginPageProps) {
                   onChange={(e) => setUsername(e.target.value)}
                   required
                   autoFocus
-                  style={focusRingStyle}
+                  className="focus-visible:border-app-primary focus-visible:ring-app-primary/30"
                 />
               </div>
 
@@ -286,22 +265,14 @@ export function LoginPage({ theme }: LoginPageProps) {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  style={focusRingStyle}
+                  className="focus-visible:border-app-primary focus-visible:ring-app-primary/30"
                 />
               </div>
 
               <Button
                 type="submit"
                 disabled={loading}
-                className="w-full text-white transition-colors"
-                style={{ backgroundColor: theme.primaryColor }}
-                onMouseEnter={(e) =>
-                  (e.currentTarget.style.backgroundColor =
-                    theme.primaryHoverColor)
-                }
-                onMouseLeave={(e) =>
-                  (e.currentTarget.style.backgroundColor = theme.primaryColor)
-                }
+                className="w-full bg-app-primary text-app-primary-text transition-colors hover:bg-app-primary-hover focus-visible:ring-app-primary/30"
               >
                 {loading ? (
                   <>
@@ -325,7 +296,7 @@ export function LoginPage({ theme }: LoginPageProps) {
         </Card>
 
         {/* Rodapé */}
-        <p className="text-center text-xs text-slate-800">
+        <p className="text-center text-xs text-on-surface-variant">
           {theme.footerText ??
             `GPP Plataform 2.0 © ${new Date().getFullYear()} SEGER/ES`}
         </p>

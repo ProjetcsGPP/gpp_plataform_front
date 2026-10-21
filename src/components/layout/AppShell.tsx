@@ -25,7 +25,7 @@ export default function AppShell({
   return (
     <AuthProvider>
       <AppThemeProvider appContext={appContext}>
-        <AuthHydrator />
+        <AuthHydrator appContext={appContext} />
         <NavigationProvider>
           <LoadingGuard>
             <div className="min-h-screen flex bg-app-gradient">
@@ -39,7 +39,7 @@ export default function AppShell({
                 />
 
                 <main className="flex-1">
-                  <div className="mx-auto w-full px-5 sm:px-8 xl:w-[85%] xl:px-0">
+                  <div className="mx-auto w-full px-5 sm:px-8 xl:w-[90%] xl:px-0">
                     {children}
                   </div>
                 </main>

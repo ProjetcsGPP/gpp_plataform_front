@@ -78,7 +78,12 @@ export function AdminResourceList<
         className: "text-right",
         headerClassName: "text-right",
         render: (row) => (
-          <Button variant="ghost" size="sm" asChild>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="table-action-button"
+            asChild
+          >
             <Link href={`${resource.basePath}/${resource.getId(row)}/editar`}>
               <Pencil aria-hidden="true" /> Editar
             </Link>

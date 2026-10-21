@@ -9,10 +9,15 @@
 import { useMe }                  from '@/hooks/useMe'
 import { usePermissionsHydrator } from '@/hooks/usePermissionsHydrator'
 import { useVersionPolling }      from '@/hooks/useVersionPolling'
+import type { AppContext }        from '@/types/auth'
 
-export function AuthHydrator() {
-  useMe()
-  usePermissionsHydrator()
-  useVersionPolling()
+interface AuthHydratorProps {
+  appContext: AppContext
+}
+
+export function AuthHydrator({ appContext }: AuthHydratorProps) {
+  useMe(appContext)
+  usePermissionsHydrator(appContext)
+  useVersionPolling(appContext)
   return null
 }

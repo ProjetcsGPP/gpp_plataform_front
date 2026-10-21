@@ -4,13 +4,14 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import React from "react";
 import { SWRConfig } from "swr";
 import { debugLog } from "@/lib/debug";
+import type { AppContext } from "@/types/auth";
 
 const mockSetPermissions = vi.fn();
 const mockClearPermissions = vi.fn();
 const mockSetLoading = vi.fn();
 const mockSetPermissionsForApp = vi.fn();
 let mockIsAuthenticated = true;
-let mockAppContext = "PORTAL";
+let mockAppContext: AppContext = "PORTAL";
 
 vi.mock("@/store/authStore", () => ({
   useAuthStore: Object.assign(
@@ -83,7 +84,7 @@ describe("usePermissionsHydrator", () => {
 
       const { usePermissionsHydrator } =
         await import("@/hooks/usePermissionsHydrator");
-      renderHook(() => usePermissionsHydrator(), { wrapper });
+      renderHook(() => usePermissionsHydrator(mockAppContext), { wrapper });
 
       debugLog("test-permissions", "legado: após renderHook", {
         apiCalls: mockApiGet.mock.calls,
@@ -126,7 +127,7 @@ describe("usePermissionsHydrator", () => {
 
       const { usePermissionsHydrator } =
         await import("@/hooks/usePermissionsHydrator");
-      renderHook(() => usePermissionsHydrator(), { wrapper });
+      renderHook(() => usePermissionsHydrator(mockAppContext), { wrapper });
 
       await waitFor(() => {
         expect(mockSetPermissionsForApp).toHaveBeenCalledWith(
@@ -158,7 +159,7 @@ describe("usePermissionsHydrator", () => {
 
       const { usePermissionsHydrator } =
         await import("@/hooks/usePermissionsHydrator");
-      renderHook(() => usePermissionsHydrator(), { wrapper });
+      renderHook(() => usePermissionsHydrator(mockAppContext), { wrapper });
 
       await waitFor(() => {
         debugLog("test-permissions", "legado: dentro do waitFor", {
@@ -180,7 +181,7 @@ describe("usePermissionsHydrator", () => {
       mockApiGet.mockRejectedValueOnce(new Error("401"));
       const { usePermissionsHydrator } =
         await import("@/hooks/usePermissionsHydrator");
-      renderHook(() => usePermissionsHydrator(), { wrapper });
+      renderHook(() => usePermissionsHydrator(mockAppContext), { wrapper });
       await waitFor(() => expect(mockClearPermissions).toHaveBeenCalled());
     });
   });
@@ -190,8 +191,41 @@ describe("usePermissionsHydrator", () => {
       mockIsAuthenticated = false;
       const { usePermissionsHydrator } =
         await import("@/hooks/usePermissionsHydrator");
-      renderHook(() => usePermissionsHydrator(), { wrapper });
+      renderHook(() => usePermissionsHydrator(mockAppContext), { wrapper });
       expect(mockApiGet).not.toHaveBeenCalled();
+    });
+  });
+
+  it("consulta novamente ao trocar de aplicacao", async () => {
+    mockApiGet
+      .mockResolvedValueOnce({
+        data: { role: "PORTAL_ADMIN", granted: ["view_user"] },
+      })
+      .mockResolvedValueOnce({
+        data: { role: "CARGA_OPERADOR", granted: ["view_importacaoplanilha"] },
+      });
+
+    const { usePermissionsHydrator } =
+      await import("@/hooks/usePermissionsHydrator");
+    const { rerender } = renderHook(
+      ({ appContext }) => usePermissionsHydrator(appContext),
+      {
+        initialProps: { appContext: "PORTAL" as AppContext },
+        wrapper,
+      },
+    );
+
+    await waitFor(() => expect(mockApiGet).toHaveBeenCalledTimes(1));
+
+    rerender({ appContext: "CARGA_ORG_LOT" });
+
+    await waitFor(() => {
+      expect(mockApiGet).toHaveBeenCalledTimes(2);
+      expect(mockSetPermissionsForApp).toHaveBeenCalledWith(
+        "CARGA_ORG_LOT",
+        "CARGA_OPERADOR",
+        ["view_importacaoplanilha"],
+      );
     });
   });
 });

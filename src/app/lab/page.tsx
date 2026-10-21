@@ -16,7 +16,7 @@ export default function TestSidebar() {
 
       <div className="flex flex-col flex-1 ml-20 min-h-screen">
         <TopBar titleMinor="Lab" title="Laboratório" appContext="PORTAL" />
-        <main className="mx-auto w-[85%] space-y-10 py-8">
+        <main className="mx-auto w-[90%] space-y-10 py-8">
           {/* === 1. PageHeader === */}
           <PageHeader
             eyebrow="Comando Solar (Sóbrio)"

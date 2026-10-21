@@ -6,6 +6,7 @@ import { renderHook, waitFor } from "@testing-library/react";
 import { SWRConfig } from "swr";
 import React from "react";
 import { useAuthStore } from "@/store/authStore";
+import type { AppContext } from "@/types/auth";
 
 // Mock declarado antes de qualquer import do modulo alvo
 const mockGet = vi.fn();
@@ -54,7 +55,7 @@ describe("useMe", () => {
   it("deve hidratar a store com os dados do usuario apos GET /me bem-sucedido", async () => {
     mockGet.mockResolvedValueOnce({ data: mockMe });
 
-    renderHook(() => useMe(), { wrapper });
+    renderHook(() => useMe("ACOES_PNGI"), { wrapper });
 
     await waitFor(() => {
       const state = useAuthStore.getState();
@@ -74,7 +75,7 @@ describe("useMe", () => {
       isLoading: false,
     });
 
-    renderHook(() => useMe(), { wrapper });
+    renderHook(() => useMe("ACOES_PNGI"), { wrapper });
 
     await waitFor(() => {
       const state = useAuthStore.getState();
@@ -86,7 +87,7 @@ describe("useMe", () => {
   it("deve retornar isLoading=false apos a requisicao completar", async () => {
     mockGet.mockResolvedValueOnce({ data: mockMe });
 
-    const { result } = renderHook(() => useMe(), { wrapper });
+    const { result } = renderHook(() => useMe("ACOES_PNGI"), { wrapper });
 
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false);
@@ -96,10 +97,42 @@ describe("useMe", () => {
   it("deve retornar isError=true quando a requisicao falha", async () => {
     mockGet.mockRejectedValueOnce(new Error("Network Error"));
 
-    const { result } = renderHook(() => useMe(), { wrapper });
+    const { result } = renderHook(() => useMe("ACOES_PNGI"), { wrapper });
 
     await waitFor(() => {
       expect(result.current.isError).toBe(true);
     });
+  });
+
+  it("mantem um cache independente para cada aplicacao", async () => {
+    const cargaMe = {
+      ...mockMe,
+      app_context: "CARGA_ORG_LOT" as const,
+      apps: ["CARGA_ORG_LOT" as const],
+    };
+    mockGet
+      .mockResolvedValueOnce({ data: mockMe })
+      .mockResolvedValueOnce({ data: cargaMe });
+
+    const { rerender } = renderHook(
+      ({ appContext }) => useMe(appContext),
+      {
+        initialProps: { appContext: "ACOES_PNGI" as AppContext },
+        wrapper,
+      },
+    );
+
+    await waitFor(() => {
+      expect(useAuthStore.getState().appContext).toBe("ACOES_PNGI");
+    });
+
+    rerender({ appContext: "CARGA_ORG_LOT" });
+
+    await waitFor(() => {
+      expect(mockGet).toHaveBeenCalledTimes(2);
+      expect(useAuthStore.getState().appContext).toBe("CARGA_ORG_LOT");
+    });
+    expect(mockGet).toHaveBeenNthCalledWith(1, "/accounts/me/");
+    expect(mockGet).toHaveBeenNthCalledWith(2, "/accounts/me/");
   });
 });

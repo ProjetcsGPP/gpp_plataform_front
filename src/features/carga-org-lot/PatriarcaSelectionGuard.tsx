@@ -14,10 +14,12 @@ export function PatriarcaSelectionGuard({ children }: { children: React.ReactNod
   const pathname = usePathname();
   const { selected } = usePatriarcaSelection();
   const { can } = usePermissions();
-  const isSelectionRoute =
-    pathname === "/carga-org-lot/patriarcas";
+  const doesNotRequirePatriarch = [
+    "/carga-org-lot/dashboard",
+    "/carga-org-lot/patriarcas",
+  ].includes(pathname);
 
-  if (selected || isSelectionRoute) return <>{children}</>;
+  if (selected || doesNotRequirePatriarch) return <>{children}</>;
 
   return (
     <AdminPage
