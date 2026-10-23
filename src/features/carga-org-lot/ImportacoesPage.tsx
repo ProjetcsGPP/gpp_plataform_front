@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
 import useSWR, { useSWRConfig } from "swr";
 import {
+  BriefcaseBusiness,
   CheckCircle2,
   ClipboardList,
   Download,
@@ -31,6 +32,7 @@ import {
   getValidationReport,
   latestOrganogramaUrl,
   listImportacoes,
+  pendenciasImportacaoDownloadUrl,
   processoAtivoKey,
   uploadImportacao,
 } from "@/features/carga-org-lot/api";
@@ -44,6 +46,7 @@ import type {
 } from "@/features/carga-org-lot/model";
 import { OrganogramaTreePanel } from "@/features/carga-org-lot/OrganogramaTreeDialog";
 import { RelatorioValidacaoPanel } from "@/features/carga-org-lot/RelatorioValidacaoPanel";
+import { LotacoesSectionNav } from "@/features/carga-org-lot/LotacoesSectionNav";
 import { SheetSelectionDialog } from "@/features/carga-org-lot/SheetSelectionDialog";
 import { ValidationReportDialog } from "@/features/carga-org-lot/ValidationReportDialog";
 import { usePatriarcaSelection } from "@/features/carga-org-lot/usePatriarcaSelection";
@@ -159,6 +162,12 @@ export function ImportacoesPage({ tipoCarga }: { tipoCarga: 3 | 4 }) {
         listImportacoes(selectedId!, 5, params),
       ]);
       return combineImports(single, packageImports, ordering);
+    },
+    {
+      refreshInterval: (latest) => latest?.results.some((item) =>
+        ["RECEBIDA", "PROCESSANDO", "ANALISANDO_CARGOS", "INCORPORANDO"].includes(item.strstatusimportacao),
+      ) ? 3000 : 0,
+      revalidateOnFocus: false,
     },
   );
   function validateFile(): boolean {
@@ -341,15 +350,25 @@ export function ImportacoesPage({ tipoCarga }: { tipoCarga: 3 | 4 }) {
                 <Send aria-hidden="true" /> Envio para a PRODEST
               </Link>
             </Button>
-          ) : can(PERMISSIONS.IMPORTACAOPLANILHA_ADD) ? (
-            <Button asChild>
-              <Link href="/carga-org-lot/lotacoes/importar">
-                <Upload aria-hidden="true" /> Nova importação
-              </Link>
-            </Button>
-          ) : undefined
+          ) : (
+            <>
+              <Button variant="outline" asChild>
+                <Link href="/carga-org-lot/cargos">
+                  <BriefcaseBusiness aria-hidden="true" /> Catálogo de cargos
+                </Link>
+              </Button>
+              {can(PERMISSIONS.IMPORTACAOPLANILHA_ADD) && (
+                <Button asChild>
+                  <Link href="/carga-org-lot/lotacoes/importar">
+                    <Upload aria-hidden="true" /> Nova importação
+                  </Link>
+                </Button>
+              )}
+            </>
+          )
         }
       >
+        <div className="mb-4"><LotacoesSectionNav /></div>
         {viewingReport ? (
           <RelatorioValidacaoPanel
             key={viewingReport.idimportacaoplanilha}
@@ -614,6 +633,12 @@ export function ImportacoesPage({ tipoCarga }: { tipoCarga: 3 | 4 }) {
                         <option value="">Todos</option>
                         {!isOrganograma && (
                           <>
+                            <option value="ANALISANDO_CARGOS">
+                              Analisando cargos
+                            </option>
+                            <option value="AGUARDANDO_REVISAO_CARGOS">
+                              Aguardando revisão de cargos
+                            </option>
                             <option value="AGUARDANDO_REVISAO">
                               Aguardando revisão
                             </option>
@@ -785,14 +810,34 @@ export function ImportacoesPage({ tipoCarga }: { tipoCarga: 3 | 4 }) {
                                 </Button>
                                 {item.relatorio_validacao && (
                                   <Button
-                                    variant="ghost"
+                                    variant={item.strstatusimportacao === "AGUARDANDO_REVISAO_CARGOS" ? "default" : "ghost"}
                                     size="sm"
                                     className="table-action-button"
                                     onClick={() => setViewingReport(item)}
                                   >
-                                    <ClipboardList /> Relatório
+                                    <ClipboardList /> {item.strstatusimportacao === "AGUARDANDO_REVISAO_CARGOS" ? "Revisar cargos" : "Relatório"}
                                   </Button>
                                 )}
+                                {!isOrganograma &&
+                                  (item.total_casos_pendentes ?? 0) > 0 &&
+                                  can(PERMISSIONS.IMPORTACAOPLANILHA_VIEW) && (
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="table-action-button"
+                                      title="Baixar planilha somente com as pendências ainda abertas"
+                                      onClick={() =>
+                                        download(
+                                          pendenciasImportacaoDownloadUrl(
+                                            item.idimportacaoplanilha,
+                                          ),
+                                          `pendencias-importacao-${item.idimportacaoplanilha}.xlsx`,
+                                        )
+                                      }
+                                    >
+                                      <Download /> Pendências XLSX
+                                    </Button>
+                                  )}
                                 {!isOrganograma &&
                                   item.strstatusimportacao === "PRONTA_PARA_INCORPORAR" &&
                                   can(PERMISSIONS.IMPORTACAOPLANILHA_CHANGE) && (
@@ -925,13 +970,20 @@ function combineImports(
   second: PaginatedResponse<ImportacaoPlanilha>,
   ordering: string,
 ): PaginatedResponse<ImportacaoPlanilha> {
+  const results = Array.from(
+    new Map(
+      [...first.results, ...second.results].map((item) => [
+        item.idimportacaoplanilha,
+        item,
+      ]),
+    ).values(),
+  ).sort((a, b) => compareImports(a, b, ordering));
+
   return {
-    count: first.count + second.count,
+    count: results.length,
     next: null,
     previous: null,
-    results: [...first.results, ...second.results].sort((a, b) =>
-      compareImports(a, b, ordering),
-    ),
+    results,
   };
 }
 
@@ -972,7 +1024,7 @@ function ImportStatusBadge({
       ? "bg-emerald-100 text-emerald-800"
       : status === "REJEITADA" || status === "ERRO_PROCESSAMENTO"
         ? "bg-red-100 text-red-800"
-        : status === "PROCESSANDO"
+        : status === "PROCESSANDO" || status === "ANALISANDO_CARGOS"
           ? "bg-blue-100 text-blue-800"
           : "bg-amber-100 text-amber-900";
   return (

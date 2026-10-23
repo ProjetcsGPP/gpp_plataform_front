@@ -2,13 +2,13 @@
 
 import { useMemo, useState } from "react";
 import useSWR, { useSWRConfig } from "swr";
-import { ArrowLeft, ChevronDown, ChevronUp, Maximize2, Minimize2, RefreshCw } from "lucide-react";
+import { ArrowLeft, BriefcaseBusiness, ChevronDown, ChevronUp, Download, Maximize2, Minimize2, RefreshCw } from "lucide-react";
 
 import { AdminAlert } from "@/components/admin/AdminPage";
 import { Button } from "@/components/ui/button";
-import { getImportacao, getRelatorioImportacao, importacaoKey, processoAtivoKey } from "@/features/carga-org-lot/api";
+import { downloadArquivo, getImportacao, getRelatorioImportacao, importacaoKey, pendenciasImportacaoDownloadUrl, processoAtivoKey } from "@/features/carga-org-lot/api";
 import { LotacaoReviewWorkspace } from "@/features/carga-org-lot/LotacaoReviewWorkspace";
-import type { ImportacaoPlanilha } from "@/features/carga-org-lot/model";
+import type { ImportacaoPlanilha, ResumoAnaliseCargos } from "@/features/carga-org-lot/model";
 import { formatOrganogramaValidationMessage } from "@/features/carga-org-lot/validationMessages";
 import { formatAdminDate } from "@/lib/adminResource";
 import { getApiErrorMessage } from "@/lib/apiErrors";
@@ -35,6 +35,7 @@ export function RelatorioValidacaoPanel({ importacao, organograma = null, onClos
   const [code, setCode] = useState("");
   const [filtersExpanded, setFiltersExpanded] = useState(true);
   const [tableMaximized, setTableMaximized] = useState(false);
+  const [downloadError, setDownloadError] = useState<string | null>(null);
   const isLotation = importacao.idtipocarga_id === 4 || importacao.idtipocarga_id === 5;
   const [activeView, setActiveView] = useState<"OCCURRENCES" | "REVIEW">(
     isLotation ? "REVIEW" : "OCCURRENCES",
@@ -46,12 +47,15 @@ export function RelatorioValidacaoPanel({ importacao, organograma = null, onClos
     ? organograma?.strreferencia || organograma?.strnomearquivo || `Organograma #${importacao.idimportacaoorganograma_id}`
     : null;
   const currentImportacao = refreshedImportacao ?? importacao;
+  const cargoSummary = getCargoSummary(data?.jsonresumo);
   const treatmentCompleted = (
     currentImportacao.strstatusimportacao === "PRONTA_PARA_INCORPORAR"
     || currentImportacao.strstatusimportacao === "INCORPORADA"
   ) && data?.strresultado === "INVALIDO";
   const reviewLabel = currentImportacao.strstatusimportacao === "PRONTA_PARA_INCORPORAR"
     ? "Revisão e incorporação"
+    : currentImportacao.strstatusimportacao === "AGUARDANDO_REVISAO_CARGOS"
+      ? "Revisar correspondências de cargos"
     : currentImportacao.strstatusimportacao === "INCORPORADA"
       ? "Tratamento realizado"
       : "Revisar casos";
@@ -62,7 +66,29 @@ export function RelatorioValidacaoPanel({ importacao, organograma = null, onClos
       mutateImportacao(),
       onRefresh?.(),
       mutateCache(processoAtivoKey(importacao.idpatriarca_id)),
+      mutateCache((key) => Array.isArray(key) && [
+        "carga-org-lot:pendencias",
+        "carga-org-lot:pendencias-resumo",
+        "carga-org-lot:conjuntos",
+        "carga-org-lot:conjuntos-resumo",
+        "carga-org-lot:conjunto",
+        "carga-org-lot:conjuntos-organograma",
+        "carga-org-lot:descartados",
+        "carga-org-lot:itens-lotacao",
+      ].includes(String(key[0]))),
     ]);
+  }
+
+  async function downloadPendingReport() {
+    setDownloadError(null);
+    try {
+      await downloadArquivo(
+        pendenciasImportacaoDownloadUrl(importacao.idimportacaoplanilha),
+        `pendencias-importacao-${importacao.idimportacaoplanilha}.xlsx`,
+      );
+    } catch (caught) {
+      setDownloadError(getApiErrorMessage(caught, "Não foi possível baixar a planilha de pendências."));
+    }
   }
 
   return (
@@ -73,13 +99,20 @@ export function RelatorioValidacaoPanel({ importacao, organograma = null, onClos
           <p className="text-sm text-slate-600">{importacao.strnomearquivo} · importação #{importacao.idimportacaoplanilha}</p>
           {organogramName && <p className="mt-0.5 text-xs font-medium text-app-primary">Organograma: {organogramName}</p>}
         </div>
-        <Button variant="outline" size="sm" onClick={onClose} aria-label="Voltar à lista de arquivos"><ArrowLeft /> Voltar aos arquivos</Button>
+        <div className="flex flex-wrap justify-end gap-2">{isLotation && (currentImportacao.total_casos_pendentes ?? 0) > 0 && <Button variant="outline" size="sm" onClick={() => void downloadPendingReport()} title="Baixar somente pendências ainda abertas"><Download /> Pendências XLSX</Button>}<Button variant="outline" size="sm" onClick={onClose} aria-label="Voltar à lista de arquivos"><ArrowLeft /> Voltar aos arquivos</Button></div>
       </header>
 
       <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden p-4">
+        {downloadError && <AdminAlert variant="error" onClose={() => setDownloadError(null)}>{downloadError}</AdminAlert>}
         {isLoading ? <p className="py-16 text-center text-sm text-slate-500">Carregando relatório...</p> : error ? (
           <AdminAlert><div className="flex items-center justify-between gap-3"><span>{getApiErrorMessage(error, "Não foi possível carregar o relatório de validação.")}</span><Button size="sm" variant="outline" onClick={() => mutate()}><RefreshCw /> Tentar novamente</Button></div></AdminAlert>
         ) : data ? <>
+          {(currentImportacao.strstatusimportacao === "ANALISANDO_CARGOS" || currentImportacao.strstatusimportacao === "AGUARDANDO_REVISAO_CARGOS") && (
+            <div className="flex shrink-0 items-start gap-3 rounded-lg border border-sky-200 bg-sky-50 p-3 text-sm text-sky-950">
+              <BriefcaseBusiness className="mt-0.5 size-5 shrink-0" />
+              <div><strong>{currentImportacao.strstatusimportacao === "ANALISANDO_CARGOS" ? "Analisando descrições de cargos" : "Análise concluída: cargos aguardam revisão humana"}</strong><p className="mt-0.5 text-xs">As sugestões são apoio à decisão. Nenhuma correspondência será efetivada sem validação explícita do usuário.</p></div>
+            </div>
+          )}
           {!tableMaximized && (
             <div className="flex shrink-0 flex-wrap items-center gap-3">
               <StatusResult code={data.strresultado} label={`${treatmentCompleted ? "Validação original: " : ""}${data.resultado_nome}`} />
@@ -97,6 +130,12 @@ export function RelatorioValidacaoPanel({ importacao, organograma = null, onClos
                 <Summary label="Avisos" value={data.inttotalavisos} tone="warning" />
               </dl>
             </div>
+          )}
+
+          {!tableMaximized && cargoSummary && (
+            <section className="shrink-0 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+              <div className="flex flex-wrap items-center gap-2"><span className="mr-1 flex items-center gap-1 text-xs font-semibold uppercase text-slate-600"><BriefcaseBusiness className="size-4" /> Análise de cargos</span><Summary label="Descrições" value={cargoSummary.total_descricoes_distintas} /><Summary label="Confirmadas" value={cargoSummary.total_correspondencias_confirmadas} /><Summary label="Novas" value={cargoSummary.total_descricoes_novas} tone="warning" /><Summary label="Em análise" value={cargoSummary.total_descricoes_em_analise} tone="warning" /><span className="text-xs text-slate-500">regras {cargoSummary.versao_regras}</span></div>
+            </section>
           )}
 
             {isLotation && (
@@ -173,4 +212,19 @@ function Severity({ code, label }: { code: string; label: string }) {
 function formatSuggestions(values: unknown[]) {
   if (!values.length) return "—";
   return values.map((value) => typeof value === "string" ? value : JSON.stringify(value)).join("; ");
+}
+
+function getCargoSummary(value: Record<string, unknown> | undefined): ResumoAnaliseCargos | null {
+  const cargos = value?.cargos;
+  if (!cargos || typeof cargos !== "object" || Array.isArray(cargos)) return null;
+  const candidate = cargos as Record<string, unknown>;
+  const numericFields = ["total_descricoes_distintas", "total_correspondencias_confirmadas", "total_descricoes_novas", "total_descricoes_em_analise"] as const;
+  if (!numericFields.every((field) => typeof candidate[field] === "number")) return null;
+  return {
+    versao_regras: String(candidate.versao_regras ?? "—"),
+    total_descricoes_distintas: Number(candidate.total_descricoes_distintas),
+    total_correspondencias_confirmadas: Number(candidate.total_correspondencias_confirmadas),
+    total_descricoes_novas: Number(candidate.total_descricoes_novas),
+    total_descricoes_em_analise: Number(candidate.total_descricoes_em_analise),
+  };
 }

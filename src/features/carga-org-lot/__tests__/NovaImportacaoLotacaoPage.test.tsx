@@ -108,6 +108,24 @@ const activeSet = {
   updated_by_name: "Usuário teste",
   created_at: "2026-10-01T12:00:00Z",
   updated_at: "2026-10-11T12:00:00Z",
+  patriarca_resumo: {
+    idpatriarca: 1,
+    sigla: "PMV",
+    nome: "Prefeitura de Vitória",
+  },
+  organograma_resumo: {
+    idimportacaoplanilha: 7,
+    referencia: "Estrutura oficial 2026",
+    nome_arquivo: "organograma.xlsx",
+    status: "VALIDADA",
+    data_importacao: "2026-10-01T12:00:00Z",
+  },
+  acoes_disponiveis: {
+    adicionar_planilha: { permitida: false, motivo: "Conjunto fechado." },
+    homologar: { permitida: false, motivo: "Conjunto já homologado." },
+    ativar: { permitida: false, motivo: "Conjunto já ativo." },
+    cancelar: { permitida: true, motivo: "" },
+  },
 } satisfies ConjuntoLotacao;
 
 const draftSet = {

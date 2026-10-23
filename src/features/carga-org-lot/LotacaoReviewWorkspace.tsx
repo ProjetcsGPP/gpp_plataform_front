@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import useSWR from "swr";
-import { AlertTriangle, CheckCircle2, History, Pencil, Sparkles, Trash2, X } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Globe2, History, Pencil, ShieldCheck, Sparkles, Trash2, X } from "lucide-react";
 
 import { AdminAlert } from "@/components/admin/AdminPage";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,7 @@ import type {
   ItemOrganograma,
   RelatorioValidacaoImportacao,
   ResolverCasoValidacaoPayload,
+  AlternativaResolucaoValidacao,
 } from "@/features/carga-org-lot/model";
 import { usePermissions } from "@/hooks/usePermissions";
 import { formatAdminDate } from "@/lib/adminResource";
@@ -178,7 +179,7 @@ export function LotacaoReviewWorkspace({ importacao, report, onRefresh }: {
   );
 }
 
-function ResolveCaseDialog({ validationCase, items, originalValues, organogramItems, canChange, onClose, onResolved, onConflict }: {
+export function ResolveCaseDialog({ validationCase, items, originalValues, organogramItems, canChange, onClose, onResolved, onConflict }: {
   validationCase: CasoValidacaoImportacao;
   items: ItemLotacaoImportado[];
   originalValues: Record<number, Partial<ItemLotacaoImportado>>;
@@ -195,6 +196,12 @@ function ResolveCaseDialog({ validationCase, items, originalValues, organogramIt
   const [drafts, setDrafts] = useState<Record<number, ItemLotacaoImportado>>(() => Object.fromEntries(items.map((item) => [item.iditemlotacaoimportado, { ...item }])));
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [cargoDecision, setCargoDecision] = useState<{
+    payload: ResolverCasoValidacaoPayload;
+    alternative?: AlternativaResolucaoValidacao;
+    description: string;
+  } | null>(null);
+  const isCargoCase = validationCase.strcodigo === "cargo_correspondencia_sugerida";
   const roots = organogramItems.filter((item) => item.idpai_id === null);
   const rootIds = new Set(roots.map((item) => item.iditemorganograma));
   const organs = organogramItems.filter((item) => item.idpai_id !== null && rootIds.has(item.idpai_id));
@@ -235,7 +242,42 @@ function ResolveCaseDialog({ validationCase, items, originalValues, organogramIt
       setError("Altere ao menos um campo antes de salvar a correção.");
       return;
     }
-    void submit({ acao: "CORRIGIR_MANUALMENTE", alteracoes: changes });
+    const payload: ResolverCasoValidacaoPayload = {
+      acao: "CORRIGIR_MANUALMENTE",
+      alteracoes: changes,
+    };
+    if (isCargoCase) {
+      setCargoDecision({
+        payload,
+        description: "Correção manual do cargo normalizado",
+      });
+      return;
+    }
+    void submit(payload);
+  }
+
+  function chooseSuggestion(alternative: AlternativaResolucaoValidacao) {
+    const payload: ResolverCasoValidacaoPayload = {
+      acao: "APLICAR_SUGESTAO",
+      alternativa_id: alternative.idalternativaresolucao,
+    };
+    if (isCargoCase) {
+      setCargoDecision({ payload, alternative, description: alternative.strdescricao });
+      return;
+    }
+    void submit(payload);
+  }
+
+  function acceptAsInformed() {
+    const payload: ResolverCasoValidacaoPayload = {
+      acao: "ACEITAR_COMO_INFORMADO",
+      justificativa: justification,
+    };
+    if (isCargoCase) {
+      setCargoDecision({ payload, description: "Manter o cargo como informado" });
+      return;
+    }
+    void submit(payload);
   }
 
   return (
@@ -249,7 +291,7 @@ function ResolveCaseDialog({ validationCase, items, originalValues, organogramIt
           {error && <AdminAlert variant="error" onClose={() => setError(null)}>{error}</AdminAlert>}
           {!editable ? <DecisionHistory validationCase={validationCase} /> : <>
             {validationCase.alternativas.length > 0 && (
-              <section><h3 className="text-sm font-semibold text-slate-900">Sugestões do sistema</h3><div className="mt-2 grid gap-2 md:grid-cols-2">{validationCase.alternativas.map((alternative) => <button key={alternative.idalternativaresolucao} type="button" disabled={isSubmitting} onClick={() => void submit({ acao: "APLICAR_SUGESTAO", alternativa_id: alternative.idalternativaresolucao })} className="rounded-lg border border-sky-200 bg-sky-50 p-3 text-left hover:border-sky-400 disabled:opacity-50"><span className="flex items-center gap-2 font-medium text-slate-900"><Sparkles className="size-4 text-sky-700" />{alternative.strdescricao}{alternative.flgrecomendada && <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs text-emerald-800">Recomendada</span>}</span>{alternative.decconfianca !== null && <span className="mt-1 block text-xs text-slate-500">Confiança: {alternative.decconfianca}%</span>}</button>)}</div></section>
+              <section><h3 className="text-sm font-semibold text-slate-900">Sugestões do sistema</h3>{isCargoCase && <p className="mt-1 text-xs text-slate-600">A recomendação nunca é aplicada automaticamente. Confira o cargo canônico e escolha o alcance antes de confirmar.</p>}<div className="mt-2 grid gap-2 md:grid-cols-2">{validationCase.alternativas.map((alternative) => <button key={alternative.idalternativaresolucao} type="button" disabled={isSubmitting} onClick={() => chooseSuggestion(alternative)} className="rounded-lg border border-sky-200 bg-sky-50 p-3 text-left hover:border-sky-400 disabled:opacity-50"><span className="flex items-center gap-2 font-medium text-slate-900"><Sparkles className="size-4 text-sky-700" />{alternative.strdescricao}{alternative.flgrecomendada && <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs text-emerald-800">Recomendada</span>}</span>{isCargoCase && canonicalCargoSuggestion(alternative) && <span className="mt-1 block text-xs font-medium text-slate-700">Cargo canônico: {canonicalCargoSuggestion(alternative)}</span>}{alternative.decconfianca !== null && <span className="mt-1 block text-xs text-slate-500">Similaridade informativa: {alternative.decconfianca}%</span>}</button>)}</div></section>
             )}
             <div className="flex flex-wrap gap-2 border-b border-slate-200 pb-3">
               <Button type="button" variant={mode === "MANUAL" ? "default" : "outline"} size="sm" onClick={() => setMode("MANUAL")}><Pencil /> Corrigir manualmente</Button>
@@ -257,14 +299,71 @@ function ResolveCaseDialog({ validationCase, items, originalValues, organogramIt
               <Button type="button" variant={mode === "DISCARD" ? "default" : "outline"} size="sm" onClick={() => setMode("DISCARD")}><Trash2 /> Descartar linhas</Button>
             </div>
             {mode === "MANUAL" && <ManualCorrection items={items} originalValues={originalValues} drafts={drafts} setDrafts={setDrafts} organs={organs} organogramItems={organogramItems} onSubmit={submitManual} isSubmitting={isSubmitting} />}
-            {mode === "ACCEPT" && <JustifiedAction title="Aceitar aviso como informado" description="Use esta opção somente quando os dados estiverem corretos apesar do aviso." value={justification} onChange={setJustification} disabled={isSubmitting} onSubmit={() => void submit({ acao: "ACEITAR_COMO_INFORMADO", justificativa: justification })} submitLabel="Confirmar aceitação" />}
-            {mode === "DISCARD" && <section className="space-y-3"><div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-900"><AlertTriangle className="mr-2 inline size-4" />As {items.length} linha(s) deste caso não serão incorporadas. Críticas exclusivas dessas linhas também serão encerradas.</div><JustifiedAction title="Justificativa do descarte" description={items.map((item) => `${item.strabaorigem}, linha ${item.intlinhaorigem}`).join("; ")} value={justification} onChange={setJustification} disabled={isSubmitting} hideButton /><label className="flex items-start gap-2 text-sm text-slate-700"><input type="checkbox" checked={discardConfirmed} onChange={(event) => setDiscardConfirmed(event.target.checked)} className="mt-1" />Confirmo que estas linhas devem ser descartadas e não incorporadas.</label><Button variant="destructive" disabled={!discardConfirmed || !justification.trim() || isSubmitting} onClick={() => void submit({ acao: "DESCARTAR_LINHAS", justificativa: justification })}><Trash2 /> Descartar linhas</Button></section>}
+            {mode === "ACCEPT" && <JustifiedAction title="Aceitar aviso como informado" description="Use esta opção somente quando os dados estiverem corretos apesar do aviso." value={justification} onChange={setJustification} disabled={isSubmitting} onSubmit={acceptAsInformed} submitLabel="Confirmar aceitação" />}
+            {mode === "DISCARD" && <section className="space-y-3"><div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-900"><AlertTriangle className="mr-2 inline size-4" />As {items.length} linha(s) deste caso não serão incorporadas. Críticas exclusivas dessas linhas também serão encerradas.</div><JustifiedAction title="Justificativa do descarte" description={items.map((item) => `${item.strabaorigem}, linha ${item.intlinhaorigem}`).join("; ")} value={justification} onChange={setJustification} disabled={isSubmitting} hideButton /><label className="flex items-start gap-2 text-sm text-slate-700"><input type="checkbox" checked={discardConfirmed} onChange={(event) => setDiscardConfirmed(event.target.checked)} className="mt-1" />Confirmo que estas linhas devem ser descartadas e não incorporadas.</label><Button variant="destructive" disabled={!discardConfirmed || !justification.trim() || isSubmitting} onClick={() => void submit({ acao: "DESCARTAR_LINHAS", justificativa: justification, ...(isCargoCase ? { escopo_cargo: "IMPORTACAO", memorizar_cargo: false } : {}) })}><Trash2 /> Descartar linhas</Button></section>}
           </>}
           {editable && validationCase.resolucoes.length > 0 && <DecisionHistory validationCase={validationCase} />}
         </div>
       </section>
+      {cargoDecision && (
+        <CargoDecisionDialog
+          decision={cargoDecision}
+          items={items}
+          isSubmitting={isSubmitting}
+          onCancel={() => setCargoDecision(null)}
+          onConfirm={(scope, remember, decisionJustification) => {
+            const payload = {
+              ...cargoDecision.payload,
+              escopo_cargo: scope,
+              memorizar_cargo: remember,
+              ...(decisionJustification.trim()
+                ? { justificativa: decisionJustification.trim() }
+                : {}),
+            } satisfies ResolverCasoValidacaoPayload;
+            setCargoDecision(null);
+            void submit(payload);
+          }}
+        />
+      )}
     </div>
   );
+}
+
+function CargoDecisionDialog({ decision, items, isSubmitting, onCancel, onConfirm }: {
+  decision: { payload: ResolverCasoValidacaoPayload; alternative?: AlternativaResolucaoValidacao; description: string };
+  items: ItemLotacaoImportado[];
+  isSubmitting: boolean;
+  onCancel: () => void;
+  onConfirm: (scope: "GLOBAL" | "PATRIARCA" | "IMPORTACAO", remember: boolean, justification: string) => void;
+}) {
+  const [scope, setScope] = useState<"GLOBAL" | "PATRIARCA" | "IMPORTACAO">("GLOBAL");
+  const [confirmed, setConfirmed] = useState(false);
+  const [justification, setJustification] = useState(
+    String(decision.payload.justificativa ?? ""),
+  );
+  const sourceTitles = [...new Set(items.map((item) => item.strcargooriginal || item.strcargonormalizado).filter(Boolean))];
+  const canonical = decision.alternative
+    ? canonicalCargoSuggestion(decision.alternative) || decision.alternative.strdescricao
+    : items[0]?.strcargonormalizado;
+  const impact = scope === "GLOBAL"
+    ? "Poderá orientar futuras importações de todos os patriarcas."
+    : scope === "PATRIARCA"
+      ? "Poderá orientar futuras importações somente deste patriarca."
+      : "A decisão ficará limitada a esta importação.";
+
+  const remember = decision.payload.acao === "APLICAR_SUGESTAO" ? false : scope !== "IMPORTACAO";
+  return <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/60 p-4" role="dialog" aria-modal="true" aria-labelledby="cargo-decision-title"><section className="w-full max-w-2xl rounded-xl bg-white p-6 shadow-2xl"><div className="flex items-start justify-between gap-4"><div><h2 id="cargo-decision-title" className="text-lg font-bold text-slate-900">Validar decisão de cargo</h2><p className="mt-1 text-sm text-slate-600">Confira a correspondência e seu alcance. Nada será aplicado antes desta confirmação.</p></div><Button variant="ghost" size="icon" onClick={onCancel} aria-label="Fechar confirmação"><X /></Button></div><dl className="mt-4 grid gap-3 rounded-lg border border-slate-200 bg-slate-50 p-4 sm:grid-cols-2"><div><dt className="text-xs font-semibold uppercase text-slate-500">Cargo informado</dt><dd className="mt-1 text-sm text-slate-900">{sourceTitles.join("; ") || "Não informado"}</dd></div><div><dt className="text-xs font-semibold uppercase text-slate-500">Cargo canônico proposto</dt><dd className="mt-1 text-sm font-semibold text-slate-900">{String(canonical || decision.description)}</dd></div></dl><fieldset className="mt-4"><legend className="text-sm font-semibold text-slate-900">Alcance da decisão</legend><div className="mt-2 grid gap-2 sm:grid-cols-3">{([ ["GLOBAL", "Global", "Todas as prefeituras"], ["PATRIARCA", "Este patriarca", "Somente esta prefeitura/autarquia"], ["IMPORTACAO", "Esta importação", "Sem efeito futuro"] ] as const).map(([value, label, description]) => <label key={value} className={`cursor-pointer rounded-lg border p-3 ${scope === value ? "border-app-primary bg-sky-50" : "border-slate-200"}`}><span className="flex items-center gap-2 text-sm font-semibold"><input type="radio" name="cargo-scope" value={value} checked={scope === value} onChange={() => { setScope(value); setConfirmed(false); }} />{label}</span><span className="mt-1 block pl-5 text-xs text-slate-500">{description}</span></label>)}</div></fieldset><div className={`mt-4 rounded-lg border p-3 text-sm ${scope === "GLOBAL" ? "border-amber-300 bg-amber-50 text-amber-950" : "border-sky-200 bg-sky-50 text-sky-950"}`}><Globe2 className="mr-2 inline size-4" /><strong>Impacto:</strong> {impact}{scope !== "IMPORTACAO" && <span className="mt-1 block text-xs">Ao confirmar, a decisão poderá ser reutilizada automaticamente dentro deste alcance.</span>}</div><label className="mt-4 block text-xs font-medium text-slate-600">Justificativa ou observação {decision.payload.acao === "ACEITAR_COMO_INFORMADO" ? "" : "(opcional)"}<textarea rows={2} value={justification} onChange={(event) => setJustification(event.target.value)} className="mt-1 block w-full rounded-md border border-slate-300 p-3 text-sm" /></label><label className="mt-4 flex items-start gap-2 rounded-lg border border-slate-200 p-3 text-sm text-slate-800"><input type="checkbox" checked={confirmed} onChange={(event) => setConfirmed(event.target.checked)} className="mt-1" /><span><strong>Revisei a correspondência e o alcance.</strong><span className="block text-xs text-slate-500">Confirmo que o cargo proposto faz sentido, inclusive se a sugestão parecer incomum.</span></span></label><div className="mt-5 flex justify-end gap-2"><Button variant="outline" onClick={onCancel} disabled={isSubmitting}>Voltar e revisar</Button><Button onClick={() => onConfirm(scope, remember, justification || String(decision.payload.justificativa ?? ""))} disabled={!confirmed || isSubmitting || (decision.payload.acao === "ACEITAR_COMO_INFORMADO" && !justification.trim() && !String(decision.payload.justificativa ?? "").trim())}><ShieldCheck /> Validar e aplicar</Button></div></section></div>;
+}
+
+function canonicalCargoSuggestion(alternative: AlternativaResolucaoValidacao) {
+  const direct = alternative.jsonpayload.strcargonormalizado;
+  const changes = alternative.jsonpayload.alteracoes;
+  if (direct) return String(direct);
+  if (changes && typeof changes === "object" && !Array.isArray(changes)) {
+    const normalized = (changes as Record<string, unknown>).strcargonormalizado;
+    if (normalized) return String(normalized);
+  }
+  return "";
 }
 
 function ManualCorrection({ items, originalValues, drafts, setDrafts, organs, organogramItems, onSubmit, isSubmitting }: {
@@ -392,7 +491,11 @@ function DecisionHistory({ validationCase }: { validationCase: CasoValidacaoImpo
 }
 
 function ImportedItemsTable({ items, originalValues }: { items: ItemLotacaoImportado[]; originalValues: Record<number, Partial<ItemLotacaoImportado>> }) {
-  return <div className="min-h-0 flex-1 overflow-auto rounded-lg border border-slate-200 bg-white"><table className="w-full min-w-[76rem] text-left text-sm"><thead className="sticky top-0 z-10 bg-slate-100 text-xs uppercase text-slate-600"><tr><th className="px-3 py-2">Origem</th><th className="px-3 py-2">Servidor / CPF</th><th className="px-3 py-2">Órgão</th><th className="px-3 py-2">Unidade</th><th className="px-3 py-2">Cargo</th><th className="px-3 py-2">Situação</th></tr></thead><tbody className="divide-y divide-slate-100">{items.map((item) => { const original = originalValues[item.iditemlotacaoimportado] ?? item; return <tr key={item.iditemlotacaoimportado} className="align-top"><td className="px-3 py-2">{item.strabaorigem}, linha {item.intlinhaorigem}</td><td className="space-y-2 px-3 py-2"><ComparisonValue label="Servidor" original={original.strnomeservidor} current={item.strnomeservidor} /><ComparisonValue label="CPF" original={formatCpf(String(original.strcpf ?? ""))} current={formatCpf(item.strcpf)} /></td><td className="px-3 py-2"><ComparisonValue original={joinValues(original.strsiglaorgao, original.strnomeorgao)} current={joinValues(item.strsiglaorgao, item.strnomeorgao)} /></td><td className="px-3 py-2"><ComparisonValue original={joinValues(original.strsiglaunidade, original.strnomeunidade)} current={joinValues(item.strsiglaunidade, item.strnomeunidade)} /></td><td className="px-3 py-2"><ComparisonValue original={joinValues(original.strcargooriginal, original.strcargonormalizado)} current={joinValues(item.strcargooriginal, item.strcargonormalizado)} /></td><td className="px-3 py-2"><span className={`rounded-full px-2 py-1 text-xs font-semibold ${item.strsituacao === "DESCARTADO" ? "bg-red-100 text-red-800" : "bg-emerald-100 text-emerald-800"}`}>{item.situacao_nome}</span></td></tr>; })}</tbody></table>{!items.length && <p className="p-10 text-center text-sm text-slate-500">Nenhum item importado foi encontrado.</p>}</div>;
+  return <div className="min-h-0 flex-1 overflow-auto rounded-lg border border-slate-200 bg-white"><table className="w-full min-w-[76rem] text-left text-sm"><thead className="sticky top-0 z-10 bg-slate-100 text-xs uppercase text-slate-600"><tr><th className="px-3 py-2">Origem</th><th className="px-3 py-2">Servidor / CPF</th><th className="px-3 py-2">Órgão</th><th className="px-3 py-2">Unidade</th><th className="px-3 py-2">Cargo</th><th className="px-3 py-2">Situação</th></tr></thead><tbody className="divide-y divide-slate-100">{items.map((item) => { const original = originalValues[item.iditemlotacaoimportado] ?? item; return <tr key={item.iditemlotacaoimportado} className="align-top"><td className="px-3 py-2">{item.strabaorigem}, linha {item.intlinhaorigem}</td><td className="space-y-2 px-3 py-2"><ComparisonValue label="Servidor" original={original.strnomeservidor} current={item.strnomeservidor} /><ComparisonValue label="CPF" original={formatCpf(String(original.strcpf ?? ""))} current={formatCpf(item.strcpf)} /></td><td className="px-3 py-2"><ComparisonValue original={joinValues(original.strsiglaorgao, original.strnomeorgao)} current={joinValues(item.strsiglaorgao, item.strnomeorgao)} /></td><td className="px-3 py-2"><ComparisonValue original={joinValues(original.strsiglaunidade, original.strnomeunidade)} current={joinValues(item.strsiglaunidade, item.strnomeunidade)} /></td><td className="px-3 py-2"><CargoValues item={item} /></td><td className="px-3 py-2"><span className={`rounded-full px-2 py-1 text-xs font-semibold ${item.strsituacao === "DESCARTADO" ? "bg-red-100 text-red-800" : "bg-emerald-100 text-emerald-800"}`}>{item.situacao_nome}</span></td></tr>; })}</tbody></table>{!items.length && <p className="p-10 text-center text-sm text-slate-500">Nenhum item importado foi encontrado.</p>}</div>;
+}
+
+function CargoValues({ item }: { item: ItemLotacaoImportado }) {
+  return <dl className="min-w-52 space-y-1 text-xs"><div><dt className="font-semibold uppercase text-slate-500">Informado na planilha</dt><dd className="text-slate-700">{item.strcargooriginal || "vazio"}</dd></div><div><dt className="font-semibold uppercase text-slate-500">Normalizado</dt><dd className="font-medium text-slate-800">{item.strcargonormalizado || "Não normalizado"}</dd></div><div><dt className="font-semibold uppercase text-slate-500">Cargo canônico</dt><dd className={item.idcargoreferencia_id ? "font-medium text-emerald-800" : "text-amber-700"}>{item.idcargoreferencia_id ? `Vinculado ao cargo #${item.idcargoreferencia_id}` : "Aguardando correspondência"}</dd></div></dl>;
 }
 
 function ComparisonValue({ label, original, current }: { label?: string; original: unknown; current: unknown }) {

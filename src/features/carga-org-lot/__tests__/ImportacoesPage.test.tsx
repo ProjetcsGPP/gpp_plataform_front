@@ -232,6 +232,40 @@ describe("telas de importação", () => {
     expect(await screen.findByText("Organograma: Estrutura 2026")).toBeInTheDocument();
   });
 
+  it("não duplica uma importação devolvida nas consultas simples e em pacote", async () => {
+    vi.mocked(cargaApi.listImportacoes).mockImplementation(
+      async (_patriarca, tipo) =>
+        tipo === 3
+          ? organogramas
+          : { count: 1, next: null, previous: null, results: [lotacaoDoConjunto] },
+    );
+
+    setup(4);
+
+    expect(await screen.findByText("Complemento de outubro")).toBeInTheDocument();
+    expect(screen.getAllByText("Complemento de outubro")).toHaveLength(1);
+  });
+
+  it("baixa o XLSX quando a importação possui pendências abertas", async () => {
+    const pendingImport = { ...lotacaoDoConjunto, total_casos_pendentes: 3 };
+    vi.mocked(cargaApi.listImportacoes).mockImplementation(
+      async (_patriarca, tipo) =>
+        tipo === 3
+          ? organogramas
+          : tipo === 4
+            ? { count: 1, next: null, previous: null, results: [pendingImport] }
+            : empty,
+    );
+
+    setup(4);
+
+    await userEvent.click(await screen.findByRole("button", { name: "Pendências XLSX" }));
+    expect(cargaApi.downloadArquivo).toHaveBeenCalledWith(
+      "/carga-org-lot/importacoes/21/pendencias/download/",
+      "pendencias-importacao-21.xlsx",
+    );
+  });
+
   it("oferece a incorporação quando as críticas inválidas já foram tratadas", async () => {
     const invalidReport = {
       ...validationReport,

@@ -36,6 +36,7 @@ import type {
   ValidationReport,
 } from "@/features/carga-org-lot/model";
 import { ValidationReportDialog } from "@/features/carga-org-lot/ValidationReportDialog";
+import { LotacoesSectionNav } from "@/features/carga-org-lot/LotacoesSectionNav";
 import { usePatriarcaSelection } from "@/features/carga-org-lot/usePatriarcaSelection";
 import { formatAdminDate } from "@/lib/adminResource";
 import { getApiErrorMessage } from "@/lib/apiErrors";
@@ -51,6 +52,7 @@ export function NovaImportacaoLotacaoPage() {
   const { selected } = usePatriarcaSelection();
   const selectedId = selected?.idpatriarca ?? null;
   const inputRef = useRef<HTMLInputElement>(null);
+  const requestedSetRef = useRef<number | null>(null);
   const [organogramaId, setOrganogramaId] = useState<number | null>(null);
   const [reference, setReference] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -64,6 +66,18 @@ export function NovaImportacaoLotacaoPage() {
   useEffect(() => {
     setOrganogramaId(null);
     setCreated(null);
+  }, [selectedId]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const requestedOrganogram = Number(params.get("organograma"));
+    const requestedSet = Number(params.get("conjunto"));
+    if (requestedOrganogram > 0) setOrganogramaId(requestedOrganogram);
+    if (requestedSet > 0) {
+      requestedSetRef.current = requestedSet;
+      setMode("ACRESCENTAR_CONJUNTO");
+      setTargetSetId(requestedSet);
+    }
   }, [selectedId]);
 
   const listKey = selectedId
@@ -116,8 +130,8 @@ export function NovaImportacaoLotacaoPage() {
       return;
     }
     const preferredSet = lotationContext?.sets.find((set) =>
-      isOpenSet(set.strsituacao),
-    );
+      set.idconjuntolotacao === requestedSetRef.current && isOpenSet(set.strsituacao),
+    ) ?? lotationContext?.sets.find((set) => isOpenSet(set.strsituacao));
     if (preferredSet) {
       setMode("ACRESCENTAR_CONJUNTO");
       setTargetSetId(preferredSet.idconjuntolotacao);
@@ -183,7 +197,10 @@ export function NovaImportacaoLotacaoPage() {
           (key) =>
             Array.isArray(key) &&
             (key[0] === "carga-org-lot:importacoes" ||
-              key[0] === "carga-org-lot:conjuntos-organograma"),
+              key[0] === "carga-org-lot:conjuntos-organograma" ||
+              key[0] === "carga-org-lot:conjuntos" ||
+              key[0] === "carga-org-lot:conjuntos-resumo" ||
+              key[0] === "carga-org-lot:conjunto"),
         ),
         mutate(processoAtivoKey(selectedId)),
       ]);
@@ -277,6 +294,7 @@ export function NovaImportacaoLotacaoPage() {
           </Button>
         }
       >
+        <div className="mb-4"><LotacoesSectionNav /></div>
         <form onSubmit={submit} className="space-y-3">
           {feedback && <AdminAlert>{feedback}</AdminAlert>}
 

@@ -12,6 +12,8 @@ import type {
   HistoricoConjuntoLotacao,
   ImportacaoPlanilha,
   ItemLotacaoImportado,
+  ItemLotacao,
+  ItemLotacaoDescartado,
   ItemOrganograma,
   ItemOrganogramaCreatePayload,
   ItemOrganogramaImpacto,
@@ -22,8 +24,14 @@ import type {
   PatriarcaUpdatePayload,
   ProcessoCargaInicial,
   CasoValidacaoImportacao,
+  CargoReferencia,
+  VariacaoCargo,
+  OcorrenciaCargo,
+  MapeamentoCargoPatriarca,
   ResolverCasoValidacaoPayload,
   ResumoConjuntosOrganograma,
+  ResumoConjuntosLotacao,
+  ResumoPendencias,
   RelatorioValidacaoImportacao,
   StatusProgresso,
   SheetSelectionReport,
@@ -45,8 +53,14 @@ export const CARGA_ORG_LOT_DASHBOARD_ENDPOINT = "/carga-org-lot/dashboard/";
 export const CONJUNTOS_LOTACAO_ENDPOINT = "/carga-org-lot/conjuntos-lotacao/";
 export const ITENS_LOTACAO_IMPORTADOS_ENDPOINT =
   "/carga-org-lot/itens-lotacao-importados/";
+export const ITENS_LOTACAO_ENDPOINT = "/carga-org-lot/itens-lotacao/";
 export const CASOS_VALIDACAO_ENDPOINT =
   "/carga-org-lot/casos-validacao-importacao/";
+export const CARGOS_REFERENCIA_ENDPOINT = "/carga-org-lot/cargos-referencia/";
+export const VARIACOES_CARGO_ENDPOINT = "/carga-org-lot/variacoes-cargo/";
+export const OCORRENCIAS_CARGO_ENDPOINT = "/carga-org-lot/ocorrencias-cargo/";
+export const MAPEAMENTOS_CARGO_ENDPOINT =
+  "/carga-org-lot/mapeamentos-cargo-patriarca/";
 
 export function processoAtivoKey(patriarcaId: number) {
   return ["carga-org-lot:processo-ativo", patriarcaId] as const;
@@ -160,6 +174,14 @@ export async function getResumoConjuntosOrganograma(organogramaId: number) {
   const response = await api.get<ResumoConjuntosOrganograma>(
     `${CONJUNTOS_LOTACAO_ENDPOINT}resumo-organograma/`,
     { params: { organograma: organogramaId } },
+  );
+  return response.data;
+}
+
+export async function getResumoConjuntosLotacao(params?: Record<string, string | number>) {
+  const response = await api.get<ResumoConjuntosLotacao>(
+    `${CONJUNTOS_LOTACAO_ENDPOINT}resumo/`,
+    { params },
   );
   return response.data;
 }
@@ -451,6 +473,10 @@ export async function getRelatorioImportacao(id: number) {
   return response.data;
 }
 
+export function pendenciasImportacaoDownloadUrl(id: number) {
+  return `${IMPORTACOES_ENDPOINT}${id}/pendencias/download/`;
+}
+
 export async function getImportacao(id: number) {
   const response = await api.get<ImportacaoPlanilha>(`${IMPORTACOES_ENDPOINT}${id}/`);
   return response.data;
@@ -495,6 +521,94 @@ export async function incorporarLotacao(id: number) {
     `${IMPORTACOES_ENDPOINT}${id}/incorporar-lotacao/`,
     {},
   );
+  return response.data;
+}
+
+export async function listCasosValidacao(params?: CatalogParams) {
+  const response = await api.get<PaginatedResponse<CasoValidacaoImportacao>>(
+    CASOS_VALIDACAO_ENDPOINT,
+    { params },
+  );
+  return response.data;
+}
+
+export async function getResumoPendencias(params?: CatalogParams) {
+  const response = await api.get<ResumoPendencias>(
+    `${CASOS_VALIDACAO_ENDPOINT}resumo/`,
+    { params },
+  );
+  return response.data;
+}
+
+export async function listItensLotacao(params?: CatalogParams) {
+  const response = await api.get<PaginatedResponse<ItemLotacao>>(
+    ITENS_LOTACAO_ENDPOINT,
+    { params },
+  );
+  return response.data;
+}
+
+export async function listItensLotacaoDescartados(params?: CatalogParams) {
+  const response = await api.get<PaginatedResponse<ItemLotacaoDescartado>>(
+    `${ITENS_LOTACAO_IMPORTADOS_ENDPOINT}descartados/`,
+    { params },
+  );
+  return response.data;
+}
+
+type CatalogParams = Record<string, string | number | boolean>;
+
+export async function listCargosReferencia(params?: CatalogParams) {
+  const response = await api.get<PaginatedResponse<CargoReferencia>>(
+    CARGOS_REFERENCIA_ENDPOINT,
+    { params: { ordering: "strnome,idcargoreferencia", ...params } },
+  );
+  return response.data;
+}
+
+export async function createCargoReferencia(payload: Pick<CargoReferencia, "strnome" | "strdescricao"> & Partial<Pick<CargoReferencia, "strstatus" | "flgativo">>) {
+  const response = await api.post<CargoReferencia>(CARGOS_REFERENCIA_ENDPOINT, payload);
+  return response.data;
+}
+
+export async function updateCargoReferencia(id: number, payload: Partial<Pick<CargoReferencia, "strnome" | "strdescricao" | "strstatus" | "flgativo">>) {
+  const response = await api.patch<CargoReferencia>(`${CARGOS_REFERENCIA_ENDPOINT}${id}/`, payload);
+  return response.data;
+}
+
+export async function listVariacoesCargo(params?: CatalogParams) {
+  const response = await api.get<PaginatedResponse<VariacaoCargo>>(
+    VARIACOES_CARGO_ENDPOINT,
+    { params: { ordering: "-inttotalocorrencias,idvariacaocargo", ...params } },
+  );
+  return response.data;
+}
+
+export async function updateVariacaoCargo(id: number, payload: Partial<Pick<VariacaoCargo, "strdescricao" | "strstatus" | "idcargoreferencia_id">>) {
+  const response = await api.patch<VariacaoCargo>(`${VARIACOES_CARGO_ENDPOINT}${id}/`, payload);
+  return response.data;
+}
+
+export async function listOcorrenciasCargo(params?: CatalogParams) {
+  const response = await api.get<PaginatedResponse<OcorrenciaCargo>>(
+    OCORRENCIAS_CARGO_ENDPOINT,
+    { params },
+  );
+  return response.data;
+}
+
+export async function listMapeamentosCargo(params?: CatalogParams) {
+  const response = await api.get<PaginatedResponse<MapeamentoCargoPatriarca>>(
+    MAPEAMENTOS_CARGO_ENDPOINT,
+    { params },
+  );
+  return response.data;
+}
+
+export async function saveMapeamentoCargo(payload: Pick<MapeamentoCargoPatriarca, "idpatriarca_id" | "idvariacaocargo_id" | "idcargoreferencia_id" | "flgativo">, id?: number) {
+  const response = id
+    ? await api.patch<MapeamentoCargoPatriarca>(`${MAPEAMENTOS_CARGO_ENDPOINT}${id}/`, payload)
+    : await api.post<MapeamentoCargoPatriarca>(MAPEAMENTOS_CARGO_ENDPOINT, payload);
   return response.data;
 }
 

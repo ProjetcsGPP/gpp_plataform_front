@@ -82,6 +82,8 @@ export interface ImportacaoPlanilha {
   strstatusimportacao:
     | "RECEBIDA"
     | "PROCESSANDO"
+    | "ANALISANDO_CARGOS"
+    | "AGUARDANDO_REVISAO_CARGOS"
     | "AGUARDANDO_REVISAO"
     | "PRONTA_PARA_INCORPORAR"
     | "INCORPORANDO"
@@ -137,6 +139,22 @@ export interface ConjuntoLotacao {
   total_registros_descartados: number;
   idconjuntosubstituto: number | null;
   download_consolidado_url: string;
+  patriarca_resumo: {
+    idpatriarca: number;
+    sigla: string;
+    nome: string;
+  };
+  organograma_resumo: {
+    idimportacaoplanilha: number;
+    referencia: string;
+    nome_arquivo: string;
+    status: string;
+    data_importacao: string;
+  };
+  acoes_disponiveis: Record<
+    "adicionar_planilha" | "homologar" | "ativar" | "cancelar",
+    { permitida: boolean; motivo: string }
+  >;
   created_by_id: number | null;
   created_by_name: string | null;
   updated_by_id: number | null;
@@ -152,6 +170,15 @@ export interface ResumoConjuntosOrganograma {
   conjuntos_em_validacao: number;
   conjuntos_com_pendencias: number;
   conjunto_ativo: ConjuntoLotacao | null;
+}
+
+export interface ResumoConjuntosLotacao {
+  total_conjuntos: number;
+  por_situacao: Array<{
+    situacao: SituacaoConjuntoLotacao;
+    nome: string;
+    total: number;
+  }>;
 }
 
 export interface HistoricoConjuntoLotacao {
@@ -203,6 +230,14 @@ export interface RelatorioValidacaoImportacao {
   casos?: CasoValidacaoImportacao[];
 }
 
+export interface ResumoAnaliseCargos {
+  versao_regras: string;
+  total_descricoes_distintas: number;
+  total_correspondencias_confirmadas: number;
+  total_descricoes_novas: number;
+  total_descricoes_em_analise: number;
+}
+
 export type StatusCasoValidacao =
   | "PENDENTE"
   | "ACEITO_COMO_INFORMADO"
@@ -223,6 +258,7 @@ export interface AlternativaResolucaoValidacao {
   jsonpayload: Record<string, unknown>;
   decconfianca: string | number | null;
   flgrecomendada: boolean;
+  idcargoreferencia_id?: number | null;
 }
 
 export interface ResolucaoValidacao {
@@ -248,6 +284,9 @@ export interface CasoValidacaoImportacao {
   strstatus: StatusCasoValidacao;
   status_nome: string;
   datresolucao: string | null;
+  assunto?: "CARGO" | "CPF" | "SERVIDOR" | "ORGANOGRAMA" | "ARQUIVO" | "OUTROS";
+  assunto_nome?: string;
+  contexto?: ContextoLotacao;
   item_ids: number[];
   ocorrencia_ids: number[];
   alternativas: AlternativaResolucaoValidacao[];
@@ -275,6 +314,8 @@ export interface ItemLotacaoImportado {
   strcpf: string;
   strcargooriginal: string;
   strcargonormalizado: string;
+  idvariacaocargo_id?: number | null;
+  idcargoreferencia_id?: number | null;
   strsiglaunidadeoriginal: string;
   strsiglaunidade: string;
   strnomeunidade: string;
@@ -282,6 +323,59 @@ export interface ItemLotacaoImportado {
   intlinhaorigem: number;
   strsituacao: SituacaoItemLotacaoImportado;
   situacao_nome: string;
+  cargo_referencia_nome?: string | null;
+  contexto?: ContextoLotacao;
+}
+
+export interface ContextoLotacao {
+  importacao: { id: number; referencia: string; nome_arquivo: string };
+  patriarca: { id: number; sigla: string; nome: string };
+  organograma: { id: number; referencia: string; nome_arquivo: string } | null;
+  conjunto: { id: number; referencia: string; situacao: SituacaoConjuntoLotacao } | null;
+}
+
+export interface DescarteLotacao {
+  idcasovalidacao: number;
+  codigo_critica: string;
+  idresolucaovalidacao: number;
+  motivo: string;
+  descartado_por_id: number | null;
+  descartado_por_nome: string | null;
+  data_descarte: string;
+}
+
+export interface ItemLotacaoDescartado extends ItemLotacaoImportado {
+  descartes: DescarteLotacao[];
+}
+
+export interface ItemLotacao {
+  iditemlotacao: number;
+  idimportacaoplanilha_id: number;
+  idorgaoorganograma_id: number | null;
+  idunidadeorganograma_id: number | null;
+  idcargoreferencia_id: number | null;
+  cargo_referencia_nome: string | null;
+  strsiglaorgao: string;
+  strnomeorgao: string;
+  strnomeservidor: string;
+  strcpf: string;
+  strcargooriginal: string;
+  strcargonormalizado: string;
+  strsiglaunidade: string;
+  strnomeunidade: string;
+  strabaorigem: string;
+  intlinhaorigem: number;
+  contexto: ContextoLotacao;
+}
+
+export interface ResumoPendencias {
+  total: number;
+  por_assunto: Array<{ assunto: string; nome: string; total: number }>;
+  por_severidade: Array<{ severidade: string; total: number }>;
+  por_status: Array<{ status: string; total: number }>;
+  por_patriarca: Array<{ idpatriarca: number; nome: string; total: number }>;
+  por_organograma: Array<{ idimportacaoorganograma: number; referencia: string; total: number }>;
+  por_conjunto: Array<{ idconjuntolotacao: number; referencia: string; total: number }>;
 }
 
 export type CamposCorrecaoLotacao = Partial<Pick<
@@ -302,10 +396,75 @@ export interface ResolverCasoValidacaoPayload {
   acao: AcaoResolucaoValidacao;
   alternativa_id?: number;
   justificativa?: string;
+  escopo_cargo?: "GLOBAL" | "PATRIARCA" | "IMPORTACAO";
+  memorizar_cargo?: boolean;
   alteracoes?: Array<{
     iditemlotacaoimportado: number;
     campos: CamposCorrecaoLotacao;
   }>;
+}
+
+export type StatusCargoReferencia = "NOVO" | "CONFIRMADO" | "INATIVO";
+export type StatusVariacaoCargo =
+  | "NOVA"
+  | "EM_ANALISE"
+  | "CONFIRMADA"
+  | "AMBIGUA"
+  | "IGNORADA";
+
+interface AuditableRecord {
+  created_by_id?: number | null;
+  created_by_name?: string | null;
+  updated_by_id?: number | null;
+  updated_by_name?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CargoReferencia extends AuditableRecord {
+  idcargoreferencia: number;
+  strnome: string;
+  strchave: string;
+  strdescricao: string;
+  strstatus: StatusCargoReferencia;
+  status_nome: string;
+  strorigem: string;
+  flgativo: boolean;
+}
+
+export interface VariacaoCargo extends AuditableRecord {
+  idvariacaocargo: number;
+  idcargoreferencia_id: number | null;
+  cargo_referencia_nome: string | null;
+  strdescricao: string;
+  strchave: string;
+  strstatus: StatusVariacaoCargo;
+  status_nome: string;
+  inttotalocorrencias: number;
+  inttotalimportacoes: number;
+  inttotalpatriarcas: number;
+  datprimeiraocorrencia: string;
+  datultimaocorrencia: string;
+}
+
+export interface OcorrenciaCargo extends AuditableRecord {
+  idocorrenciacargo: number;
+  idvariacaocargo_id: number;
+  variacao: VariacaoCargo;
+  idimportacaoplanilha_id: number;
+  idpatriarca_id: number;
+  intquantidade: number;
+  jsonlocalizacoes: unknown[];
+}
+
+export interface MapeamentoCargoPatriarca extends AuditableRecord {
+  idmapeamentocargo: number;
+  idpatriarca_id: number;
+  idvariacaocargo_id: number;
+  variacao_descricao: string;
+  idcargoreferencia_id: number;
+  cargo_referencia_nome: string;
+  flgativo: boolean;
 }
 
 export interface ItemOrganograma {

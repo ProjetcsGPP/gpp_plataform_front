@@ -237,4 +237,42 @@ describe("revisão de casos de lotação", () => {
     expect(screen.getByText("Valores alterados")).toBeInTheDocument();
     expect(screen.getByText("Item #123 · Nome do servidor")).toBeInTheDocument();
   });
+
+  it("não aplica sugestão de cargo antes da validação explícita do alcance", async () => {
+    const cargoCase: CasoValidacaoImportacao = {
+      ...errorCase,
+      idcasovalidacao: 44,
+      strcodigo: "cargo_correspondencia_sugerida",
+      strtitulo: "Correspondência de cargo sugerida",
+      strmensagem: "Confira se a descrição corresponde ao cargo canônico.",
+      alternativas: [{
+        idalternativaresolucao: 33,
+        stracao: "APLICAR_SUGESTAO",
+        strdescricao: "Auxiliar administrativo",
+        jsonpayload: { strcargonormalizado: "AUXILIAR ADMINISTRATIVO" },
+        decconfianca: "87.40",
+        flgrecomendada: true,
+        idcargoreferencia_id: 8,
+      }],
+    };
+    setup(importacao, { ...report, casos: [cargoCase] });
+
+    await userEvent.click(await screen.findByRole("button", { name: "Resolver caso" }));
+    await userEvent.click(screen.getByRole("button", { name: /Auxiliar administrativo/ }));
+
+    expect(cargaApi.resolveCasoValidacao).not.toHaveBeenCalled();
+    expect(screen.getByRole("dialog", { name: "Validar decisão de cargo" })).toBeInTheDocument();
+    expect(screen.getByText(/futuras importações de todos os patriarcas/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Validar e aplicar" })).toBeDisabled();
+
+    await userEvent.click(screen.getByRole("checkbox", { name: /Revisei a correspondência e o alcance/i }));
+    await userEvent.click(screen.getByRole("button", { name: "Validar e aplicar" }));
+
+    await waitFor(() => expect(cargaApi.resolveCasoValidacao).toHaveBeenCalledWith(44, {
+      acao: "APLICAR_SUGESTAO",
+      alternativa_id: 33,
+      escopo_cargo: "GLOBAL",
+      memorizar_cargo: false,
+    }));
+  });
 });

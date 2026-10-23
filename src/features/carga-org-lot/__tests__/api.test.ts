@@ -17,6 +17,8 @@ import {
   downloadArquivo,
   getImpactoExclusaoItem,
   getResumoConjuntosOrganograma,
+  getResumoConjuntosLotacao,
+  getResumoPendencias,
   getConfiguracaoProdest,
   getConjuntoLotacao,
   getImportacao,
@@ -26,6 +28,7 @@ import {
   getSubtreeConfirmationImpact,
   homologarConjuntoLotacao,
   latestOrganogramaUrl,
+  pendenciasImportacaoDownloadUrl,
   listCargasRecentesProdest,
   listConjuntosLotacao,
   listEnviosOrganogramaProdest,
@@ -33,6 +36,9 @@ import {
   listHistoricoConjuntoLotacao,
   listItensOrganograma,
   listItensLotacaoImportados,
+  listItensLotacao,
+  listItensLotacaoDescartados,
+  listCasosValidacao,
   listImportacoes,
   listProcessosCargaInicial,
   listPatriarcas,
@@ -183,6 +189,30 @@ describe("API de carga de organograma e lotação", () => {
       "/carga-org-lot/conjuntos-lotacao/31/cancelar/",
       { justificativa: "Revisão solicitada." },
     );
+  });
+
+  it("usa os contratos das consultas operacionais de lotação", async () => {
+    const page = { count: 0, next: null, previous: null, results: [] };
+    const summary = { total_conjuntos: 0, por_situacao: [] };
+    const pendingSummary = { total: 0, por_assunto: [] };
+    const get = vi.spyOn(api, "get")
+      .mockResolvedValueOnce({ data: summary })
+      .mockResolvedValueOnce({ data: page })
+      .mockResolvedValueOnce({ data: pendingSummary })
+      .mockResolvedValueOnce({ data: page })
+      .mockResolvedValueOnce({ data: page });
+
+    await getResumoConjuntosLotacao({ patriarca: 1 });
+    await listCasosValidacao({ patriarca: 1, status: "PENDENTE" });
+    await getResumoPendencias({ patriarca: 1 });
+    await listItensLotacao({ patriarca: 1, vigente: true });
+    await listItensLotacaoDescartados({ patriarca: 1 });
+
+    expect(get).toHaveBeenNthCalledWith(1, "/carga-org-lot/conjuntos-lotacao/resumo/", { params: { patriarca: 1 } });
+    expect(get).toHaveBeenNthCalledWith(2, "/carga-org-lot/casos-validacao-importacao/", { params: { patriarca: 1, status: "PENDENTE" } });
+    expect(get).toHaveBeenNthCalledWith(3, "/carga-org-lot/casos-validacao-importacao/resumo/", { params: { patriarca: 1 } });
+    expect(get).toHaveBeenNthCalledWith(4, "/carga-org-lot/itens-lotacao/", { params: { patriarca: 1, vigente: true } });
+    expect(get).toHaveBeenNthCalledWith(5, "/carga-org-lot/itens-lotacao-importados/descartados/", { params: { patriarca: 1 } });
   });
 
   it("cria o organograma inicial por JSON e omite referência vazia", async () => {
@@ -414,5 +444,11 @@ describe("API de carga de organograma e lotação", () => {
 
   it("monta a rota determinística do organograma mais recente", () => {
     expect(latestOrganogramaUrl(9)).toBe("/carga-org-lot/patriarcas/9/organograma/download/");
+  });
+
+  it("monta a rota do relatório XLSX de pendências da importação", () => {
+    expect(pendenciasImportacaoDownloadUrl(17)).toBe(
+      "/carga-org-lot/importacoes/17/pendencias/download/",
+    );
   });
 });
