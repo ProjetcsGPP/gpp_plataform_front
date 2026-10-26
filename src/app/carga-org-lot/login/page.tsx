@@ -26,6 +26,7 @@ export default async function CargaOrgLotLoginPage({ searchParams }: CargaOrgLot
   return (
     <LoginPage
       theme={carga_org_lotTheme}
+      redirectTo={params.redirect}
       sessionExpiredMessage={
         sessionExpired ? 'Sua sessão expirou. Faça login novamente.' : undefined
       }

@@ -26,6 +26,7 @@ export default async function AcoesPngiLoginPage({ searchParams }: AcoesPngiLogi
   return (
     <LoginPage
       theme={acoes_pngiTheme}
+      redirectTo={params.redirect}
       sessionExpiredMessage={
         sessionExpired ? 'Sua sessão expirou. Faça login novamente.' : undefined
       }

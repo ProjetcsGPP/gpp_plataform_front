@@ -1,130 +1,94 @@
-# Integração Next.js com o backend GPP
+# Integração Next.js com a autenticação GPP
 
-## Resumo
+## Fonte de verdade
 
-O frontend Next.js deve consumir o backend por sessão, sem JWT e sem armazenar token em localStorage.
-O browser recebe o cookie `gpp_session` e o envia automaticamente em requisições com `credentials: 'include'`.
+Este documento registra o consumo frontend do contrato vigente descrito em
+`backend/docs/AUTH_NEXTJS_FRONTEND.md`, `backend/docs/AUTH_NEXTJS_BACKEND.md` e
+`backend/docs/API_CONTRACT.md`. O frontend preserva o singleton Axios de
+`src/lib/api.ts`; não deve criar wrapper `fetch`, cliente HTTP ou mecanismo de
+autenticação paralelo.
 
-## Variáveis de ambiente
+## Regras obrigatórias
 
-Use uma variável pública para a URL base do backend.
+- autenticação por sessão Django, sem JWT e sem tokens em `localStorage`;
+- Axios compartilhado com `baseURL: "/api"` e `withCredentials: true`;
+- cookie HttpOnly separado por aplicação: `gpp_session_<APP>`;
+- cookie CSRF legível `csrftoken`, obtido por
+  `GET /api/accounts/auth/csrf/` antes da primeira mutação;
+- `X-CSRFToken` em todo `POST`, `PUT`, `PATCH` e `DELETE`;
+- releitura do cookie antes de cada mutação, pois o login pode rotacioná-lo;
+- login exclusivamente com `identifier`, `password` e `app_context`;
+- nenhuma chamada ou fallback para `resolve-user`;
+- falhas de credenciais e de acesso exibidas genericamente, sem enumeração;
+- capabilities distribuem funcionalidade e permissões técnicas autorizam
+  ações; componentes não verificam nomes de roles.
 
-```env
-NEXT_PUBLIC_BACKEND_URL=http://localhost:8000
-```
-
-## Regras obrigatórias no fetch
-
-Sempre use:
-
-```ts
-credentials: 'include'
-```
-
-Isso é necessário para enviar o cookie de sessão do Django em chamadas de login, logout, `me`, switch de aplicação e APIs protegidas.
-
-## Fluxo de autenticação
+## Fluxos
 
 ### Login
 
-1. Buscar aplicações públicas do backend.
-2. O usuário escolhe a aplicação e informa credenciais.
-3. Fazer `POST /api/accounts/login/` com `username`, `password` e `app_context`.
-4. Se o backend aceitar, o cookie `gpp_session` será salvo pelo browser.
+1. `GET /api/accounts/auth/csrf/` se `csrftoken` ainda não existir.
+2. `POST /api/accounts/login/` com:
 
-### Depois do login
+   ```json
+   {
+     "identifier": "valor opaco informado pelo usuário",
+     "password": "...",
+     "app_context": "PORTAL"
+   }
+   ```
 
-- Chamar `GET /api/accounts/me/` para obter usuário, perfil, roles e apps acessíveis.
-- Redirecionar conforme o `app_context` atual.
-- Recarregar navegação e permissões com base no contexto atual.
+3. Em sucesso, fazer navegação completa para um destino interno permitido da
+   mesma aplicação.
+4. Hidratar `/accounts/me/`, menus, capabilities e permissões pelos mecanismos
+   compartilhados existentes.
+
+Os status `400`, `401` e `403` do login não devem revelar se usuário, e-mail,
+senha, vínculo ou aplicação existem. `429` pode informar espera por excesso de
+tentativas e `5xx`/falha de rede podem informar indisponibilidade genérica.
+
+### Mutação autenticada
+
+O interceptor Axios garante o bootstrap quando necessário e lê o token atual
+imediatamente antes da requisição. Código de feature não manipula o cookie nem
+repete essa lógica.
+
+### Sessão inválida
+
+Sessão expirada, revogada, usuário inativo e contexto divergente resultam em
+`401` nos endpoints autenticados. O interceptor limpa o estado autenticado e
+redireciona para o login da aplicação, preservando somente um caminho relativo
+interno como retorno. Um `401` de requisição marcada como pública não dispara
+esse fluxo.
+
+### Logout seletivo
+
+`POST /api/accounts/logout/{app_slug}/` encerra somente a sessão da aplicação
+indicada. A chamada exige CSRF mesmo quando a sessão já estiver inválida; o
+interceptor compartilhado atende essa exigência. O frontend só limpa seu estado
+e navega após a conclusão da chamada.
 
 ### Troca de aplicação
 
-Se o usuário tiver acesso a mais de uma app:
+`POST /api/accounts/switch-app/` recebe somente `app_context`. Depois do
+sucesso, os hydrators existentes recarregam usuário, navegação, capabilities e
+permissões no novo contexto.
 
-1. Entrar primeiro no Portal ou diretamente na app desejada.
-2. Listar as apps permitidas pelo endpoint autenticado.
-3. Ao clicar em outra app, chamar `POST /api/accounts/switch-app/` com o novo `app_context`.
-4. Recarregar o estado da sessão e da interface.
+## Cookies e redirects
 
-## O que o frontend não deve fazer
+- JavaScript nunca lê cookies `gpp_session_<APP>`; eles são HttpOnly.
+- O browser envia credenciais conforme `withCredentials` do cliente
+  compartilhado e a política de cookie documentada pelo backend.
+- Destinos pós-login devem começar com o prefixo da própria aplicação, ser da
+  mesma origem e não apontar novamente para a tela de login.
+- URLs absolutas, protocol-relative, com barra invertida ou de outra aplicação
+  são rejeitadas e substituídas pelo dashboard padrão.
 
-- Não ler `gpp_session` via JavaScript.
-- Não salvar credenciais ou sessão em localStorage.
-- Não assumir que o cookie é `sessionid`.
-- Não tratar acesso ao Portal como equivalente a acesso às outras apps.
+## Evidência frontend
 
-## Casos suportados
+Os testes relevantes ficam em:
 
-| Cenário | Resultado esperado |
-|---|---|
-| Login direto em uma app com role | Sessão criada e contexto definido |
-| Login no Portal por PORTAL_ADMIN | Sessão criada com contexto Portal |
-| Entrar no Portal e mudar para outra app | Switch de contexto sem trocar o cookie |
-| Entrar direto numa app específica | Sessão já nasce no contexto correto |
-| Fazer logout | Sessão revogada e cookie removido |
-
-## Casos não suportados
-
-| Cenário | Resultado |
-|---|---|
-| Tentar login no Portal sem ser admin | Rejeitado pelo backend |
-| Tentar trocar para app sem role | Rejeitado pelo backend |
-| Fazer request protegida sem credentials | Cookie não é enviado |
-| Tentar usar JWT | Não existe suporte |
-
-## Estrutura sugerida no Next.js
-
-- `lib/api.ts`: wrapper de fetch com `credentials: 'include'`.
-- `lib/auth.ts`: funções de login, logout, `me`, `switchApp`.
-- `app/login/page.tsx`: formulário de login.
-- `app/(protected)/layout.tsx`: proteção por sessão no server side.
-- `components/app-switcher.tsx`: seletor de aplicação para Portal Admin.
-
-## Exemplo de wrapper
-
-```ts
-const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL!
-
-export async function apiFetch(path: string, init: RequestInit = {}) {
-  const res = await fetch(`${BASE_URL}${path}`, {
-    ...init,
-    credentials: 'include',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(init.headers || {}),
-    },
-  })
-
-  return res
-}
-```
-
-## Exemplo de login
-
-```ts
-await apiFetch('/api/accounts/login/', {
-  method: 'POST',
-  body: JSON.stringify({
-    username,
-    password,
-    app_context,
-  }),
-})
-```
-
-## Exemplo de troca de app
-
-```ts
-await apiFetch('/api/accounts/switch-app/', {
-  method: 'POST',
-  body: JSON.stringify({
-    app_context: 'ACOES_PNGI',
-  }),
-})
-```
-
-## Observação importante
-
-O cookie continua sendo o mesmo durante o switch de contexto.
-O que muda é o contexto interno da sessão e, por consequência, as permissões carregadas pelo backend.
+- `src/lib/__tests__/api.auth.test.ts`;
+- `src/lib/__tests__/auth.test.ts`;
+- `src/lib/__tests__/authRedirect.test.ts`;
+- `src/components/auth/__tests__/LoginPage.test.tsx`.

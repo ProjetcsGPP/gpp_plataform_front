@@ -46,6 +46,7 @@ describe("Content-Type do cliente compartilhado", () => {
   });
 
   it("mantém a serialização JSON automática para objetos comuns", async () => {
+    document.cookie = "csrftoken=teste-json; path=/";
     const captured: InternalAxiosRequestConfig[] = [];
     await api.post(
       "/teste-json/",
@@ -58,6 +59,7 @@ describe("Content-Type do cliente compartilhado", () => {
   });
 
   it("preserva FormData sem inserir application/json", async () => {
+    document.cookie = "csrftoken=teste-form; path=/";
     const captured: InternalAxiosRequestConfig[] = [];
     const form = new FormData();
     const file = new File(["conteúdo"], "organograma.xlsx");

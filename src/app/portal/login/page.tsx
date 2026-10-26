@@ -26,6 +26,7 @@ export default async function PortalLoginPage({ searchParams }: PortalLoginPageP
   return (
     <LoginPage
       theme={portalTheme}
+      redirectTo={params.redirect}
       sessionExpiredMessage={
         sessionExpired ? 'Sua sessão expirou. Faça login novamente.' : undefined
       }

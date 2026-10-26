@@ -13,6 +13,11 @@ const patriarca = {
 describe("ciclo de sessão da seleção de patriarca", () => {
   beforeEach(() => {
     usePatriarcaSelectionStore.getState().clear();
+    document.cookie = "csrftoken=; Max-Age=0; path=/";
+    vi.spyOn(api, "get").mockImplementation(async () => {
+      document.cookie = "csrftoken=teste; path=/";
+      return { data: {} };
+    });
     vi.spyOn(api, "post").mockResolvedValue({ data: {} });
   });
 

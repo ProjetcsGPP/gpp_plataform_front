@@ -14,6 +14,47 @@ const api = axios.create({
   withCredentials: true,
 });
 
+const UNSAFE_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
+export const CSRF_BOOTSTRAP_URL = "/accounts/auth/csrf/";
+let csrfBootstrap: Promise<string> | null = null;
+
+export function readCsrfToken(): string | null {
+  if (typeof document === "undefined") return null;
+  const value = document.cookie
+    .split("; ")
+    .find((cookie) => cookie.startsWith("csrftoken="))
+    ?.split("=")
+    .slice(1)
+    .join("=");
+
+  return value ? decodeURIComponent(value) : null;
+}
+
+export function isAuthenticatedSessionFailure(
+  status: number | undefined,
+  authMode: "public" | "authenticated" | undefined,
+): boolean {
+  return status === 401 && authMode !== "public";
+}
+
+export async function ensureCsrfCookie(): Promise<string> {
+  const existing = readCsrfToken();
+  if (existing) return existing;
+
+  csrfBootstrap ??= api
+    .get(CSRF_BOOTSTRAP_URL, { gppAuthMode: "public" })
+    .then(() => {
+      const token = readCsrfToken();
+      if (!token) throw new Error("CSRF bootstrap did not provide a token");
+      return token;
+    })
+    .finally(() => {
+      csrfBootstrap = null;
+    });
+
+  return csrfBootstrap;
+}
+
 function diagnosticResponseData(data: unknown): unknown {
   if (!data || typeof data !== "object" || Array.isArray(data)) return data;
   const payload = data as Record<string, unknown>;
@@ -40,7 +81,7 @@ function diagnosticResponseData(data: unknown): unknown {
 
 // Garante barra final em toda URL
 api.interceptors.request.use(
-  (config) => {
+  async (config) => {
     useNetworkActivityStore.getState().beginRequest();
     if (config.url && !config.url.endsWith("/") && !config.url.includes("?")) {
       config.url += "/";
@@ -55,25 +96,18 @@ api.interceptors.request.use(
       withCredentials: config.withCredentials,
     });
 
-    if (
-      method &&
-      ["POST", "PUT", "PATCH", "DELETE"].includes(method) &&
-      typeof document !== "undefined"
-    ) {
-      const csrf = document.cookie
-        .split("; ")
-        .find((cookie) => cookie.startsWith("csrftoken="))
-        ?.split("=")
-        .slice(1)
-        .join("=");
+    if (method && UNSAFE_METHODS.has(method) && typeof document !== "undefined") {
+      await ensureCsrfCookie();
+      // Login may rotate the cookie. Always read it again immediately before
+      // every mutation instead of retaining an in-memory token.
+      const csrf = readCsrfToken();
 
       debugLog("api", "csrf", {
         present: Boolean(csrf),
       });
 
-      if (csrf) {
-        config.headers["X-CSRFToken"] = decodeURIComponent(csrf);
-      }
+      if (!csrf) throw new Error("CSRF token is unavailable");
+      config.headers.set("X-CSRFToken", csrf);
     }
 
     return config;
@@ -100,8 +134,6 @@ api.interceptors.response.use(
     useNetworkActivityStore.getState().endRequest();
     const status = error.response?.status;
     const url = error.config?.url;
-    const isLogout = url?.includes("/accounts/logout");
-
     const diagnostic = {
       method: error.config?.method?.toUpperCase(),
       url,
@@ -124,7 +156,7 @@ api.interceptors.response.use(
       debugError("api", "response error", diagnostic);
     }
 
-    if (!isLogout && status === 401) {
+    if (isAuthenticatedSessionFailure(status, error.config?.gppAuthMode)) {
       if (typeof navigator !== "undefined" && !navigator.onLine) {
         debugLog("auth", "401 ignorado porque o navegador está offline");
         return Promise.reject(error);
@@ -147,7 +179,10 @@ api.interceptors.response.use(
           typeof window !== "undefined" &&
           !window.location.pathname.includes("/login")
         ) {
-          window.location.href = `${loginPath}?reason=session_expired`;
+          const redirect = encodeURIComponent(
+            `${window.location.pathname}${window.location.search}`,
+          );
+          window.location.href = `${loginPath}?reason=session_expired&redirect=${redirect}`;
         }
       } else if (typeof window !== "undefined") {
         const pathname = window.location.pathname;
@@ -160,7 +195,10 @@ api.interceptors.response.use(
           const [, cfg] = match;
 
           if (!pathname.includes("/login")) {
-            window.location.href = `${cfg.loginPath}?reason=session_expired`;
+            const redirect = encodeURIComponent(
+              `${window.location.pathname}${window.location.search}`,
+            );
+            window.location.href = `${cfg.loginPath}?reason=session_expired&redirect=${redirect}`;
           }
         }
       }

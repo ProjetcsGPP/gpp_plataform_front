@@ -1,6 +1,9 @@
 # Frontend AI Contract
 
-Primeiro rascunho derivado de `swagger_texto.txt`, pensado para uso em prompts de IA no frontend. Este arquivo não substitui o OpenAPI original; ele traduz a API em ações operacionais orientadas à interface. [file:1]
+Contrato operacional derivado originalmente de `swagger_texto.txt` e corrigido
+pelo contrato de autenticação vigente em 2026-10-23. Em divergências de
+autenticação, prevalecem `backend/docs/AUTH_NEXTJS_FRONTEND.md`,
+`backend/docs/AUTH_NEXTJS_BACKEND.md` e `backend/docs/API_CONTRACT.md`.
 
 ## Objetivo
 
@@ -10,19 +13,25 @@ Este contrato serve para orientar uma IA a escolher **o que chamar**, em **que o
 
 - Modelo de autenticação: `SessionAuthentication` com cookie de sessão e CSRF. [file:1]
 - Existem endpoints públicos e endpoints autenticados; não assumir que toda rota `/api` exige login. [file:1]
-- O login depende de `username`, `password` e `app_context`. [file:1]
+- O login depende de `identifier`, `password` e `app_context`; `identifier` é
+  opaco e não pode ser previamente resolvido. [file:1]
 - O backend cria uma sessão por aplicação, com cookie no formato `gpp_session_{APP}`. [file:1]
-- Para mutações autenticadas (`POST`, `PUT`, `PATCH`, `DELETE`), enviar CSRF quando aplicável ao fluxo da aplicação. A documentação geral da API explicita o uso de sessão + CSRF. [file:1]
+- Antes da primeira mutação, inicializar CSRF por
+  `GET /api/accounts/auth/csrf/`; em todo `POST`, `PUT`, `PATCH` e `DELETE`, o
+  Axios compartilhado relê `csrftoken` e envia `X-CSRFToken`. [file:1]
 - Alguns endpoints retornam lista plana sem paginação; outros retornam envelope paginado com `count`, `next`, `previous` e `results`. [file:1]
 - O endpoint `/api/accounts/me/permissions/` depende da aplicação resolvida pela sessão atual; a documentação informa que a leitura correta é baseada em `request.app_context`. [file:1]
 
 ## Fluxo padrão de autenticação
 
-1. Caso a página não determine a aplicaç~so que quer executar, chamar `listar_aplicacoes_publicas_login` para preencher o seletor de `app_context`. [file:1]
-2. Opcionalmente chamar `resolver_usuario` quando o usuário informar email ou username livremente. [file:1]
-3. Chamar `login` com `username`, `password` e `app_context`. [file:1]
+1. Caso a página não determine a aplicação, chamar
+   `listar_aplicacoes_publicas_login` para preencher `app_context`. [file:1]
+2. Inicializar o cookie CSRF pelo endpoint público de bootstrap. [file:1]
+3. Chamar `login` diretamente com `identifier`, `password` e `app_context`, sem
+   consulta intermediária. [file:1]
 4. Após sucesso, chamar `carregar_usuario_atual`. [file:1]
-5. Em seguida, chamar `carregar_permissoes_usuario_atual` para habilitar ou bloquear ações de UI. [file:1]
+5. Em seguida, carregar capabilities, menus e permissões técnicas pelos
+   mecanismos compartilhados. [file:1]
 
 ## Padrões de resposta
 
@@ -52,28 +61,17 @@ Este contrato serve para orientar uma IA a escolher **o que chamar**, em **que o
 - Autenticação: `sessao_cookie`. [file:1]
 - Observações extraídas do swagger: GET /api/accounts/auth/aplicacoes/ GET /api/accounts/auth/aplicacoes/{codigointerno}/ [file:1]
 
-### resolver_usuario
-
-- Objetivo: Converter email ou username no username canônico antes do login. [file:1]
-- Método: `POST`. [file:1]
-- Endpoint: `/api/accounts/auth/resolve-user/`. [file:1]
-- Autenticação: `sessao_cookie`. [file:1]
-- Resumo do backend: Resolve username a partir de email ou username. [file:1]
-- Observações extraídas do swagger: Recebe um identificador (email ou username) e retorna o username [file:1]
-- Respostas relevantes: 200: 'Username resolvido: { ''username'': ''...'' }'; 404: Usuário não encontrado. [file:1]
-- Uso de UI: normalizar o identificador antes de enviar credenciais. [file:1]
-- Saída útil para prompt: obter `username` canônico quando o usuário informar email. [file:1]
-
 ### login
 
 - Objetivo: Autenticar usuário e abrir sessão por aplicação. [file:1]
 - Método: `POST`. [file:1]
 - Endpoint: `/api/accounts/login/`. [file:1]
-- Autenticação: `sessao_cookie`. [file:1]
+- Autenticação: pública, protegida por CSRF. [file:1]
 - Resumo do backend: Login via sessão. [file:1]
 - Observações extraídas do swagger: Autentica o usuário e cria uma sessão por aplicação (cookie `gpp_session_{APP}`). [file:1]
 - Respostas relevantes: 200: Login realizado com sucesso; 400: Credenciais ou app_context não informados; 401: Credenciais inválidas; 403: Usuário sem acesso à aplicação. [file:1]
-- Pré-condições: possuir `app_context` escolhido e credenciais preenchidas. [file:1]
+- Corpo: `identifier`, `password`, `app_context`. [file:1]
+- Pré-condições: possuir `app_context`, credenciais preenchidas e cookie CSRF. [file:1]
 - Pós-condições: sessão autenticada na aplicação escolhida; seguir com `carregar_usuario_atual` e `carregar_permissoes_usuario_atual`. [file:1]
 
 ### logout_sessao_atual
@@ -195,7 +193,7 @@ Este contrato serve para orientar uma IA a escolher **o que chamar**, em **que o
 ## Exemplos de comandos para prompts
 
 - "Ao abrir a tela de login, carregue as aplicações públicas e monte o seletor de `app_context` usando `listar_aplicacoes_publicas_login`." [file:1]
-- "Quando o usuário digitar email no login, resolva o username com `resolver_usuario` antes de autenticar." [file:1]
+- "Trate usuário ou email como `identifier` opaco e envie diretamente ao login." [file:1]
 - "Faça login no contexto `PORTAL`, depois carregue dados do usuário atual e suas permissões." [file:1]
 - "Antes de mostrar um botão administrativo, verifique `carregar_permissoes_usuario_atual` e confirme se a permissão necessária está em `granted`." [file:1]
 - "Para a tela de overrides, liste dados paginados com `listar_permission_overrides`; em criação, edição ou exclusão, revalide a lista após sucesso." [file:1]
@@ -253,20 +251,6 @@ Seção expandida com **todos** os métodos encontrados sob `/api/accounts`, no 
 - Descrição operacional: GET /api/accounts/auth/aplicacoes/ GET /api/accounts/auth/aplicacoes/{codigointerno}/ [file:1]
 - Uso de UI: recuperar uma aplicação pública específica pelo código para pré-preenchimento ou validação de `app_context`. [file:1]
 
-### resolver_usuario
-
-- Método: `POST`. [file:1]
-- Endpoint: `/api/accounts/auth/resolve-user/`. [file:1]
-- operationId: `accounts_auth_resolve_user_create`. [file:1]
-- Autenticação: `publica`. [file:1]
-- Resumo: Resolve username a partir de email ou username. [file:1]
-- Descrição operacional: Recebe um identificador (email ou username) e retorna o username [file:1]
-- Campos obrigatórios no corpo: `identifier`. [file:1]
-- Respostas:
-  - `200`: 'Username resolvido: { ''username'': ''...'' }'. [file:1]
-  - `404`: sem descrição detalhada no swagger. [file:1]
-- Uso de UI: normalizar email ou username digitado antes do login. [file:1]
-
 ### login
 
 - Método: `POST`. [file:1]
@@ -275,7 +259,7 @@ Seção expandida com **todos** os métodos encontrados sob `/api/accounts`, no 
 - Autenticação: `publica`. [file:1]
 - Resumo: Login via sessão. [file:1]
 - Descrição operacional: Autentica o usuário e cria uma sessão por aplicação (cookie `gpp_session_{APP}`). [file:1]
-- Campos obrigatórios no corpo: `username`, `password`, `app_context`. [file:1]
+- Campos obrigatórios no corpo: `identifier`, `password`, `app_context`. [file:1]
 - Respostas:
   - `200`: Login realizado com sucesso. [file:1]
   - `400`: Credenciais ou app_context não informados. [file:1]

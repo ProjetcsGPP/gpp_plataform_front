@@ -1,7 +1,7 @@
 // src/components/auth/LoginPage.tsx
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,8 +12,8 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
-import { getAplicacoesPublicas, login } from "@/lib/auth";
-import type { AplicacaoPublica } from "@/lib/auth";
+import { login } from "@/lib/auth";
+import { resolvePostLoginRedirect } from "@/lib/authRedirect";
 import { Loader2, LogIn } from "lucide-react";
 import Image from "next/image";
 import { debugError, debugLog } from "@/lib/debug";
@@ -44,14 +44,21 @@ export interface LoginTheme {
 interface LoginPageProps {
   theme: LoginTheme;
   sessionExpiredMessage?: string;
+  redirectTo?: string;
 }
 
-export function LoginPage({ theme }: LoginPageProps) {
+const GENERIC_CREDENTIAL_ERROR =
+  "Não foi possível entrar com as credenciais informadas.";
+
+export function LoginPage({
+  theme,
+  sessionExpiredMessage,
+  redirectTo,
+}: LoginPageProps) {
   // Não usa useRouter — navegação pós-login é hard navigation (window.location.href)
   // para garantir que o cookie gpp_session_{APP} seja persistido pelo browser
   // antes do AppThemeProvider montar e disparar GET /accounts/me/
-  const [apps, setApps] = useState<AplicacaoPublica[]>([]);
-  const [username, setUsername] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const appContext = theme.defaultAppContext;
   const [error, setError] = useState("");
@@ -100,76 +107,28 @@ export function LoginPage({ theme }: LoginPageProps) {
     );
   }
 
-  useEffect(() => {
-    debugLog("login-page", "carregando aplicações públicas");
-
-    getAplicacoesPublicas()
-      .then((data) => {
-        debugLog("login-page", "aplicações carregadas", {
-          count: data.length,
-        });
-
-        setApps(data);
-      })
-      .catch((error) => {
-        debugError("login-page", "erro ao carregar aplicações públicas", {
-          status: error.response?.status,
-          data: error.response?.data,
-        });
-      });
-  }, []);
-
-  /*
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    setError('')
-    setLoading(true)
-    try {
-      await login(username, password, appContext as 'PORTAL' | 'ACOES_PNGI' | 'CARGA_ORG_LOT')
-
-      const redirectMap = theme.redirectMap ?? {}
-      const destination = redirectMap[appContext] ?? '/portal/dashboard'
-
-      // Hard navigation obrigatória: garante que o browser persiste o
-      // Set-Cookie (gpp_session_{APP}) da resposta do POST /login antes
-      // de montar o layout autenticado e disparar GET /accounts/me/.
-      // router.push() (client-side) causaria race condition → 401.
-      window.location.href = destination
-    } catch (err: unknown) {
-      const e = err as {
-        response?: { status?: number; data?: { detail?: string } }
-      }
-      const status = e.response?.status
-      const detail = e.response?.data?.detail
-      if (status === 401) setError('Usuário ou senha incorretos.')
-      else if (status === 403) setError(detail ?? 'Sem permissão para esta aplicação.')
-      else if (status === 400) setError(detail ?? 'Preencha todos os campos.')
-      else setError(detail ?? 'Erro ao realizar login.')
-      setLoading(false)
-    }
-  }
-    */
-
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
     setError("");
     setLoading(true);
 
-    debugLog("login-page", "submit iniciado", {
-      username,
-      appContext,
-    });
+    debugLog("login-page", "submit iniciado", { appContext });
 
     try {
       await login(
-        username,
+        identifier,
         password,
         appContext as "PORTAL" | "ACOES_PNGI" | "CARGA_ORG_LOT",
       );
 
       const redirectMap = theme.redirectMap ?? {};
-      const destination = redirectMap[appContext] ?? "/portal/dashboard";
+      const fallback = redirectMap[appContext] ?? "/portal/dashboard";
+      const destination = resolvePostLoginRedirect(
+        redirectTo,
+        appContext,
+        fallback,
+      );
 
       debugLog("login-page", "login concluído", {
         appContext,
@@ -191,31 +150,26 @@ export function LoginPage({ theme }: LoginPageProps) {
       };
 
       const status = error.response?.status;
-      const detail = error.response?.data?.detail;
       const code = error.response?.data?.code;
 
       debugError("login-page", "login falhou", {
         status,
         code,
-        detail,
       });
 
-      if (status === 401) {
-        setError("Usuário ou senha incorretos.");
-      } else if (status === 403) {
-        setError(detail ?? "Sem permissão para esta aplicação.");
-      } else if (status === 400) {
-        setError(detail ?? "Preencha todos os campos.");
+      if (status === 400 || status === 401 || status === 403) {
+        setError(GENERIC_CREDENTIAL_ERROR);
+      } else if (status === 429) {
+        setError("Muitas tentativas. Aguarde alguns minutos e tente novamente.");
+      } else if (status && status >= 500) {
+        setError("Serviço de autenticação indisponível. Tente novamente mais tarde.");
       } else {
-        setError(detail ?? "Erro ao realizar login.");
+        setError("Não foi possível conectar ao serviço de autenticação.");
       }
 
       setLoading(false);
     }
   }
-
-  // Suprime aviso de 'apps' não utilizado — mantido para uso futuro no seletor
-  void apps;
 
   return (
     <div
@@ -243,13 +197,15 @@ export function LoginPage({ theme }: LoginPageProps) {
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-1">
-                <Label htmlFor="username">Usuário ou E-mail</Label>
+                <Label htmlFor="identifier">Usuário ou E-mail</Label>
                 <Input
-                  id="username"
+                  id="identifier"
+                  name="identifier"
                   type="text"
                   placeholder="usuário ou e-mail"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
+                  value={identifier}
+                  onChange={(e) => setIdentifier(e.target.value)}
+                  autoComplete="username"
                   required
                   autoFocus
                   className="focus-visible:border-app-primary focus-visible:ring-app-primary/30"
@@ -264,6 +220,7 @@ export function LoginPage({ theme }: LoginPageProps) {
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  autoComplete="current-password"
                   required
                   className="focus-visible:border-app-primary focus-visible:ring-app-primary/30"
                 />
@@ -286,8 +243,21 @@ export function LoginPage({ theme }: LoginPageProps) {
                 )}
               </Button>
 
+              {sessionExpiredMessage && !error && (
+                <div
+                  role="status"
+                  className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800"
+                >
+                  {sessionExpiredMessage}
+                </div>
+              )}
+
               {error && (
-                <div className="rounded-md bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-600">
+                <div
+                  role="alert"
+                  aria-live="polite"
+                  className="rounded-md bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-600"
+                >
                   {error}
                 </div>
               )}
