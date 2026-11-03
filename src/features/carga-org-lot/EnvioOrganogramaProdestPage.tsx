@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import useSWR from "swr";
+import useSWR, { useSWRConfig } from "swr";
 import {
   Activity,
   ArrowLeft,
@@ -23,10 +23,13 @@ import { AdminAlert, AdminPage, AdminPanel } from "@/components/admin/AdminPage"
 import { RouteGuard } from "@/components/common/RouteGuard";
 import { Button } from "@/components/ui/button";
 import { ConfirmarEnvioProdestDialog } from "@/features/carga-org-lot/ConfirmarEnvioProdestDialog";
+import { EncerrarMonitoramentoProdestDialog } from "@/features/carga-org-lot/EncerrarMonitoramentoProdestDialog";
 import { EnvioProdestActivityPanel } from "@/features/carga-org-lot/EnvioProdestActivityPanel";
 import {
   consultarRelatorioEnvioOrganogramaProdest,
   consultarStatusEnvioOrganogramaProdest,
+  cargaOrgLotDashboardKey,
+  encerrarMonitoramentoEnvioOrganogramaProdest,
   getEnvioOrganogramaProdest,
   listEventosEnvioOrganograma,
   listImportacoes,
@@ -34,6 +37,7 @@ import {
 } from "@/features/carga-org-lot/api";
 import type {
   EnvioOrganogramaProdest,
+  EncerrarMonitoramentoProdestPayload,
   EventoIntegracaoProdest,
   ImportacaoPlanilha,
   MensagemWebSocketProdest,
@@ -61,6 +65,7 @@ type WizardStep = "source" | "mode" | "confirm";
 type PageView = "send" | "history";
 
 export function EnvioOrganogramaProdestPage() {
+  const { mutate: mutateGlobal } = useSWRConfig();
   const { selected } = usePatriarcaSelection();
   const { can } = usePermissions();
   const canChange = can(PERMISSIONS.IMPORTACAOPLANILHA_CHANGE);
@@ -79,9 +84,15 @@ export function EnvioOrganogramaProdestPage() {
   const [confirmingDefinitive, setConfirmingDefinitive] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [manualAction, setManualAction] = useState(false);
+  const [closingMonitoring, setClosingMonitoring] = useState(false);
+  const [closureDialogOpen, setClosureDialogOpen] = useState(false);
+  const [closureFieldErrors, setClosureFieldErrors] = useState<Record<string, string[]>>({});
+  const [dismissedClosureChoiceId, setDismissedClosureChoiceId] = useState<number | null>(null);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const submissionLock = useRef(false);
+  const closureSubmissionLock = useRef(false);
   const lastEventId = useRef(0);
+  const workflowRecoveryAttempted = useRef(new Set<number>());
 
   const sources = useSWR(
     patriarcaId ? ["carga-org-lot:fontes-envio-prodest", patriarcaId] : null,
@@ -98,6 +109,12 @@ export function EnvioOrganogramaProdestPage() {
   const activeAttempt = acompanhamento?.tentativa_ativa ?? null;
   const latestAttempt = acompanhamento?.ultimo_resultado ?? null;
   const displayedAttempt = trackedAttempt ?? activeAttempt ?? latestAttempt;
+  const hasRemoteStaleWarning = Boolean(
+    displayedAttempt?.strstatus === "PROCESSANDO"
+      && displayedAttempt.finalizada_prodest === false
+      && events.some((event) => event.strcodigo === "PROCESSAMENTO_SEM_ATUALIZACAO"),
+  );
+  const remoteUpdatedAtDisplay = preparedRemoteUpdatedAt(events);
   const selectedImport = sources.data?.results.find(
     (item) => item.idimportacaoplanilha === selectedImportId,
   ) ?? null;
@@ -136,37 +153,38 @@ export function EnvioOrganogramaProdestPage() {
     }
   }, [mergeEvents]);
 
-  const refreshCanonicalState = useCallback(async () => {
+  const refreshCanonicalState = useCallback(async (
+    targetId?: number,
+    fallback?: EnvioOrganogramaProdest,
+  ) => {
     const refreshed = await data.acompanhamento.mutate();
     await data.history.mutate();
-    const target = refreshed?.tentativa_ativa ?? trackedAttempt ?? refreshed?.ultimo_resultado;
+    const canonicalAttempts = [
+      refreshed?.tentativa_ativa,
+      refreshed?.ultimo_resultado,
+    ].filter((attempt): attempt is EnvioOrganogramaProdest => Boolean(attempt));
+    const canonical = targetId
+      ? canonicalAttempts.find((attempt) => attempt.idenvioorganograma === targetId)
+      : canonicalAttempts[0];
+    const target = canonical
+      ?? fallback
+      ?? (targetId && trackedAttempt?.idenvioorganograma !== targetId ? null : trackedAttempt);
+    if (target) {
+      setTrackedAttempt((current) => (
+        !current || current.idenvioorganograma === target.idenvioorganograma
+          ? target
+          : current
+      ));
+    }
     if (target) await recoverEvents(target.idenvioorganograma, lastEventId.current);
+    return target;
   }, [data.acompanhamento, data.history, recoverEvents, trackedAttempt]);
 
   const handleRealtimeMessage = useCallback((message: MensagemWebSocketProdest) => {
     const process = message.processo;
     if (!process || process.patriarca_id !== patriarcaId) return;
-    setTrackedAttempt((current) => {
-      if (!current || current.idenvioorganograma !== process.envio_id) return current;
-      return {
-        ...current,
-        fase_atual: process.fase_atual,
-        strfaseatual: process.fase_atual,
-        fase_atual_nome: process.fase_atual_nome,
-        status_atual: process.status_atual,
-        status_atual_nome: process.status_atual_nome,
-        mensagem_atual: process.mensagem_atual,
-        strmensagematual: process.mensagem_atual,
-        datultimaatividade: process.datultimaatividade,
-        ultimo_evento_id: process.ultimo_evento_id,
-      };
-    });
-    void data.acompanhamento.mutate();
-    void data.history.mutate();
-    if (displayedAttempt?.idenvioorganograma === process.envio_id) {
-      void recoverEvents(process.envio_id, lastEventId.current);
-    }
-  }, [data.acompanhamento, data.history, displayedAttempt?.idenvioorganograma, patriarcaId, recoverEvents]);
+    void refreshCanonicalState(process.envio_id);
+  }, [patriarcaId, refreshCanonicalState]);
 
   const realtimeStatus = useProdestRealtime({
     channel: `/ws/carga-org-lot/patriarcas/${patriarcaId ?? 0}/`,
@@ -183,8 +201,12 @@ export function EnvioOrganogramaProdestPage() {
     setTrackedAttempt(null);
     setEvents([]);
     lastEventId.current = 0;
+    workflowRecoveryAttempted.current.clear();
     setViewingImport(null);
     setFeedback(null);
+    setClosureDialogOpen(false);
+    setClosureFieldErrors({});
+    setDismissedClosureChoiceId(null);
   }, [patriarcaId]);
 
   useEffect(() => {
@@ -196,6 +218,24 @@ export function EnvioOrganogramaProdestPage() {
     }
     if (latestAttempt) setTrackedAttempt(latestAttempt);
   }, [activeAttempt, latestAttempt, view]);
+
+  useEffect(() => {
+    if (displayedAttempt?.fluxo_operacional) return;
+    const attemptId = displayedAttempt?.idenvioorganograma;
+    if (!attemptId || workflowRecoveryAttempted.current.has(attemptId)) return;
+    workflowRecoveryAttempted.current.add(attemptId);
+    void getEnvioOrganogramaProdest(attemptId)
+      .then((canonical) => {
+        setTrackedAttempt((current) => (
+          !current || current.idenvioorganograma === canonical.idenvioorganograma
+            ? canonical
+            : current
+        ));
+      })
+      .catch(() => {
+        void data.acompanhamento.mutate();
+      });
+  }, [data.acompanhamento, displayedAttempt]);
 
   useEffect(() => {
     if (!displayedAttempt) {
@@ -295,11 +335,51 @@ export function EnvioOrganogramaProdestPage() {
         ? await consultarStatusEnvioOrganogramaProdest(displayedAttempt.idenvioorganograma)
         : await consultarRelatorioEnvioOrganogramaProdest(displayedAttempt.idenvioorganograma);
       setTrackedAttempt(latest);
-      await refreshCanonicalState();
+      await refreshCanonicalState(latest.idenvioorganograma, latest);
     } catch (error) {
       setFeedback({ kind: "error", ...parseProdestError(error) });
     } finally {
       setManualAction(false);
+    }
+  }
+
+  async function closeMonitoring(payload: EncerrarMonitoramentoProdestPayload) {
+    if (!displayedAttempt || closureSubmissionLock.current) return;
+    closureSubmissionLock.current = true;
+    setClosingMonitoring(true);
+    setClosureFieldErrors({});
+    setFeedback(null);
+    try {
+      const latest = await encerrarMonitoramentoEnvioOrganogramaProdest(
+        displayedAttempt.idenvioorganograma,
+        payload,
+      );
+      setTrackedAttempt(latest);
+      setClosureDialogOpen(false);
+      setDismissedClosureChoiceId(latest.idenvioorganograma);
+      await refreshCanonicalState(latest.idenvioorganograma, latest);
+      await mutateGlobal(cargaOrgLotDashboardKey);
+      setFeedback({
+        kind: "success",
+        message: latest.finalizada_prodest
+          ? "A PRODEST concluiu o processamento durante a última consulta. O resultado foi atualizado normalmente."
+          : "Acompanhamento local encerrado. A situação da carga anterior na PRODEST permanece indeterminada. Um novo envio local foi liberado.",
+      });
+    } catch (error) {
+      if (getHttpStatus(error) === 409) {
+        setClosureDialogOpen(false);
+        setFeedback({ kind: "error", message: getApiErrorMessage(error, "O acompanhamento ainda não pode ser encerrado.") });
+        await refreshCanonicalState(displayedAttempt.idenvioorganograma);
+      } else {
+        const fieldErrors = parseProdestFieldErrors(error);
+        setClosureFieldErrors(fieldErrors);
+        if (!Object.keys(fieldErrors).length) {
+          setFeedback({ kind: "error", ...parseProdestError(error) });
+        }
+      }
+    } finally {
+      closureSubmissionLock.current = false;
+      setClosingMonitoring(false);
     }
   }
 
@@ -396,9 +476,14 @@ export function EnvioOrganogramaProdestPage() {
                   blockedReason={acompanhamento?.motivo_bloqueio}
                   canChange={canChange}
                   manualAction={manualAction}
+                  hasRemoteStaleWarning={hasRemoteStaleWarning}
+                  remoteUpdatedAtDisplay={remoteUpdatedAtDisplay}
                   onStatus={() => void runManualAction("status")}
                   onReport={() => void runManualAction("report")}
                   onRetry={retryAttempt}
+                  closureChoiceDismissed={dismissedClosureChoiceId === (displayedAttempt ?? activeAttempt).idenvioorganograma}
+                  onContinueWaiting={() => setDismissedClosureChoiceId((displayedAttempt ?? activeAttempt).idenvioorganograma)}
+                  onReleaseNewSend={() => { setClosureFieldErrors({}); setClosureDialogOpen(true); }}
                 />
               ) : (
                 <Wizard
@@ -426,9 +511,14 @@ export function EnvioOrganogramaProdestPage() {
                     envio={displayedAttempt}
                     canChange={canChange}
                     manualAction={manualAction}
+                    hasRemoteStaleWarning={hasRemoteStaleWarning}
+                    remoteUpdatedAtDisplay={remoteUpdatedAtDisplay}
                     onStatus={() => void runManualAction("status")}
                     onReport={() => void runManualAction("report")}
                     onRetry={retryAttempt}
+                    closureChoiceDismissed={dismissedClosureChoiceId === displayedAttempt.idenvioorganograma}
+                    onContinueWaiting={() => setDismissedClosureChoiceId(displayedAttempt.idenvioorganograma)}
+                    onReleaseNewSend={() => { setClosureFieldErrors({}); setClosureDialogOpen(true); }}
                     compact
                   />
                 </div>
@@ -450,6 +540,15 @@ export function EnvioOrganogramaProdestPage() {
             isSubmitting={isSubmitting}
             onCancel={() => setConfirmingDefinitive(false)}
             onConfirm={() => void submit(false)}
+          />
+        )}
+
+        {closureDialogOpen && displayedAttempt && (
+          <EncerrarMonitoramentoProdestDialog
+            isSubmitting={closingMonitoring}
+            fieldErrors={closureFieldErrors}
+            onCancel={() => { if (!closingMonitoring) setClosureDialogOpen(false); }}
+            onConfirm={(payload) => void closeMonitoring(payload)}
           />
         )}
       </AdminPage>
@@ -621,21 +720,36 @@ function AttemptOverview({
   blockedReason,
   canChange,
   manualAction,
+  hasRemoteStaleWarning,
+  remoteUpdatedAtDisplay,
   onStatus,
   onReport,
   onRetry,
+  closureChoiceDismissed,
+  onContinueWaiting,
+  onReleaseNewSend,
   compact = false,
 }: {
   envio: EnvioOrganogramaProdest;
   blockedReason?: string;
   canChange: boolean;
   manualAction: boolean;
+  hasRemoteStaleWarning: boolean;
+  remoteUpdatedAtDisplay: string | null;
   onStatus: () => void;
   onReport: () => void;
   onRetry: () => void;
+  closureChoiceDismissed: boolean;
+  onContinueWaiting: () => void;
+  onReleaseNewSend: () => void;
   compact?: boolean;
 }) {
   const isActive = isEnvioOrganogramaAtivo(envio);
+  const closureOptions = envio.encerramento_monitoramento?.opcoes_disponiveis ?? [];
+  const showClosureChoice = envio.encerramento_monitoramento?.permitido === true
+    && closureOptions.includes("CONTINUAR_AGUARDANDO")
+    && closureOptions.includes("LIBERAR_NOVO_ENVIO")
+    && !closureChoiceDismissed;
   return (
     <AdminPanel className="p-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -646,14 +760,33 @@ function AttemptOverview({
           <h2 className="mt-1 text-xl font-bold text-slate-900">{envio.importacao_referencia || `Tentativa #${envio.idenvioorganograma}`}</h2>
           <p className="mt-1 text-sm text-slate-600">Tentativa #{envio.idenvioorganograma} · {envio.modo === "SIMULACAO" ? "Simulação" : "Envio definitivo"}</p>
         </div>
-        <StatusBadge envio={envio} />
+        <StatusBadge envio={envio} hasRemoteStaleWarning={hasRemoteStaleWarning} />
       </div>
 
-      <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
-        <p className="font-semibold text-slate-900">{envio.fase_atual_nome}</p>
-        <p className="mt-1 text-sm text-slate-600">{envio.mensagem_atual || envio.strmensagemerro || envio.status_nome}</p>
-        {blockedReason && <p className="mt-2 text-xs font-medium text-amber-800">{blockedReason}</p>}
-      </div>
+      {!showClosureChoice && (
+        <div className={cn(
+          "mt-5 rounded-xl border p-4",
+          hasRemoteStaleWarning
+            ? "border-amber-300 bg-amber-50"
+            : "border-slate-200 bg-slate-50",
+        )}>
+          <p className={cn(
+            "font-semibold",
+            hasRemoteStaleWarning ? "text-amber-950" : "text-slate-900",
+          )}>
+            {hasRemoteStaleWarning ? "Aguardando atualização da PRODEST" : envio.fase_atual_nome}
+          </p>
+          <p className={cn(
+            "mt-1 text-sm",
+            hasRemoteStaleWarning ? "text-amber-900" : "text-slate-600",
+          )}>
+            {hasRemoteStaleWarning
+              ? "A última resposta conhecida da PRODEST informa que a carga ainda não foi finalizada. Consulte abaixo quando o backend verificou essa situação pela última vez."
+              : envio.mensagem_atual || envio.strmensagemerro || envio.status_nome}
+          </p>
+          {blockedReason && <p className="mt-2 text-xs font-medium text-amber-800">{blockedReason}</p>}
+        </div>
+      )}
 
       {envio.strstatus === "CONCLUIDO_DESATUALIZADO" && (
         <div role="alert" className="mt-4 rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950">
@@ -667,11 +800,73 @@ function AttemptOverview({
         </div>
       )}
 
-      <dl className="mt-5 grid gap-4 text-sm sm:grid-cols-3">
+      {envio.strstatus === "SITUACAO_REMOTA_INDETERMINADA" && (
+        <div role="status" className="mt-4 rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950">
+          <p className="font-semibold">Acompanhamento local encerrado</p>
+          <p className="mt-1">A situação da carga anterior na PRODEST permanece indeterminada. Um novo envio local foi liberado.</p>
+        </div>
+      )}
+
+      {showClosureChoice && (
+        <div role="alert" className="mt-4 rounded-xl border border-amber-300 bg-amber-50 p-4 text-amber-950">
+          <p className="font-semibold">A carga continua sem atualização da PRODEST.</p>
+          <p className="mt-1 text-sm">
+            Você pode continuar aguardando ou encerrar somente o acompanhamento local para liberar um novo envio.
+            A liberação não cancela a carga anterior na PRODEST, que ainda poderá ser processada.
+          </p>
+          {envio.encerramento_monitoramento.disponivel_em && (
+            <p className="mt-2 text-xs">Decisão disponível desde {formatAdminDate(envio.encerramento_monitoramento.disponivel_em)}.</p>
+          )}
+          <div className="mt-4 flex flex-wrap gap-2">
+            <Button variant="outline" onClick={onContinueWaiting}>Continuar aguardando</Button>
+            <Button
+              variant="destructive"
+              disabled={!canChange || !envio.acoes_disponiveis.encerrar_monitoramento}
+              onClick={onReleaseNewSend}
+            >
+              <TriangleAlert aria-hidden="true" /> Liberar novo envio
+            </Button>
+          </div>
+          {!canChange && <p className="mt-2 text-xs">Seu usuário não possui permissão para liberar um novo envio.</p>}
+        </div>
+      )}
+
+      <dl className="mt-5 grid gap-4 text-sm sm:grid-cols-2 xl:grid-cols-5">
         <Info label="Iniciado em" value={formatAdminDate(envio.datsolicitacao)} />
         <Info label="Iniciado por" value={envio.created_by_name || "Sistema"} />
-        <Info label="Última atividade" value={formatAdminDate(envio.datultimaatividade || envio.updated_at)} />
+        <Info
+          label="Última atividade registrada"
+          value={formatOptionalDate(envio.datultimaatividade)}
+        />
+        <Info
+          label="Última consulta à PRODEST"
+          value={formatOptionalDate(envio.datultimaconsulta)}
+        />
+        <Info
+          label="Última atualização informada pela PRODEST"
+          value={remoteUpdatedAtDisplay || "Ainda não informada"}
+        />
       </dl>
+
+      {envio.idtentativaanterior_id && (
+        <p className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
+          Este envio foi realizado após o encerramento do acompanhamento da tentativa #{envio.idtentativaanterior_id}.
+        </p>
+      )}
+
+      {envio.strstatus === "SITUACAO_REMOTA_INDETERMINADA" && (
+        <dl className="mt-5 grid gap-4 rounded-xl border border-amber-200 bg-amber-50/60 p-4 text-sm sm:grid-cols-2">
+          <Info label="GUID da carga remota" value={envio.idexternocarga || "Não informado"} />
+          <Info label="Encerramento local" value={formatOptionalDate(envio.datencerramentomanual)} />
+          <Info label="Decisão tomada por" value={envio.encerrado_by_name || "Não informado"} />
+          <Info label="Analista da PRODEST avisado" value={formatBoolean(envio.flganalistaprodestavisado)} />
+          <Info label="Analista respondeu" value={formatBoolean(envio.flganalistaprodestrespondeu)} />
+          <div className="sm:col-span-2"><Info label="Justificativa" value={envio.strjustificativaencerramento || "Não informada"} /></div>
+          {envio.strretornoanalistaprodest && (
+            <div className="sm:col-span-2"><Info label="Orientação registrada" value={envio.strretornoanalistaprodest} /></div>
+          )}
+        </dl>
+      )}
 
       {envio.relatorio_disponivel && (
         <details className="mt-5 rounded-lg border border-slate-200">
@@ -688,25 +883,18 @@ function AttemptOverview({
         {canChange && envio.acoes_disponiveis.tentar_novamente && (
           <Button onClick={onRetry}><RefreshCw aria-hidden="true" /> Tentar novamente</Button>
         )}
+        {canChange && envio.acoes_disponiveis.consultar_status && (
+          <Button variant="outline" disabled={manualAction} onClick={onStatus}>
+            <RefreshCw className={cn(manualAction && "animate-spin")} aria-hidden="true" />
+            {manualAction ? "Consultando situação..." : "Consultar situação agora"}
+          </Button>
+        )}
+        {canChange && envio.acoes_disponiveis.consultar_relatorio && (
+          <Button variant="outline" disabled={manualAction} onClick={onReport}>
+            <FileSearch aria-hidden="true" /> Atualizar relatório
+          </Button>
+        )}
       </div>
-
-      {canChange && (envio.acoes_disponiveis.consultar_status || envio.acoes_disponiveis.consultar_relatorio) && (
-        <details className="mt-4 text-sm">
-          <summary className="cursor-pointer font-medium text-slate-600">Opções auxiliares</summary>
-          <div className="mt-3 flex flex-wrap gap-2">
-            {envio.acoes_disponiveis.consultar_status && (
-              <Button variant="outline" size="sm" disabled={manualAction} onClick={onStatus}>
-                <RefreshCw aria-hidden="true" /> Consultar agora
-              </Button>
-            )}
-            {envio.acoes_disponiveis.consultar_relatorio && (
-              <Button variant="outline" size="sm" disabled={manualAction} onClick={onReport}>
-                <FileSearch aria-hidden="true" /> Atualizar relatório
-              </Button>
-            )}
-          </div>
-        </details>
-      )}
     </AdminPanel>
   );
 }
@@ -819,19 +1007,56 @@ function WizardFooter({ onBack, onNext, nextDisabled = false }: { onBack?: () =>
   );
 }
 
-function StatusBadge({ envio }: { envio: EnvioOrganogramaProdest }) {
-  const classes = envio.strstatus === "ERRO"
+function StatusBadge({
+  envio,
+  hasRemoteStaleWarning = false,
+}: {
+  envio: EnvioOrganogramaProdest;
+  hasRemoteStaleWarning?: boolean;
+}) {
+  const classes = hasRemoteStaleWarning
+    ? "bg-amber-100 text-amber-900"
+    : envio.strstatus === "ERRO"
     ? "bg-red-100 text-red-800"
     : envio.strstatus === "CONCLUIDO"
       ? "bg-emerald-100 text-emerald-800"
       : envio.strstatus === "CONCLUIDO_DESATUALIZADO"
         ? "bg-amber-100 text-amber-900"
+        : envio.strstatus === "SITUACAO_REMOTA_INDETERMINADA"
+          ? "bg-amber-100 text-amber-900"
         : "bg-blue-100 text-blue-800";
-  return <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${classes}`}>{envio.status_nome}</span>;
+  const label = envio.strstatus === "SITUACAO_REMOTA_INDETERMINADA"
+    ? "Situação remota indeterminada"
+    : envio.status_nome;
+  return (
+    <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${classes}`}>
+      {hasRemoteStaleWarning ? "Processamento sem atualização" : label}
+    </span>
+  );
 }
 
 function Info({ label, value }: { label: string; value: string }) {
   return <div><dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</dt><dd className="mt-1 text-slate-800">{value}</dd></div>;
+}
+
+function formatOptionalDate(value: string | null) {
+  return value ? formatAdminDate(value) : "Ainda não informada";
+}
+
+function preparedRemoteUpdatedAt(events: EventoIntegracaoProdest[]) {
+  for (const event of [...events].reverse()) {
+    const details = event.jsondetalhes_exibicao;
+    if (!details) continue;
+    const value = details.ultima_atualizacao_prodest
+      ?? details.dataUltimaAtualizacaoUtc;
+    if (typeof value === "string") return value;
+  }
+  return null;
+}
+
+function formatBoolean(value: boolean | null) {
+  if (value === null) return "Não informado";
+  return value ? "Sim" : "Não";
 }
 
 function ReportValue({ value }: { value: unknown }) {
@@ -855,6 +1080,24 @@ function isEligibleImport(item: ImportacaoPlanilha) {
 function getHttpStatus(error: unknown) {
   if (!error || typeof error !== "object" || !("response" in error)) return undefined;
   return (error as { response?: { status?: number } }).response?.status;
+}
+
+function parseProdestFieldErrors(error: unknown): Record<string, string[]> {
+  if (!error || typeof error !== "object" || !("response" in error)) return {};
+  const data = (error as { response?: { data?: unknown } }).response?.data;
+  if (!data || typeof data !== "object" || Array.isArray(data)) return {};
+  const record = data as Record<string, unknown>;
+  const source = record.errors && typeof record.errors === "object" && !Array.isArray(record.errors)
+    ? record.errors as Record<string, unknown>
+    : record;
+  return Object.fromEntries(
+    Object.entries(source).flatMap(([field, value]) => {
+      const messages = Array.isArray(value)
+        ? value.filter((item): item is string => typeof item === "string")
+        : typeof value === "string" ? [value] : [];
+      return messages.length ? [[field, messages] as const] : [];
+    }),
+  );
 }
 
 function parseProdestError(error: unknown): { message: string; attemptId?: number } {

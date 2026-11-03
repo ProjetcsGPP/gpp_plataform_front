@@ -6,6 +6,7 @@ import { usePatriarcaSelectionStore } from "@/store/patriarcaSelectionStore";
 
 const patriarca = {
   idpatriarca: 1,
+  idexternopatriarca: "uuid-1",
   strsiglapatriarca: "PMBG",
   strnome: "Prefeitura",
 };

@@ -43,29 +43,7 @@ export function CargaOrgLotProdestDashboard() {
 
   const onMessage = useCallback((message: MensagemWebSocketProdest) => {
     if (message.tipo !== "processo_atualizado" || !message.processo) return;
-    const process = message.processo;
-    void mutate((current) => {
-      if (!current) return current;
-      return {
-        ...current,
-        processos_em_andamento: current.processos_em_andamento.map((item) => (
-          item.idenvioorganograma === process.envio_id
-            ? {
-                ...item,
-                fase_atual: process.fase_atual,
-                strfaseatual: process.fase_atual,
-                fase_atual_nome: process.fase_atual_nome,
-                status_atual: process.status_atual,
-                status_atual_nome: process.status_atual_nome,
-                mensagem_atual: process.mensagem_atual,
-                strmensagematual: process.mensagem_atual,
-                datultimaatividade: process.datultimaatividade,
-                ultimo_evento_id: process.ultimo_evento_id,
-              }
-            : item
-        )),
-      };
-    }, { revalidate: true });
+    void mutate();
   }, [mutate]);
   const realtimeStatus = useProdestRealtime({
     channel: "/ws/carga-org-lot/dashboard/",
@@ -80,6 +58,7 @@ export function CargaOrgLotProdestDashboard() {
       const patriarca = await getPatriarca(patriarcaId);
       select({
         idpatriarca: patriarca.idpatriarca,
+        idexternopatriarca: patriarca.idexternopatriarca,
         strsiglapatriarca: patriarca.strsiglapatriarca,
         strnome: patriarca.strnome,
       });
@@ -143,7 +122,12 @@ export function CargaOrgLotProdestDashboard() {
                 </div>
                 <p className="mt-4 rounded-lg bg-slate-50 px-4 py-3 text-sm text-slate-700">{process.mensagem_atual}</p>
                 <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-                  <p className="flex items-center gap-1.5 text-xs text-slate-500"><Clock3 className="size-4" aria-hidden="true" /> {formatAdminDate(process.datultimaatividade)}</p>
+                  <p className="flex items-center gap-1.5 text-xs text-slate-500">
+                    <Clock3 className="size-4" aria-hidden="true" />
+                    {process.datultimaatividade
+                      ? formatAdminDate(process.datultimaatividade)
+                      : "Sem atividade registrada"}
+                  </p>
                   <Button size="sm" onClick={() => void openProcess(process.idpatriarca_id)} disabled={openingId === process.idpatriarca_id}>
                     <ExternalLink aria-hidden="true" /> {openingId === process.idpatriarca_id ? "Abrindo..." : "Acompanhar"}
                   </Button>

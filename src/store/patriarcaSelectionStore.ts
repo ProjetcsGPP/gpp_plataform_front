@@ -4,6 +4,7 @@ import { create } from "zustand";
 
 export interface PatriarcaSelection {
   idpatriarca: number;
+  idexternopatriarca: string;
   strsiglapatriarca: string;
   strnome: string;
 }

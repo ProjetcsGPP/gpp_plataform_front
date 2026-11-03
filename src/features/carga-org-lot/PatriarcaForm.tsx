@@ -12,7 +12,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   createPatriarca,
+  getPatriarca,
   listStatusProgresso,
+  patriarcaDetailKey,
   updatePatriarca,
 } from "@/features/carga-org-lot/api";
 import type { Patriarca } from "@/features/carga-org-lot/model";
@@ -59,17 +61,26 @@ export function PatriarcaForm({ record }: { record?: Patriarca }) {
     };
     try {
       let saved: Patriarca;
-      if (record) saved = await updatePatriarca(record.idpatriarca, payload);
-      else {
+      if (record) {
+        await updatePatriarca(record.idpatriarca, payload);
+        saved = await getPatriarca(record.idpatriarca);
+      } else {
         saved = await createPatriarca({
           ...payload,
           idstatusprogresso_id: novoStatus!.idstatusprogresso,
         });
       }
+      await mutate(patriarcaDetailKey(saved.idpatriarca), saved, {
+        revalidate: false,
+      });
       if (!record || selected?.idpatriarca === saved.idpatriarca) {
         select(saved);
       }
-      await mutate((key) => Array.isArray(key) && key[0] === "carga-org-lot:patriarcas");
+      await mutate(
+        (key) => Array.isArray(key) && key[0] === "carga-org-lot:patriarcas",
+        undefined,
+        { revalidate: true },
+      );
       router.push("/carga-org-lot/patriarcas");
       router.refresh();
     } catch (caught) {

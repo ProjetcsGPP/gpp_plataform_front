@@ -14,21 +14,11 @@ import { AdminPanel } from "@/components/admin/AdminPage";
 import type {
   EnvioOrganogramaProdest,
   EventoIntegracaoProdest,
-  FaseIntegracaoProdest,
   StatusOperacionalProdest,
 } from "@/features/carga-org-lot/model";
 import type { ProdestRealtimeStatus } from "@/features/carga-org-lot/useProdestRealtime";
 import { formatAdminDate } from "@/lib/adminResource";
 import { cn } from "@/lib/utils";
-
-const PHASES: Array<{ code: FaseIntegracaoProdest; label: string }> = [
-  { code: "PREPARACAO", label: "Preparação" },
-  { code: "AUTENTICACAO", label: "Autenticação" },
-  { code: "ENVIO", label: "Envio" },
-  { code: "PROCESSAMENTO", label: "Processamento" },
-  { code: "RELATORIO", label: "Relatório" },
-  { code: "CONCLUSAO", label: "Conclusão" },
-];
 
 export function EnvioProdestActivityPanel({
   envio,
@@ -41,6 +31,20 @@ export function EnvioProdestActivityPanel({
   realtimeStatus: ProdestRealtimeStatus;
   isLoading: boolean;
 }) {
+  const workflow = envio?.fluxo_operacional;
+  const awaitingRemoteUpdate = envio?.strstatus === "PROCESSANDO"
+    && envio.finalizada_prodest === false
+    && eventos.some((event) => event.strcodigo === "PROCESSAMENTO_SEM_ATUALIZACAO");
+  const heading = awaitingRemoteUpdate
+    ? "Aguardando atualização da PRODEST"
+    : workflow?.fase_atual_nome
+      ?? (envio ? "Atualizando acompanhamento" : "Aguardando início");
+  const message = awaitingRemoteUpdate
+    ? "A última resposta conhecida da PRODEST informa que a carga ainda não foi finalizada. Consulte abaixo quando o backend verificou essa situação pela última vez."
+    : workflow?.mensagem_atual
+      ?? (envio
+        ? "Recuperando do servidor as etapas atualizadas deste envio."
+        : "As etapas aparecerão aqui quando o envio for iniciado.");
   return (
     <aside className="xl:sticky xl:top-5 xl:self-start" aria-label="Acompanhamento do envio">
       <AdminPanel className="overflow-hidden">
@@ -51,18 +55,33 @@ export function EnvioProdestActivityPanel({
                 Acompanhamento
               </p>
               <h2 className="mt-1 text-lg font-bold text-slate-900">
-                {envio ? envio.fase_atual_nome : "Aguardando início"}
+                {heading}
               </h2>
             </div>
-            <ConnectionIndicator status={realtimeStatus} />
+            <div className="flex flex-wrap justify-end gap-2">
+              {(workflow || awaitingRemoteUpdate) && (
+                <OperationalStatus
+                  status={awaitingRemoteUpdate ? "AVISO" : workflow!.status_atual}
+                  label={awaitingRemoteUpdate ? "Processamento sem atualização" : workflow!.status_atual_nome}
+                />
+              )}
+              <ConnectionIndicator status={realtimeStatus} />
+            </div>
           </div>
           <p className="mt-2 text-sm text-slate-600">
-            {envio?.mensagem_atual || "As etapas aparecerão aqui quando o envio for iniciado."}
+            {message}
           </p>
-          {envio?.datultimaatividade && (
-            <p className="mt-2 text-xs text-slate-500">
-              Última atividade: {formatAdminDate(envio.datultimaatividade)}
-            </p>
+          {envio && (
+            <dl className="mt-3 grid gap-2 text-xs text-slate-500 sm:grid-cols-2">
+              <ActivityDate
+                label="Última atividade registrada"
+                value={envio.datultimaatividade}
+              />
+              <ActivityDate
+                label="Última consulta à PRODEST"
+                value={envio.datultimaconsulta}
+              />
+            </dl>
           )}
         </div>
 
@@ -100,30 +119,41 @@ export function EnvioProdestActivityPanel({
 }
 
 function PhaseStepper({ envio }: { envio: EnvioOrganogramaProdest | null }) {
-  const currentIndex = envio
-    ? PHASES.findIndex((phase) => phase.code === envio.fase_atual)
-    : -1;
+  const stages = envio?.fluxo_operacional?.etapas ?? [];
+  if (!stages.length) {
+    return (
+      <p className="mt-3 rounded-lg bg-slate-50 px-4 py-3 text-sm text-slate-500">
+        As etapas serão informadas pelo servidor quando o envio começar.
+      </p>
+    );
+  }
   return (
     <ol className="mt-3 space-y-2">
-      {PHASES.map((phase, index) => {
-        const status: StatusOperacionalProdest = !envio || index > currentIndex
-          ? "AGUARDANDO"
-          : index < currentIndex
-            ? "SUCESSO"
-            : envio.status_atual;
-        const presentation = statusPresentation(status);
+      {stages.map((stage) => {
+        const presentation = statusPresentation(stage.status);
         const Icon = presentation.icon;
         return (
-          <li key={phase.code} className="flex items-center gap-3 text-sm">
+          <li key={`${stage.ordem}-${stage.codigo}`} className="flex items-start gap-3 text-sm">
             <span className={cn("flex size-7 shrink-0 items-center justify-center rounded-full", presentation.badge)}>
-              <Icon className={cn("size-4", status === "EM_ANDAMENTO" && "animate-spin")} aria-hidden="true" />
+              <Icon
+                className={cn("size-4", stage.status === "EM_ANDAMENTO" && "animate-spin")}
+                aria-hidden="true"
+              />
             </span>
-            <span className={cn("font-medium", index === currentIndex ? "text-slate-950" : "text-slate-600")}>
-              {phase.label}
-            </span>
-            {index === currentIndex && envio && (
-              <span className="ml-auto text-xs text-slate-500">{envio.status_atual_nome}</span>
-            )}
+            <div className="min-w-0 flex-1 pt-0.5">
+              <div className="flex items-baseline justify-between gap-2">
+                <span className={cn("font-medium", stage.atual ? "text-slate-950" : "text-slate-600")}>
+                  {stage.nome}
+                </span>
+                <span className="shrink-0 text-xs text-slate-500">{stage.status_nome}</span>
+              </div>
+              <p className="mt-0.5 text-xs text-slate-500">{stage.mensagem}</p>
+              {stage.data_ultima_atividade && (
+                <p className="mt-0.5 text-[0.7rem] text-slate-400">
+                  {formatAdminDate(stage.data_ultima_atividade)}
+                </p>
+              )}
+            </div>
           </li>
         );
       })}
@@ -140,7 +170,11 @@ function TimelineEvent({
 }) {
   const presentation = statusPresentation(evento.strstatusoperacional);
   const Icon = presentation.icon;
-  const details = Object.entries(evento.jsondetalhes ?? {});
+  const details = Object.entries(
+    evento.jsondetalhes_exibicao
+      ?? evento.jsondetalhes
+      ?? {},
+  );
   return (
     <li className="relative flex gap-3 pb-5 last:pb-0">
       {!last && <span className="absolute left-3.5 top-7 h-[calc(100%-1rem)] w-px bg-slate-200" aria-hidden="true" />}
@@ -155,7 +189,9 @@ function TimelineEvent({
           </time>
         </div>
         <p className="mt-1 text-xs text-slate-600">{evento.strmensagem}</p>
-        <p className="mt-1 text-[0.7rem] font-medium text-slate-500">{evento.fase_nome}</p>
+        <p className="mt-1 text-[0.7rem] font-medium text-slate-500">
+          {evento.fase_exibicao_nome}
+        </p>
         {details.length > 0 && (
           <details className="mt-2 text-xs text-slate-600">
             <summary className="cursor-pointer font-medium text-app-primary">Mais informações</summary>
@@ -174,18 +210,52 @@ function TimelineEvent({
   );
 }
 
+function ActivityDate({ label, value }: { label: string; value: string | null }) {
+  return (
+    <div>
+      <dt className="font-medium">{label}</dt>
+      <dd className="mt-0.5 text-slate-700">
+        {value ? formatAdminDate(value) : "Ainda não informada"}
+      </dd>
+    </div>
+  );
+}
+
+function OperationalStatus({
+  status,
+  label,
+}: {
+  status: StatusOperacionalProdest;
+  label: string;
+}) {
+  const presentation = statusPresentation(status);
+  const Icon = presentation.icon;
+  return (
+    <span className={cn(
+      "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium",
+      presentation.badge,
+    )}>
+      <Icon
+        className={cn("size-3.5", status === "EM_ANDAMENTO" && "animate-spin")}
+        aria-hidden="true"
+      />
+      {label}
+    </span>
+  );
+}
+
 function ConnectionIndicator({ status }: { status: ProdestRealtimeStatus }) {
   if (status === "connected") {
     return (
       <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-800">
-        <Radio className="size-3.5" aria-hidden="true" /> Ao vivo
+        <Radio className="size-3.5" aria-hidden="true" /> Ao vivo · backend
       </span>
     );
   }
   return (
     <span
       className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-900"
-      title="O processamento continua no servidor."
+      title="Situação da conexão em tempo real entre o navegador e o backend."
     >
       <LoaderCircle className={cn("size-3.5", status !== "unavailable" && "animate-spin")} aria-hidden="true" />
       {status === "unavailable" ? "Sem atualização ao vivo" : "Reconectando"}

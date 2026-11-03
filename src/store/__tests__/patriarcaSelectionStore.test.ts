@@ -10,9 +10,19 @@ describe("seleção de patriarca", () => {
 
   it("mantém apenas a escolha efêmera da sessão atual", () => {
     const { selectForUser, clear } = usePatriarcaSelectionStore.getState();
-    selectForUser(10, { idpatriarca: 1, strsiglapatriarca: "PMBG", strnome: "Prefeitura" });
+    selectForUser(10, {
+      idpatriarca: 1,
+      idexternopatriarca: "uuid-1",
+      strsiglapatriarca: "PMBG",
+      strnome: "Prefeitura",
+    });
     expect(usePatriarcaSelectionStore.getState()).toMatchObject({
-      selected: { idpatriarca: 1, strsiglapatriarca: "PMBG", strnome: "Prefeitura" },
+      selected: {
+        idpatriarca: 1,
+        idexternopatriarca: "uuid-1",
+        strsiglapatriarca: "PMBG",
+        strnome: "Prefeitura",
+      },
       selectedForUserId: 10,
     });
     expect(localStorage.getItem("carga-org-lot-patriarca-selection")).toBeNull();
