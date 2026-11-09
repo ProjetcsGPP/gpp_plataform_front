@@ -32,6 +32,7 @@ const loginRoutes: Record<AppContext, string> = {
   PORTAL: "/accounts/login/",
   ACOES_PNGI: "/accounts/login/",
   CARGA_ORG_LOT: "/accounts/login/",
+  PUB_INSTITUCIONAL: "/accounts/login/",
 };
 
 function clearSessionSelection(appContext: AppContext) {
@@ -86,9 +87,9 @@ export async function login(
  * @returns Promise<void>
  */
 export async function logoutApp(appContext: AppContext): Promise<void> {
-  const { slug } = APP_CONFIG[appContext];
+  const { slug, logoutSlug } = APP_CONFIG[appContext];
   try {
-    await api.post(`/accounts/logout/${slug}/`);
+    await api.post(`/accounts/logout/${logoutSlug ?? slug}/`);
   } finally {
     clearSessionSelection(appContext);
   }

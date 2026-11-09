@@ -1,0 +1,48 @@
+{
+  "items": [
+    {
+      "id": "patriarcas-edocs",
+      "codigo": "PATRIARCAS_EDOCS",
+      "label": "Patriarcas E-Docs",
+      "icon": "account_tree",
+      "app": "PUB_INSTITUCIONAL",
+      "href": "/publicacoes/patriarcas",
+      "order": 100,
+      "permissionKey": "view_patriarcaedocs",
+      "capabilityControlled": true
+    },
+    {
+      "id": "coletas-edocs",
+      "codigo": "COLETAS_EDOCS",
+      "label": "Coletas E-Docs",
+      "icon": "download",
+      "app": "PUB_INSTITUCIONAL",
+      "href": "/publicacoes/coletas",
+      "order": 200,
+      "permissionKey": "view_coletapatriarcasedocs",
+      "capabilityControlled": true
+    },
+    {
+      "id": "divergencias-edocs",
+      "codigo": "DIVERGENCIAS_EDOCS",
+      "label": "Divergências E-Docs",
+      "icon": "difference",
+      "app": "PUB_INSTITUCIONAL",
+      "href": "/publicacoes/divergencias",
+      "order": 300,
+      "permissionKey": "view_divergenciapatriarcaedocs",
+      "capabilityControlled": true
+    },
+    {
+      "id": "auditoria-edocs",
+      "codigo": "AUDITORIA_EDOCS",
+      "label": "Auditoria E-Docs",
+      "icon": "policy",
+      "app": "PUB_INSTITUCIONAL",
+      "href": "/publicacoes/auditoria",
+      "order": 400,
+      "permissionKey": "view_eventoauditoriapatriarcaedocs",
+      "capabilityControlled": true
+    }
+  ]
+}

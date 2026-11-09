@@ -119,7 +119,7 @@ export function LoginPage({
       await login(
         identifier,
         password,
-        appContext as "PORTAL" | "ACOES_PNGI" | "CARGA_ORG_LOT",
+        appContext,
       );
 
       const redirectMap = theme.redirectMap ?? {};

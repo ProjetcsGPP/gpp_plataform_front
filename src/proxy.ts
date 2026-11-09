@@ -10,6 +10,7 @@ const ROUTE_COOKIE_MAP: Record<string, string> = {
   '/portal':        'gpp_session_PORTAL',
   '/acoes-pngi':    'gpp_session_ACOES_PNGI',
   '/carga-org-lot': 'gpp_session_CARGA_ORG_LOT',
+  '/publicacoes':    'gpp_session_PUB_INSTITUCIONAL',
 }
 
 /**
@@ -19,6 +20,7 @@ const ROUTE_LOGIN_MAP: Record<string, string> = {
   '/portal':        '/portal/login',
   '/acoes-pngi':    '/acoes-pngi/login',
   '/carga-org-lot': '/carga-org-lot/login',
+  '/publicacoes':    '/publicacoes/login',
 }
 
 /**
@@ -30,6 +32,7 @@ const PUBLIC_BYPASSES = [
   '/portal/manutencao',
   '/acoes-pngi/login',
   '/carga-org-lot/login',
+  '/publicacoes/login',
   '/api/',
   '/_next/',
   '/favicon',
@@ -94,5 +97,6 @@ export const config = {
     '/portal/:path*',
     '/acoes-pngi/:path*',
     '/carga-org-lot/dashboard/:path*',
+    '/publicacoes/:path*',
   ],
 }

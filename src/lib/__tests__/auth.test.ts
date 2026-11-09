@@ -49,6 +49,27 @@ describe("contrato de autenticação", () => {
     expect(apiPost).toHaveBeenCalledWith("/accounts/logout/carga-org-lot/");
   });
 
+  it("autentica Publicações com o contexto canônico", async () => {
+    await login("maria", "segredo", "PUB_INSTITUCIONAL");
+
+    expect(apiPost).toHaveBeenCalledWith(
+      "/accounts/login/",
+      {
+        identifier: "maria",
+        password: "segredo",
+        app_context: "PUB_INSTITUCIONAL",
+      },
+      { gppAuthMode: "public" },
+    );
+  });
+
+  it("usa o slug IAM no logout de Publicações", async () => {
+    await logoutApp("PUB_INSTITUCIONAL");
+    expect(apiPost).toHaveBeenCalledWith(
+      "/accounts/logout/pub-institucional/",
+    );
+  });
+
   it("troca aplicação enviando apenas o contexto", async () => {
     await switchApp("ACOES_PNGI");
     expect(apiPost).toHaveBeenCalledWith("/accounts/switch-app/", {

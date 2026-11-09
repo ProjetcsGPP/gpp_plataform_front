@@ -6,7 +6,10 @@ do frontend da aplicação `PUBLICACOES` e da transformação do Portal.
 ## Documentos
 
 - [FRONTEND_ASSESSMENT.md](./FRONTEND_ASSESSMENT.md): auditoria arquitetural
-  inicial do frontend, realizada antes da implementação.
+  inicial do frontend, reconciliada com o estado canônico de 2026-11-03.
+- [FRONTEND_IMPLEMENTATION_PLAN.md](./FRONTEND_IMPLEMENTATION_PLAN.md): pontos
+  a corrigir, dependências, fases, pacotes de trabalho, arquivos, testes e
+  rollout do frontend.
 - [DECISIONS_AND_INPUTS.md](./DECISIONS_AND_INPUTS.md): registro evolutivo de
   decisões aprovadas, pendências e novos insumos recebidos em reuniões ou
   conversas.
@@ -19,6 +22,9 @@ A referência de coordenação transversal é a
 mantida em `backend/docs/SHARED`. Os IDs `PUB-*` dessa matriz prevalecem como
 identificadores compartilhados; os registros `FE-PUB-*` deste diretório são o
 detalhamento local do frontend e devem apontar para eles.
+
+A reconfirmação arquitetural canônica está em
+[`PUBLICACOES_CURRENT_STATE_ASSESSMENT.md`](../../../backend/docs/SHARED/PUBLICACOES_CURRENT_STATE_ASSESSMENT.md).
 
 ## Regras de manutenção
 

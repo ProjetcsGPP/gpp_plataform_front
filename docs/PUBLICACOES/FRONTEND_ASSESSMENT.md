@@ -1,10 +1,14 @@
 # Assessment arquitetural do frontend — PUBLICACOES
 
-**Status:** auditoria inicial preservada e gate de segurança `PUB-008` concluído  
-**Data da auditoria:** 2026-10-23  
-**Último alinhamento transversal:** 2026-10-23  
-**Branch auditada:** `feat/publicacoes-informacoes`  
-**Commit auditado:** `1b657cb`  
+**Status:** reconciliado com o estado canônico; implementação funcional ainda não autorizada
+
+**Data da auditoria:** 2026-10-23
+
+**Última reconfirmação:** 2026-11-03
+
+**Branch auditada:** `feat/publicacoes-informacoes`
+
+**Commit reconfirmado:** `623f58b`
 **Escopo:** frontend, integração com os contratos planejados no backend e
 transformação do Portal
 
@@ -12,6 +16,12 @@ transformação do Portal
 [`backend/docs/SHARED/PUBLICACOES_INTEGRATION_MATRIX.md`](../../../backend/docs/SHARED/PUBLICACOES_INTEGRATION_MATRIX.md).
 Os IDs `PUB-*` citados abaixo têm o significado e o status definidos nessa
 matriz.
+
+**Reconfirmação canônica:**
+[`PUBLICACOES_CURRENT_STATE_ASSESSMENT.md`](../../../backend/docs/SHARED/PUBLICACOES_CURRENT_STATE_ASSESSMENT.md).
+Em caso de divergência histórica, esse documento e a matriz prevalecem. O plano
+executável do frontend está em
+[`FRONTEND_IMPLEMENTATION_PLAN.md`](./FRONTEND_IMPLEMENTATION_PLAN.md).
 
 ## 1. Premissas obrigatórias
 
@@ -34,17 +44,21 @@ A arquitetura atual aceita `PUBLICACOES` como extensão aditiva. O gate de
 autenticação `PUB-008` foi concluído; a implementação funcional ainda deve
 respeitar os demais bloqueios e contratos públicos e administrativos.
 
-Os principais bloqueios são:
+Os principais bloqueios atuais são:
 
 1. `/portal` ainda é protegido por cookie e não possui página pública;
-2. na auditoria inicial, o login usava resolução enumerável e não inicializava
-   CSRF; a correção frontend de `PUB-008` está registrada na seção 13;
-3. validade de sessão, usuário ativo e throttling foram endurecidos e testados
-   no backend; a integração frontend depende das evidências da seção 13;
-4. não existe isolamento explícito entre cache público e autenticado;
-5. cards, rotas e tipos de aplicação ainda estão fechados às aplicações atuais;
-6. workflow, dashboard, gráficos e APIs administrativas ainda não possuem
+2. responsáveis, piloto e classificação campo a campo continuam pendentes;
+3. `PUB-020` permanece bloqueado por banco real, egress, observabilidade e
+   tratamento formal dos achados aplicáveis;
+4. não existe isolamento implementado entre cache público, autenticado e preview;
+5. cards e tipos de aplicação ainda estão fechados às aplicações atuais;
+6. workflow, dashboard público e APIs administrativas ainda não possuem
    contratos implementáveis.
+
+Login opaco, bootstrap/rotação CSRF, mensagens genéricas, sessão expirada e os
+testes do gate `PUB-008` já estão implementados. Rotas, estratégia híbrida e
+fronteiras de cache também já foram decididas em `PUB-012` a `PUB-014`; falta
+implementá-las e comprová-las.
 
 ## 3. Conflitos por severidade
 
@@ -98,12 +112,12 @@ mas não definem isolamento, retenção, invalidação ou política de erro entr
 dois domínios. O Portal público precisa continuar em SWR, com chaves
 namespaced e uma fronteira de cache explicitamente testada.
 
-#### Interceptor de 401 incompatível com chamada pública
+#### Modo público já existe, mas precisa ser aplicado ao novo contrato
 
-O interceptor compartilhado interpreta qualquer `401` como expiração de
-sessão e redireciona para login com base no `appContext` ou pathname. Chamadas
-públicas precisam ser identificadas dentro do mesmo mecanismo compartilhado
-para que um erro público não seja tratado como expiração de sessão.
+O interceptor compartilhado já distingue chamadas com
+`gppAuthMode: "public"` e não trata seus `401` como expiração de sessão. Toda
+consulta client-side do novo Portal público deverá usar esse modo e desabilitar
+credenciais para que um erro público não limpe a autenticação nem abra o login.
 
 #### Requisições públicas enviam credenciais por padrão
 
@@ -126,9 +140,9 @@ role ou catálogo duplicado.
 
 #### Login não está extraído
 
-`LoginPage` mistura branding, formulário, carregamento de aplicações e layout.
-O componente recebe `sessionExpiredMessage`, mas não o renderiza; o parâmetro
-`redirect` da rota também não é aplicado. A transformação exige um `LoginForm`
+`LoginPage` mistura branding, formulário e layout. A mensagem de sessão expirada
+e o parâmetro `redirect` já são consumidos no código atual. A transformação
+exige um `LoginForm`
 reutilizável e um `LoginDialog` acessível, preservando hard navigation após o
 login quando necessária para persistência do cookie.
 
@@ -155,9 +169,10 @@ controlada desses primitives, não um mecanismo paralelo.
 
 ### 3.3 Médios
 
-- `portal/layout.tsx` aplica o cabeçalho sem login também sobre áreas que montam
-  `AppShell`; os layouts público e autenticado precisam ser separados por route
-  groups ou estrutura equivalente.
+- `portal/layout.tsx` é neutro, mas monta `AppThemeProvider`, Zustand e efeito no
+  `body` sobre toda a árvore. Os layouts público e autenticado precisam ser
+  separados por route groups ou estrutura equivalente para preservar a
+  fronteira SSR/client.
 - O Axios singleton, relativo a `/api` e acoplado ao Zustand, é adequado ao CSR,
   mas não deve ser importado diretamente em SSR porque estado global pode vazar
   entre requisições.
@@ -174,26 +189,22 @@ controlada desses primitives, não um mecanismo paralelo.
   completa.
 - `next.config.ts` aponta o proxy da API para `localhost:8000`; gateway e origem
   de produção precisam ser definidos.
-- As versões principais de `next` e `eslint-config-next` não estão alinhadas.
+- Next e `eslint-config-next` estão alinhados em `16.4.3`; os achados atuais de
+  dependências estão descritos na seção 14.
 
 ## 4. Informações ausentes ou ambíguas
 
 ### Produto e governança
 
 - nome funcional final;
-- publicação por uma ou duas pessoas;
 - primeiro conjunto de dados piloto;
 - classificação campo a campo;
 - retenção, SLA, RPO, RTO e responsáveis.
 
 ### Portal e autenticação
 
-- `/portal` muda de conteúdo conforme sessão ou a área autenticada permanece em
-  `/portal/dashboard`;
-- semântica compatível de `/portal/login` e do parâmetro `redirect`;
 - mesma aba ou nova aba para cards;
 - comportamento sem publicação, após revogação ou em degradação;
-- requisitos de SEO e SSR;
 - navegadores e meta de acessibilidade.
 
 ### Conteúdo público
@@ -216,25 +227,22 @@ controlada desses primitives, não um mecanismo paralelo.
 
 ## 5. Decisões e definições necessárias antes de implementar
 
-1. Comprovar e registrar o fechamento integrado de `PUB-008`.
-2. Aprovar a matriz de rotas públicas e autenticadas.
-3. Decidir CSR, SSR ou estratégia híbrida para o Portal público.
-4. Definir isolamento de cache público/autenticado dentro do SWR existente.
-5. Definir cache HTTP, `ETag`, invalidação e fallback de erro.
-6. Implementar a decisão de login por `identifier` (`PUB-015`) e detalhar o
-   bootstrap CSRF exigido pelo bloqueio `PUB-008`.
-7. Definir a compatibilidade de `/portal/login` e redirect seguro.
-8. Detalhar o DTO autoritativo dos cards, já decidido em `PUB-016`, incluindo
+1. Nomear responsáveis e aprovar piloto e classificação (`PUB-011`).
+2. Fechar PostgreSQL on-premises, egress, observabilidade e cadeia de
+   fornecimento (`PUB-020`, `PUB-022`).
+3. Aprovar o contrato administrativo (`PUB-018`).
+4. Aprovar o catálogo IAM (`PUB-019`).
+5. Aprovar o schema público (`PUB-017`) e os estados públicos (`PUB-024`).
+6. Aprovar navegadores e meta de acessibilidade (`PUB-025`).
+7. Detalhar o DTO autoritativo dos cards, já decidido em `PUB-016`, incluindo
    destinos, estados, disponibilidade e validação de URL.
-9. Aprovar menus, capabilities e permissões de `PUBLICACOES`.
-10. Implementar a decisão de ator único de `PUB-009` e aprovar o contrato de
-    concorrência ainda pendente em `PUB-018`.
-11. Aprovar o contrato público antes de definir gráficos ou layout final.
-12. Definir preview, erros e tratamento de credenciais de consumidor.
+8. Definir preview, erros e tratamento de credenciais de consumidor nos
+   contratos das fases correspondentes.
 
-As direções arquiteturais de login e cards não estão mais pendentes: `PUB-015`
-e `PUB-016` estão `DECIDIDO`. Permanecem pendentes seus contratos executáveis e
-o atendimento aos critérios de aceite e bloqueios relacionados.
+As direções arquiteturais de rotas, renderização, cache, login e cards não estão
+mais pendentes: `PUB-012` a `PUB-016` estão `DECIDIDO`. Permanecem pendentes a
+implementação, os contratos executáveis complementares e o atendimento aos
+critérios de aceite e bloqueios relacionados.
 
 ## 6. Mapa de impacto
 
@@ -484,19 +492,16 @@ open redirect e logout seletivo. Ela controla a fronteira `/api`; uma execução
 full-stack com Django/PostgreSQL reais continua dependendo de ambiente efêmero
 e fixtures backend isoladas.
 
-## 14. Alerta de dependências — 2026-10-26
+## 14. Estado de dependências — reconfirmado em 2026-11-03
 
-Uma consulta ao banco de advisories do npm, executada após a instalação do
-Playwright, reportou 14 vulnerabilidades no grafo atual: 1 crítica, 8 altas e 5
-moderadas. O achado mais urgente é o `next@16.3.6`, apontado por advisories de
-execução remota, SSRF, indisponibilidade e cache; a versão corrente publicada é
-`16.4.3`. Também há correções disponíveis para `vitest@4.1.11`,
-`shadcn@4.21.0` e dependências transitivas.
+O manifest atual usa Next e `eslint-config-next` `16.4.3`, Vitest `4.1.12` e
+shadcn `4.22.1`; portanto, o alerta histórico sobre as versões anteriores está
+superado.
 
-Não foi executado `npm audit fix`, pois upgrades automáticos podem alterar
-versões e contratos sem revisão. Recomenda-se uma entrega de segurança
-separada, prioritária, começando por Next `16.4.3`, Vitest `4.1.12` ou superior
-compatível e shadcn `4.22.1`, seguida pelas suítes Vitest/Playwright, build e
-novo `npm audit`. Esse alerta não reabre o contrato específico de autenticação
-de `PUB-008`, mas deve bloquear exposição pública até a remediação ou aceitação
-formal do risco.
+A auditoria canônica de 2026-11-03 registrou zero vulnerabilidades nas
+dependências de runtime (`npm audit --omit=dev`). No grafo completo há 22
+achados em ferramentas de desenvolvimento: 1 alto, 19 moderados e 2 baixos.
+Esses achados devem ser corrigidos ou receber tratamento formal antes do aceite
+da cadeia de fornecimento, sem serem apresentados como vulnerabilidades de
+runtime do Portal. Não se deve executar correção automática sem revisar impacto
+e repetir lint, typecheck, Vitest, Playwright e build Webpack.

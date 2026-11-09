@@ -122,6 +122,18 @@ export const PERMISSIONS = {
   ITEMORGANOGRAMA_ADD: "add_itemorganograma",
   ITEMORGANOGRAMA_CHANGE: "change_itemorganograma",
   ITEMORGANOGRAMA_DELETE: "delete_itemorganograma",
+
+  // ── Publicações Institucionais / E-Docs ───────────────────────────
+  EDOCS_PATRIARCA_CONSULTAR: "consultar_patriarcas_edocs",
+  EDOCS_PATRIARCA_REVISAR: "revisar_patriarcas_edocs",
+  EDOCS_PATRIARCA_SELECIONAR_COLETA: "selecionar_patriarcas_coleta",
+  EDOCS_PATRIARCA_SOLICITAR_COLETA: "solicitar_coleta_patriarcas_edocs",
+  EDOCS_COLETA_VIEW: "view_coletapatriarcasedocs",
+  EDOCS_DIVERGENCIA_VIEW: "view_divergenciapatriarcaedocs",
+  EDOCS_EVENTO_AUDITORIA_VIEW: "view_eventoauditoriapatriarcaedocs",
+  EDOCS_OBSERVACAO_VIEW: "view_observacaopatriarcaedocs",
+  EDOCS_PATRIARCA_VIEW: "view_patriarcaedocs",
+  EDOCS_COLETA_VISUALIZAR: "visualizar_coletas_patriarcas",
 } as const;
 
 export type PermissionKey = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];

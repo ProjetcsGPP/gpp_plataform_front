@@ -79,6 +79,38 @@ describe('proxy — FASE 4', () => {
     expect(res.status).toBe(200)
   })
 
+  // ── PUBLICAÇÕES INSTITUCIONAIS ────────────────────────────────────
+  it('deve redirecionar /publicacoes sem o cookie correto', () => {
+    const req = makeRequest('/publicacoes', {
+      'gpp_session_PORTAL': 'valid-session-token',
+    })
+    const res = proxy(req)
+
+    expect(res.status).toBe(307)
+    expect(res.headers.get('location')).toContain('/publicacoes/login')
+    expect(res.headers.get('location')).toContain('reason=session_expired')
+  })
+
+  it('deve proteger todas as rotas de Publicações com seu cookie isolado', () => {
+    for (const path of [
+      '/publicacoes',
+      '/publicacoes/patriarcas',
+      '/publicacoes/coletas',
+      '/publicacoes/divergencias',
+      '/publicacoes/auditoria',
+    ]) {
+      const res = proxy(makeRequest(path, {
+        'gpp_session_PUB_INSTITUCIONAL': 'valid-session-token',
+      }))
+      expect(res.status).toBe(200)
+    }
+  })
+
+  it('deve deixar /publicacoes/login passar sem cookie', () => {
+    const res = proxy(makeRequest('/publicacoes/login'))
+    expect(res.status).toBe(200)
+  })
+
   // ── ROTAS PÚBLICAS ────────────────────────────────────────────────
   it('deve deixar rotas de login passarem sem verificar cookie', () => {
     const req = makeRequest('/portal/login')
@@ -115,5 +147,15 @@ describe('proxy — FASE 4', () => {
     const res = proxy(req)
     expect(res.status).toBe(307)
     expect(res.headers.get('location')).toContain('/acoes-pngi/login')
+  })
+
+  it('cookie de outra aplicação não deve proteger Publicações', () => {
+    const req = makeRequest('/publicacoes/patriarcas', {
+      'gpp_session_CARGA_ORG_LOT': 'valid-session-token',
+    })
+    const res = proxy(req)
+
+    expect(res.status).toBe(307)
+    expect(res.headers.get('location')).toContain('/publicacoes/login')
   })
 })
