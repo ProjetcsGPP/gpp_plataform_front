@@ -20,6 +20,10 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { LogOut, Loader2, LayoutGrid, RefreshCw } from "lucide-react";
 import { logError } from "@/lib/logger";
+import {
+  resolvePortalApplicationContext,
+  resolvePortalApplicationDestination,
+} from "@/lib/portalApplicationDestination";
 import { useState } from "react";
 
 export default function PortalDashboardPage() {
@@ -69,19 +73,35 @@ export default function PortalDashboardPage() {
   }
 
   async function handleAppClick(app: PortalAplicacao) {
-    if (app.codigointerno === "") return;
+    const appContext = resolvePortalApplicationContext(app.codigointerno);
+    if (!appContext) return;
+
+    let destination = resolvePortalApplicationDestination(
+      app,
+      window.location.origin,
+    );
+
+    // Compatibilidade temporária: os base_url legados ainda não apontam para
+    // as páginas iniciais reais dessas duas aplicações no frontend.
+    if (appContext === "ACOES_PNGI") destination = "/acoes-pngi/dashboard";
+    else if (appContext === "CARGA_ORG_LOT")
+      destination = "/carga-org-lot/dashboard";
+
+    if (!destination) {
+      await logError(
+        new Error("Aplicação sem destino frontend válido."),
+        "portal/dashboard/applicationDestination",
+      );
+      return;
+    }
+
     setSwitching(app.codigointerno);
     try {
       // 1. Faz o handshake silencioso e seguro com a nossa nova SwitchAppView no Django
-      await switchApp(
-        app.codigointerno as "PORTAL" | "ACOES_PNGI" | "CARGA_ORG_LOT",
-      );
+      await switchApp(appContext);
 
       // 2. Abre o sistema correspondente em uma NOVA ABA (_blank) de forma transparente
-      if (app.codigointerno === "ACOES_PNGI")
-        window.open("/acoes-pngi/dashboard", "_blank");
-      else if (app.codigointerno === "CARGA_ORG_LOT")
-        window.open("/carga-org-lot/dashboard", "_blank");
+      window.open(destination, "_blank", "noopener,noreferrer");
     } catch (err) {
       await logError(err, "portal/dashboard/switchApp");
     } finally {

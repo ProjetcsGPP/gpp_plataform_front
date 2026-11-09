@@ -1,20 +1,19 @@
-# Publicações Institucionais — dependências de integração
+# Publicações Institucionais — integração E-Docs
 
 A fundação usa o contexto `PUB_INSTITUCIONAL`, o Axios compartilhado, a
 hidratação de autenticação/permissões existente e os menus dinâmicos de
 `GET /api/accounts/menus/`.
 
-Os contratos HTTP administrativos de patriarcas, coletas, divergências e
-auditoria ainda não estão disponíveis. Por isso, as rotas permanecem em estado
-neutro e não criam hooks SWR, endpoints, payloads ou dados simulados. Quando os
-contratos forem formalizados, os hooks devem usar o cliente Axios compartilhado
-como fetcher do SWR.
+As quatro áreas administrativas consomem o contrato versionado em
+`backend/docs/PUBLICACOES/EDOCS_ADMIN_API.md` pelo prefixo
+`/api/pub-institucional/`. As consultas usam SWR e o cliente Axios compartilhado.
+Mutações revalidam todo o namespace de cache E-Docs.
 
-O WebSocket reservado em `/ws/pub-institucional/edocs/` não é conectado nesta
-fundação. Quando implementado, ele servirá apenas para notificar e provocar a
-revalidação dos dados HTTP/SWR; nunca será a fonte canônica de estado.
+O WebSocket `/ws/pub-institucional/edocs/` funciona somente como sinal de
+revalidação. Seu payload não é aplicado ao estado das telas: o estado canônico
+sempre volta a ser obtido pela API HTTP/SWR.
 
-Antes de expor endpoints sob `/api/pub-institucional/`, o backend deve associar
-esse prefixo ao contexto `PUB_INSTITUCIONAL` no middleware de contexto. A
-publicação da aplicação e de seu destino no Portal também permanece autoritativa
-no backend; nenhum cartão ou destino decisório foi adicionado ao navegador.
+As ações por registro dependem simultaneamente das permissões técnicas
+hidratadas e de `acoes_disponiveis`. As opções de decisão de divergência vêm
+exclusivamente de `decisoes_permitidas`. Nenhum nome de role participa dessas
+decisões.

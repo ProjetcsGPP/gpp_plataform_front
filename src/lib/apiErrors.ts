@@ -20,6 +20,8 @@ function firstMessage(payload: unknown): string | null {
   if (typeof payload !== "object") return null;
 
   const record = payload as Record<string, unknown>;
+  const detalhe = firstMessage(record.detalhe);
+  if (detalhe) return detalhe;
   const detail = firstMessage(record.detail);
   if (detail) return detail;
   const message = firstMessage(record.message);

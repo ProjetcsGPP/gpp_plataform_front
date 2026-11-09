@@ -53,6 +53,32 @@ describe("getApiErrorMessage", () => {
     );
   });
 
+  it("prioriza o detalhe seguro do conflito E-Docs", () => {
+    const error = new axios.AxiosError(
+      "Conflict",
+      "ERR_BAD_RESPONSE",
+      undefined,
+      undefined,
+      {
+        status: 409,
+        statusText: "Conflict",
+        headers: new AxiosHeaders(),
+        config: { headers: new AxiosHeaders() },
+        data: {
+          success: false,
+          errors: {
+            codigo: "conflito_catalogo_edocs",
+            detalhe: "A divergência já foi decidida.",
+          },
+        },
+      },
+    );
+
+    expect(getApiErrorMessage(error)).toBe(
+      "A divergência já foi decidida.",
+    );
+  });
+
   it("não exibe uma página HTML de depuração no card de erro", () => {
     const error = new axios.AxiosError(
       "Internal Server Error",
