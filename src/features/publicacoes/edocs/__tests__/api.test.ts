@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
+  alterarIndicadoresMunicipaisEdocs,
   alterarSelecaoColetaEdocs,
   decidirDivergenciaEdocs,
   listAuditoriaEdocs,
@@ -53,12 +54,26 @@ describe("API administrativa E-Docs", () => {
     };
 
     await alterarSelecaoColetaEdocs(7, selection);
+    await alterarIndicadoresMunicipaisEdocs(7, {
+      codigo_municipio: 3201100,
+      municipio_implantado: true,
+      justificativa: "Situação confirmada.",
+    });
     await solicitarColetaEdocs();
     await decidirDivergenciaEdocs(9, decision);
 
     expect(patch).toHaveBeenCalledWith(
       "/pub-institucional/patriarcas/7/selecao-coleta/",
       selection,
+    );
+    expect(patch).toHaveBeenNthCalledWith(
+      2,
+      "/pub-institucional/patriarcas/7/indicadores-municipais/",
+      {
+        codigo_municipio: 3201100,
+        municipio_implantado: true,
+        justificativa: "Situação confirmada.",
+      },
     );
     expect(post).toHaveBeenNthCalledWith(1, "/pub-institucional/coletas/");
     expect(post).toHaveBeenNthCalledWith(

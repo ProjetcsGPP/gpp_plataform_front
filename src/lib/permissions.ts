@@ -134,6 +134,30 @@ export const PERMISSIONS = {
   EDOCS_OBSERVACAO_VIEW: "view_observacaopatriarcaedocs",
   EDOCS_PATRIARCA_VIEW: "view_patriarcaedocs",
   EDOCS_COLETA_VISUALIZAR: "visualizar_coletas_patriarcas",
+  EDOCS_INDICADORES_MUNICIPAIS_ALTERAR:
+    "alterar_indicadores_municipais_edocs",
+
+  // ── Publicações Institucionais / Coleta mensal E-Docs ─────────────
+  EDOCS_MENSAL_COLETA_VIEW: "view_coletamensaledocs",
+  EDOCS_MENSAL_COLETA_SOLICITAR: "solicitar_coleta_mensal_edocs",
+  EDOCS_MENSAL_RESULTADO_PATRIARCA_VIEW:
+    "view_resultadomensalpatriarcaedocs",
+  EDOCS_MENSAL_RESULTADO_ORGANIZACAO_VIEW:
+    "view_resultadomensalorganizacaoedocs",
+  EDOCS_MENSAL_FONTE_BRUTA_VIEW: "view_fontebrutacoletamensaledocs",
+  EDOCS_MENSAL_EVENTO_AUDITORIA_VIEW:
+    "view_eventoauditoriacoletamensaledocs",
+
+  // ── Publicações Institucionais / E-Flow ────────────────────────────
+  EFLOW_COLETA_IMPORTAR: "importar_coleta_eflow",
+  EFLOW_COLETA_VIEW: "view_coletaeflow",
+  EFLOW_DEFINICAO_VIEW: "view_definicaofluxoeflow",
+  EFLOW_EVENTO_AUDITORIA_VIEW: "view_eventoauditoriaeflow",
+  EFLOW_RESULTADO_VIEW: "view_resultadocalculoeflow",
+  EFLOW_PREFERENCIA_VIEW: "view_preferenciaexibicaoeflow",
+  EFLOW_PREFERENCIA_ALTERAR: "alterar_preferencia_exibicao_eflow",
+  EFLOW_PREFERENCIA_AUDITORIA_VIEW:
+    "view_eventoauditoriapreferenciaeflow",
 } as const;
 
 export type PermissionKey = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];

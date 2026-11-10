@@ -43,6 +43,39 @@
       "order": 400,
       "permissionKey": "view_eventoauditoriapatriarcaedocs",
       "capabilityControlled": true
+    },
+    {
+      "id": "coleta-dados",
+      "codigo": "COLETA_DADOS",
+      "label": "Coleta de Dados",
+      "icon": "database",
+      "app": "PUB_INSTITUCIONAL",
+      "order": 500,
+      "capabilityControlled": true,
+      "children": [
+        {
+          "id": "coleta-eflow",
+          "codigo": "COLETA_EFLOW",
+          "label": "E-Flow",
+          "icon": "upload_file",
+          "app": "PUB_INSTITUCIONAL",
+          "href": "/publicacoes/coleta-dados/eflow",
+          "order": 510,
+          "permissionKey": "view_coletaeflow",
+          "capabilityControlled": true
+        },
+        {
+          "id": "coleta-edocs-mensal",
+          "codigo": "COLETA_EDOCS_MENSAL",
+          "label": "E-Docs",
+          "icon": "calendar_month",
+          "app": "PUB_INSTITUCIONAL",
+          "href": "/publicacoes/coleta-dados/edocs",
+          "order": 520,
+          "permissionKey": "view_coletamensaledocs",
+          "capabilityControlled": true
+        }
+      ]
     }
   ]
 }

@@ -119,11 +119,13 @@ export function EdocsModal({
   onClose,
   children,
   wide = false,
+  extraWide = false,
 }: {
   title: string;
   onClose: () => void;
   children: ReactNode;
   wide?: boolean;
+  extraWide?: boolean;
 }) {
   return (
     <div
@@ -134,7 +136,7 @@ export function EdocsModal({
     >
       <section
         className={`max-h-[90vh] w-full overflow-auto rounded-xl bg-white p-6 shadow-2xl ${
-          wide ? "max-w-4xl" : "max-w-xl"
+          extraWide ? "max-w-7xl" : wide ? "max-w-4xl" : "max-w-xl"
         }`}
       >
         <div className="flex items-start justify-between gap-4">

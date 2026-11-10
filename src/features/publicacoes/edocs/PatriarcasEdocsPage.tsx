@@ -2,14 +2,18 @@
 
 import { useState } from "react";
 import useSWR, { useSWRConfig } from "swr";
-import { ListChecks } from "lucide-react";
+import { ListChecks, MapPin } from "lucide-react";
 
 import { AdminDataTable, type AdminTableColumn } from "@/components/admin/AdminDataTable";
 import { AdminAlert } from "@/components/admin/AdminPage";
 import { AdminLoading } from "@/components/admin/AdminLoading";
 import { RouteGuard } from "@/components/common/RouteGuard";
 import { Button } from "@/components/ui/button";
-import { alterarSelecaoColetaEdocs, listPatriarcasEdocs } from "@/features/publicacoes/edocs/api";
+import {
+  alterarIndicadoresMunicipaisEdocs,
+  alterarSelecaoColetaEdocs,
+  listPatriarcasEdocs,
+} from "@/features/publicacoes/edocs/api";
 import { EDOCS_ACTIONS, hasEdocsAction } from "@/features/publicacoes/edocs/actions";
 import { edocsCacheKeys, revalidateEdocsCaches } from "@/features/publicacoes/edocs/cache";
 import {
@@ -20,7 +24,10 @@ import {
   EdocsStatusBadge,
   EdocsTextFilter,
 } from "@/features/publicacoes/edocs/EdocsUi";
-import type { PatriarcaEdocs } from "@/features/publicacoes/edocs/model";
+import type {
+  IndicadoresMunicipaisPayload,
+  PatriarcaEdocs,
+} from "@/features/publicacoes/edocs/model";
 import { edocsOrdering, nextEdocsSorting } from "@/features/publicacoes/edocs/table";
 import { usePermissions } from "@/hooks/usePermissions";
 import { formatAdminDate } from "@/lib/adminResource";
@@ -43,6 +50,8 @@ export function PatriarcasEdocsPage() {
     { key: "nome", direction: "asc" },
   ]);
   const [selected, setSelected] = useState<PatriarcaEdocs | null>(null);
+  const [municipalIndicators, setMunicipalIndicators] =
+    useState<PatriarcaEdocs | null>(null);
   const [feedback, setFeedback] = useState<{
     kind: "error" | "success";
     message: string;
@@ -127,6 +136,20 @@ export function PatriarcasEdocsPage() {
       ),
     },
     {
+      key: "municipio",
+      label: "Município",
+      render: (row) => (
+        <div className="text-xs">
+          <span className="font-medium text-slate-800">
+            {row.codigo_municipio ?? "Não informado"}
+          </span>
+          <span className="mt-1 block text-slate-500">
+            {municipalIndicatorSummary(row)}
+          </span>
+        </div>
+      ),
+    },
+    {
       key: "atualizado",
       label: "Atualizado em",
       sortKey: "atualizado_em",
@@ -137,18 +160,43 @@ export function PatriarcasEdocsPage() {
       label: "Ações",
       headerClassName: "text-right",
       className: "text-right",
-      render: (row) =>
-        can(PERMISSIONS.EDOCS_PATRIARCA_SELECIONAR_COLETA) &&
-        hasEdocsAction(
-          row.acoes_disponiveis,
-          EDOCS_ACTIONS.ALTERAR_SELECAO_COLETA,
-        ) ? (
-          <Button variant="outline" size="sm" onClick={() => setSelected(row)}>
-            <ListChecks aria-hidden="true" /> Alterar seleção
-          </Button>
-        ) : (
-          <span className="text-xs text-slate-400">Sem ações</span>
-        ),
+      render: (row) => {
+        const canChangeSelection =
+          can(PERMISSIONS.EDOCS_PATRIARCA_SELECIONAR_COLETA) &&
+          hasEdocsAction(
+            row.acoes_disponiveis,
+            EDOCS_ACTIONS.ALTERAR_SELECAO_COLETA,
+          );
+        const canChangeMunicipality =
+          can(PERMISSIONS.EDOCS_INDICADORES_MUNICIPAIS_ALTERAR) &&
+          hasEdocsAction(
+            row.acoes_disponiveis,
+            EDOCS_ACTIONS.ALTERAR_INDICADORES_MUNICIPAIS,
+          );
+
+        if (!canChangeSelection && !canChangeMunicipality) {
+          return <span className="text-xs text-slate-400">Sem ações</span>;
+        }
+
+        return (
+          <div className="flex justify-end gap-2">
+            {canChangeMunicipality && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setMunicipalIndicators(row)}
+              >
+                <MapPin aria-hidden="true" /> Indicadores
+              </Button>
+            )}
+            {canChangeSelection && (
+              <Button variant="outline" size="sm" onClick={() => setSelected(row)}>
+                <ListChecks aria-hidden="true" /> Alterar seleção
+              </Button>
+            )}
+          </div>
+        );
+      },
     },
   ];
 
@@ -260,7 +308,159 @@ export function PatriarcasEdocsPage() {
           }}
         />
       )}
+
+      {municipalIndicators && (
+        <IndicadoresMunicipaisDialog
+          patriarca={municipalIndicators}
+          onClose={() => setMunicipalIndicators(null)}
+          onSave={async (payload) => {
+            try {
+              await alterarIndicadoresMunicipaisEdocs(
+                municipalIndicators.id,
+                payload,
+              );
+              setMunicipalIndicators(null);
+              await revalidateEdocsCaches(mutateCache);
+              setFeedback({
+                kind: "success",
+                message: "Indicadores municipais atualizados e registrados na auditoria.",
+              });
+            } catch (caught) {
+              setFeedback({
+                kind: "error",
+                message: getApiErrorMessage(
+                  caught,
+                  "Não foi possível atualizar os indicadores municipais.",
+                ),
+              });
+            }
+          }}
+        />
+      )}
     </RouteGuard>
+  );
+}
+
+const MUNICIPAL_BOOLEAN_FIELDS = [
+  ["municipio_implantado", "Município implantado"],
+  ["municipio_em_implantacao", "Município em implantação"],
+  ["municipio_manifestou_interesse", "Manifestou interesse"],
+  ["municipio_implantado_sem_uso_edocs", "Implantado sem uso do E-Docs"],
+] as const;
+
+function municipalIndicatorSummary(patriarca: PatriarcaEdocs) {
+  const active = MUNICIPAL_BOOLEAN_FIELDS.filter(([field]) => patriarca[field]);
+  return active.length ? active.map(([, label]) => label).join(" · ") : "Sem indicadores ativos";
+}
+
+function IndicadoresMunicipaisDialog({
+  patriarca,
+  onClose,
+  onSave,
+}: {
+  patriarca: PatriarcaEdocs;
+  onClose: () => void;
+  onSave: (payload: IndicadoresMunicipaisPayload) => Promise<void>;
+}) {
+  const [municipalityCode, setMunicipalityCode] = useState(
+    patriarca.codigo_municipio?.toString() ?? "",
+  );
+  const [indicators, setIndicators] = useState(() =>
+    Object.fromEntries(
+      MUNICIPAL_BOOLEAN_FIELDS.map(([field]) => [field, patriarca[field]]),
+    ) as Record<(typeof MUNICIPAL_BOOLEAN_FIELDS)[number][0], boolean>,
+  );
+  const [justification, setJustification] = useState("");
+  const [saving, setSaving] = useState(false);
+  const normalizedCode = municipalityCode.trim()
+    ? Number(municipalityCode.trim())
+    : null;
+  const codeIsValid = normalizedCode === null || Number.isInteger(normalizedCode);
+  const hasChanges =
+    codeIsValid &&
+    (normalizedCode !== patriarca.codigo_municipio ||
+      MUNICIPAL_BOOLEAN_FIELDS.some(
+        ([field]) => indicators[field] !== patriarca[field],
+      ));
+
+  async function submit() {
+    const payload: IndicadoresMunicipaisPayload = {
+      justificativa: justification.trim(),
+    };
+    if (normalizedCode !== patriarca.codigo_municipio) {
+      payload.codigo_municipio = normalizedCode;
+    }
+    for (const [field] of MUNICIPAL_BOOLEAN_FIELDS) {
+      if (indicators[field] !== patriarca[field]) {
+        payload[field] = indicators[field];
+      }
+    }
+
+    setSaving(true);
+    await onSave(payload);
+    setSaving(false);
+  }
+
+  return (
+    <EdocsModal title="Indicadores municipais" onClose={onClose} wide>
+      <p className="mt-3 text-sm text-slate-600">
+        Atualize somente os dados confirmados de <strong>{patriarca.nome}</strong>.
+        Os indicadores são independentes entre si.
+      </p>
+      <label className="mt-4 block text-xs font-medium text-slate-600">
+        Código do município
+        <input
+          className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+          inputMode="numeric"
+          value={municipalityCode}
+          onChange={(event) => setMunicipalityCode(event.target.value)}
+          aria-invalid={!codeIsValid}
+        />
+      </label>
+      {!codeIsValid && (
+        <p className="mt-1 text-xs text-red-700">Informe um número inteiro ou deixe vazio.</p>
+      )}
+      <fieldset className="mt-4 space-y-2">
+        <legend className="text-xs font-semibold uppercase tracking-wide text-slate-600">
+          Situação municipal
+        </legend>
+        {MUNICIPAL_BOOLEAN_FIELDS.map(([field, label]) => (
+          <label key={field} className="flex items-center gap-2 text-sm text-slate-700">
+            <input
+              type="checkbox"
+              checked={indicators[field]}
+              onChange={(event) =>
+                setIndicators((current) => ({
+                  ...current,
+                  [field]: event.target.checked,
+                }))
+              }
+            />
+            {label}
+          </label>
+        ))}
+      </fieldset>
+      <label className="mt-4 block text-xs font-medium text-slate-600">
+        Justificativa
+        <textarea
+          className="mt-1 block w-full rounded-md border border-slate-300 p-3 text-sm"
+          rows={4}
+          value={justification}
+          onChange={(event) => setJustification(event.target.value)}
+        />
+      </label>
+      <div className="mt-5 flex justify-end gap-2">
+        <Button variant="outline" onClick={onClose} disabled={saving}>
+          Cancelar
+        </Button>
+        <Button
+          disabled={!hasChanges || !justification.trim() || saving}
+          onClick={submit}
+        >
+          {saving ? "Salvando..." : "Salvar alterações"}
+        </Button>
+      </div>
+    </EdocsModal>
   );
 }
 

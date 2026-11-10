@@ -7,6 +7,7 @@ import type {
   DivergenciaPatriarcaEdocs,
   DivergenciasQuery,
   EventoAuditoriaPatriarcaEdocs,
+  IndicadoresMunicipaisPayload,
   PaginatedResponse,
   PatriarcaEdocs,
   PatriarcasQuery,
@@ -29,6 +30,17 @@ export async function alterarSelecaoColetaEdocs(
 ) {
   const response = await api.patch<PatriarcaEdocs>(
     `${EDOCS_API}/patriarcas/${id}/selecao-coleta/`,
+    payload,
+  );
+  return response.data;
+}
+
+export async function alterarIndicadoresMunicipaisEdocs(
+  id: number,
+  payload: IndicadoresMunicipaisPayload,
+) {
+  const response = await api.patch<PatriarcaEdocs>(
+    `${EDOCS_API}/patriarcas/${id}/indicadores-municipais/`,
     payload,
   );
   return response.data;

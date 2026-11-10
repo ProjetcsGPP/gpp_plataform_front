@@ -28,7 +28,6 @@ interface VersionResponse {
 
 export function useVersionPolling(appContext: AppContext) {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
-  const authzVersion = useAuthStore((s) => s.authzVersion);
   const bumpManifestVersion = useNavigationStore((s) => s.bumpManifestVersion);
 
   const lastAuthzVersion = useRef<number | null>(null);
@@ -85,7 +84,7 @@ export function useVersionPolling(appContext: AppContext) {
     } finally {
       isCheckingRef.current = false;
     }
-  }, [appContext, isAuthenticated, authzVersion, bumpManifestVersion]);
+  }, [appContext, isAuthenticated, bumpManifestVersion]);
 
   useEffect(() => {
     if (!isAuthenticated) return;

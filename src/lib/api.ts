@@ -82,7 +82,6 @@ function diagnosticResponseData(data: unknown): unknown {
 // Garante barra final em toda URL
 api.interceptors.request.use(
   async (config) => {
-    useNetworkActivityStore.getState().beginRequest();
     if (config.url && !config.url.endsWith("/") && !config.url.includes("?")) {
       config.url += "/";
     }
@@ -110,6 +109,14 @@ api.interceptors.request.use(
       config.headers.set("X-CSRFToken", csrf);
     }
 
+    const shouldBlockUi = config.gppBlockUi ?? Boolean(
+      method && UNSAFE_METHODS.has(method),
+    );
+    if (shouldBlockUi) {
+      useNetworkActivityStore.getState().beginRequest();
+      config.gppBlockUiTracked = true;
+    }
+
     return config;
   },
   (error) => {
@@ -121,7 +128,7 @@ api.interceptors.request.use(
 // Redireciona para o login da app correta em caso de 401.
 api.interceptors.response.use(
   (response) => {
-    useNetworkActivityStore.getState().endRequest();
+    finishTrackedRequest(response.config);
     debugLog("api", "response", {
       method: response.config.method?.toUpperCase(),
       url: response.config.url,
@@ -131,7 +138,7 @@ api.interceptors.response.use(
     return response;
   },
   (error) => {
-    useNetworkActivityStore.getState().endRequest();
+    finishTrackedRequest(error.config);
     const status = error.response?.status;
     const url = error.config?.url;
     const diagnostic = {
@@ -207,6 +214,12 @@ api.interceptors.response.use(
     return Promise.reject(error);
   },
 );
+
+function finishTrackedRequest(config: { gppBlockUiTracked?: boolean } | undefined) {
+  if (!config?.gppBlockUiTracked) return;
+  config.gppBlockUiTracked = false;
+  useNetworkActivityStore.getState().endRequest();
+}
 
 export default api;
 export { api };

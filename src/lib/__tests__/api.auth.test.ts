@@ -11,6 +11,7 @@ import api, {
   isAuthenticatedSessionFailure,
 } from "@/lib/api";
 import { logoutApp } from "@/lib/auth";
+import { useNetworkActivityStore } from "@/store/networkActivityStore";
 
 function success(config: InternalAxiosRequestConfig): AxiosResponse {
   return { data: {}, status: 200, statusText: "OK", headers: {}, config };
@@ -21,6 +22,7 @@ describe("contrato CSRF do Axios compartilhado", () => {
 
   beforeEach(() => {
     document.cookie = "csrftoken=; Max-Age=0; path=/";
+    useNetworkActivityStore.setState({ pendingRequests: 0 });
   });
 
   afterEach(() => {
@@ -131,6 +133,40 @@ describe("contrato CSRF do Axios compartilhado", () => {
     await expect(
       api.get("/accounts/login/", { adapter, gppAuthMode: "public" }),
     ).rejects.toMatchObject({ response: { status: 401 } });
+  });
+
+  it("não bloqueia globalmente consultas GET", async () => {
+    const adapter: AxiosAdapter = async (config) => {
+      expect(useNetworkActivityStore.getState().pendingRequests).toBe(0);
+      return success(config);
+    };
+
+    await api.get("/accounts/authz/version/", { adapter });
+
+    expect(useNetworkActivityStore.getState().pendingRequests).toBe(0);
+  });
+
+  it("bloqueia mutações enquanto a requisição está em andamento", async () => {
+    document.cookie = "csrftoken=existente; path=/";
+    const adapter: AxiosAdapter = async (config) => {
+      expect(useNetworkActivityStore.getState().pendingRequests).toBe(1);
+      return success(config);
+    };
+
+    await api.post("/recurso/", {}, { adapter });
+
+    expect(useNetworkActivityStore.getState().pendingRequests).toBe(0);
+  });
+
+  it("permite solicitar bloqueio explícito em uma consulta", async () => {
+    const adapter: AxiosAdapter = async (config) => {
+      expect(useNetworkActivityStore.getState().pendingRequests).toBe(1);
+      return success(config);
+    };
+
+    await api.get("/consulta-critica/", { adapter, gppBlockUi: true });
+
+    expect(useNetworkActivityStore.getState().pendingRequests).toBe(0);
   });
 });
 

@@ -17,6 +17,11 @@ export interface PatriarcaEdocs {
   versao: number;
   criado_em: string;
   atualizado_em: string;
+  codigo_municipio: number | null;
+  municipio_implantado: boolean;
+  municipio_em_implantacao: boolean;
+  municipio_manifestou_interesse: boolean;
+  municipio_implantado_sem_uso_edocs: boolean;
   acoes_disponiveis: string[];
 }
 
@@ -106,6 +111,15 @@ export interface AuditoriaQuery extends ListQuery {
 
 export interface SelecaoColetaPayload {
   coletar_detalhes: boolean;
+  justificativa: string;
+}
+
+export interface IndicadoresMunicipaisPayload {
+  codigo_municipio?: number | null;
+  municipio_implantado?: boolean;
+  municipio_em_implantacao?: boolean;
+  municipio_manifestou_interesse?: boolean;
+  municipio_implantado_sem_uso_edocs?: boolean;
   justificativa: string;
 }
 
