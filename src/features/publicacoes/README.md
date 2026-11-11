@@ -53,6 +53,25 @@ organização, metadados das fontes e auditoria usam Axios/SWR e preservam o
 backend como estado canônico. O WebSocket E-Docs apenas provoca revalidação
 das chaves HTTP.
 
+As revisões mensais usam exclusivamente os estados `SOLICITADA`, `EXECUTANDO`,
+`SUCESSO` e `ERRO`. A listagem consulta periodicamente o backend apenas durante
+a execução e interrompe o polling nos estados terminais. O reencaminhamento é
+oferecido somente com a permissão técnica e a ação autoritativa
+`reencaminhar`; ele reutiliza a revisão persistida e revalida os recursos SWR,
+sem alteração otimista do estado canônico.
+
+No detalhe de uma revisão concluída, o resumo consulta o endpoint consolidado
+de resultados mensais e apresenta os totais de todos os municípios, sem somar
+a página visível. A aba de municípios exibe também os indicadores ambientais e
+financeiros persistidos para cada resultado, mantendo a versão de cálculo
+fornecida pelo backend.
+
+O painel de totais históricos consulta diretamente
+`resultados-mensais-patriarcas-edocs/totais-historicos/` e oferece os quatro
+escopos contratados pela combinação opcional de ano e município. Competências,
+versões e indicadores exibidos são integralmente autoritativos do backend; o
+frontend não seleciona revisões nem recompõe somatórios a partir das tabelas.
+
 Os indicadores municipais são alterados no catálogo de patriarcas somente
 quando a permissão técnica e a ação `alterar_indicadores_municipais` estão
 presentes. O `PATCH` envia apenas campos efetivamente modificados e a

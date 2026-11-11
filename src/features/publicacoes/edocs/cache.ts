@@ -11,6 +11,8 @@ export const edocsCacheKeys = {
     [EDOCS_CACHE_PREFIX, "divergencias", ...values] as const,
   auditoria: (values: readonly unknown[]) =>
     [EDOCS_CACHE_PREFIX, "auditoria", ...values] as const,
+  implantacoes: (values: readonly unknown[]) =>
+    [EDOCS_CACHE_PREFIX, "implantacoes", ...values] as const,
 };
 
 export function isEdocsCacheKey(key: unknown): boolean {

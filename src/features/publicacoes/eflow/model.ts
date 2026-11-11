@@ -44,6 +44,9 @@ export interface ColetaEflow {
   arquivo_tamanho_bytes: number;
   iniciada_em: string;
   concluida_em: string | null;
+  ano_vigencia_inicio: number;
+  mes_vigencia_inicio: number;
+  vigencia_retroativa: boolean;
   quantidade_fluxos: number;
   quantidade_orgaos_participantes: number;
   quantidade_setores_ativos: number;
@@ -108,6 +111,13 @@ export interface ColetasEflowQuery {
   page_size: number;
   situacao?: SituacaoColetaEflow;
   ordering?: string;
+}
+
+export interface ImportarColetaEflowPayload {
+  arquivo: File;
+  ano_vigencia_inicio: number;
+  mes_vigencia_inicio: number;
+  vigencia_retroativa: boolean;
 }
 
 export interface DefinicoesEflowQuery {

@@ -23,13 +23,21 @@ describe("API administrativa E-Flow", () => {
     });
     const file = new File(["ID;Nome"], "eflow.csv", { type: "text/csv" });
 
-    await importarColetaEflow(file);
+    await importarColetaEflow({
+      arquivo: file,
+      ano_vigencia_inicio: 2024,
+      mes_vigencia_inicio: 1,
+      vigencia_retroativa: true,
+    });
 
     expect(post).toHaveBeenCalledTimes(1);
     const [url, body, config] = post.mock.calls[0];
     expect(url).toBe("/pub-institucional/coletas-eflow/");
     expect(body).toBeInstanceOf(FormData);
     expect((body as FormData).get("arquivo")).toBe(file);
+    expect((body as FormData).get("ano_vigencia_inicio")).toBe("2024");
+    expect((body as FormData).get("mes_vigencia_inicio")).toBe("1");
+    expect((body as FormData).get("vigencia_retroativa")).toBe("true");
     expect(config).toBeUndefined();
   });
 

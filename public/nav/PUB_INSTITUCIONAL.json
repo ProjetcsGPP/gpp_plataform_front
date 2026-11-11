@@ -76,6 +76,50 @@
           "capabilityControlled": true
         }
       ]
+    },
+    {
+      "id": "publicacoes",
+      "codigo": "PUBLICACOES",
+      "label": "Publicações",
+      "icon": "publish",
+      "app": "PUB_INSTITUCIONAL",
+      "order": 600,
+      "capabilityControlled": true,
+      "children": [
+        {
+          "id": "gestao-publicacoes",
+          "codigo": "GESTAO_PUBLICACOES",
+          "label": "Gestão",
+          "icon": "edit_document",
+          "app": "PUB_INSTITUCIONAL",
+          "href": "/publicacoes/gestao",
+          "order": 610,
+          "permissionKey": "view_publicacao",
+          "capabilityControlled": true
+        },
+        {
+          "id": "visoes-publicacao",
+          "codigo": "VISOES_PUBLICACAO",
+          "label": "Visões",
+          "icon": "filter_alt",
+          "app": "PUB_INSTITUCIONAL",
+          "href": "/publicacoes/visoes",
+          "order": 620,
+          "permissionKey": "view_configuracaovisaopublicacao",
+          "capabilityControlled": true
+        },
+        {
+          "id": "historico-publicacoes",
+          "codigo": "HISTORICO_PUBLICACOES",
+          "label": "Histórico",
+          "icon": "history",
+          "app": "PUB_INSTITUCIONAL",
+          "href": "/publicacoes/historico",
+          "order": 630,
+          "permissionKey": "view_historicopublicacao",
+          "capabilityControlled": true
+        }
+      ]
     }
   ]
 }

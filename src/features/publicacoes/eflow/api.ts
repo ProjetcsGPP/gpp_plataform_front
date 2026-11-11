@@ -13,13 +13,17 @@ import type {
   ResultadoCalculoEflow,
   ResultadosEflowQuery,
   AuditoriaPreferenciaEflowQuery,
+  ImportarColetaEflowPayload,
 } from "@/features/publicacoes/eflow/model";
 
 const EFLOW_API = "/pub-institucional";
 
-export async function importarColetaEflow(arquivo: File) {
+export async function importarColetaEflow(payload: ImportarColetaEflowPayload) {
   const form = new FormData();
-  form.append("arquivo", arquivo);
+  form.append("arquivo", payload.arquivo);
+  form.append("ano_vigencia_inicio", String(payload.ano_vigencia_inicio));
+  form.append("mes_vigencia_inicio", String(payload.mes_vigencia_inicio));
+  form.append("vigencia_retroativa", String(payload.vigencia_retroativa));
 
   const response = await api.post<ColetaEflow>(
     `${EFLOW_API}/coletas-eflow/`,

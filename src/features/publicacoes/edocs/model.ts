@@ -22,7 +22,25 @@ export interface PatriarcaEdocs {
   municipio_em_implantacao: boolean;
   municipio_manifestou_interesse: boolean;
   municipio_implantado_sem_uso_edocs: boolean;
+  implantacao_edocs_observada: ImplantacaoEdocsObservada | null;
   acoes_disponiveis: string[];
+}
+
+export interface ImplantacaoEdocsObservada {
+  ano: number;
+  mes: number;
+  competencia: string;
+  coleta_evidencia_id: string;
+  criterio: string;
+  totais_evidencia: Record<string, unknown>;
+  criado_em: string;
+}
+
+export interface ImplantacaoPatriarcaEdocs extends ImplantacaoEdocsObservada {
+  id: number;
+  patriarca_id: number;
+  patriarca_sigla: string;
+  patriarca_nome: string;
 }
 
 export interface ColetaPatriarcasEdocs {
@@ -107,6 +125,12 @@ export interface AuditoriaQuery extends ListQuery {
   coleta_id?: string;
   patriarca_id?: number;
   divergencia_id?: number;
+}
+
+export interface ImplantacoesQuery extends ListQuery {
+  ano?: number;
+  mes?: number;
+  search?: string;
 }
 
 export interface SelecaoColetaPayload {

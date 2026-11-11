@@ -55,6 +55,9 @@ export function EflowPage() {
   const { mutate: mutateCache } = useSWRConfig();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
+  const [validFromYear, setValidFromYear] = useState(new Date().getFullYear());
+  const [validFromMonth, setValidFromMonth] = useState(new Date().getMonth() + 1);
+  const [retroactive, setRetroactive] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadFeedback, setUploadFeedback] = useState<{
     kind: "error" | "success";
@@ -118,7 +121,12 @@ export function EflowPage() {
     setUploadFeedback(null);
     setLastResult(null);
     try {
-      const created = await importarColetaEflow(file);
+      const created = await importarColetaEflow({
+        arquivo: file,
+        ano_vigencia_inicio: validFromYear,
+        mes_vigencia_inicio: validFromMonth,
+        vigencia_retroativa: retroactive,
+      });
       setLastResult(created);
       setUploadFeedback({
         kind: created.situacao === "FALHOU" ? "error" : "success",
@@ -159,6 +167,18 @@ export function EflowPage() {
       key: "arquivo",
       label: "Arquivo",
       render: (row) => row.arquivo_nome,
+    },
+    {
+      key: "vigencia",
+      label: "Início da vigência",
+      render: (row) => (
+        <div>
+          <span>{String(row.mes_vigencia_inicio).padStart(2, "0")}/{row.ano_vigencia_inicio}</span>
+          {row.vigencia_retroativa && (
+            <span className="block text-xs text-amber-700">Base retroativa</span>
+          )}
+        </div>
+      ),
     },
     {
       key: "situacao",
@@ -263,7 +283,7 @@ export function EflowPage() {
                   <p id="eflow-upload-help" className="mt-1 text-sm text-slate-600">
                     Selecione o CSV original. Cada envio cria um novo snapshot independente.
                   </p>
-                  <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end">
+                  <div className="mt-4 grid gap-3 sm:grid-cols-[minmax(0,1fr)_8rem_10rem_auto] sm:items-end">
                     <label className="flex-1 text-xs font-medium text-slate-600">
                       Arquivo CSV
                       <Input
@@ -279,11 +299,26 @@ export function EflowPage() {
                         }}
                       />
                     </label>
-                    <Button onClick={handleUpload} disabled={!file || uploading}>
+                    <label className="text-xs font-medium text-slate-600">
+                      Ano de início
+                      <Input className="mt-1 bg-white" type="number" min={2024} value={validFromYear} onChange={(event) => setValidFromYear(Number(event.target.value))} />
+                    </label>
+                    <label className="text-xs font-medium text-slate-600">
+                      Mês de início
+                      <select className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm" value={validFromMonth} onChange={(event) => setValidFromMonth(Number(event.target.value))}>
+                        {Array.from({ length: 12 }, (_, index) => <option key={index + 1} value={index + 1}>{String(index + 1).padStart(2, "0")}</option>)}
+                      </select>
+                    </label>
+                    <Button onClick={handleUpload} disabled={!file || uploading || validFromYear < 2024 || !Number.isInteger(validFromYear)}>
                       <Upload aria-hidden="true" />
                       {uploading ? "Importando..." : "Importar CSV"}
                     </Button>
                   </div>
+                  <label className="mt-3 flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950">
+                    <input type="checkbox" className="mt-1" checked={retroactive} onChange={(event) => setRetroactive(event.target.checked)} />
+                    <span><strong>Usar como melhor informação histórica disponível.</strong><span className="block text-xs">A vigência retroativa não comprova que esta fotografia do arquivo já existia na competência inicial informada.</span></span>
+                  </label>
+                  {validFromYear < 2024 && <p className="mt-2 text-sm text-red-700">O início da série histórica é janeiro de 2024.</p>}
                   <p id="eflow-file-summary" className="mt-2 text-xs text-slate-500">
                     {file
                       ? `${file.name} — ${formatFileSize(file.size)}`
@@ -436,6 +471,7 @@ function ImportResult({
             <EflowStatus situacao={coleta.situacao} />
             <span>{coleta.arquivo_nome}</span>
             <span>{formatFileSize(coleta.arquivo_tamanho_bytes)}</span>
+            <span>Vigência desde {String(coleta.mes_vigencia_inicio).padStart(2, "0")}/{coleta.ano_vigencia_inicio}{coleta.vigencia_retroativa ? " (retroativa)" : ""}</span>
             {result && (
               <span>{result.quantidade_fluxos.toLocaleString("pt-BR")} fluxos</span>
             )}

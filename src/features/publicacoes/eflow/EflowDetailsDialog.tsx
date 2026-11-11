@@ -111,6 +111,14 @@ export function EflowDetailsDialog({
       extraWide
     >
       <div className="mt-5 space-y-6">
+        <AdminPanel className="p-4">
+          <div className="grid gap-3 text-sm sm:grid-cols-3">
+            <div><span className="block text-xs text-slate-500">Início da vigência</span><strong>{String(coleta.mes_vigencia_inicio).padStart(2, "0")}/{coleta.ano_vigencia_inicio}</strong></div>
+            <div><span className="block text-xs text-slate-500">Coleta realizada em</span><strong>{formatAdminDate(coleta.iniciada_em)}</strong></div>
+            <div><span className="block text-xs text-slate-500">Vigência retroativa</span><strong>{coleta.vigencia_retroativa ? "Sim" : "Não"}</strong></div>
+          </div>
+          {coleta.vigencia_retroativa && <p className="mt-3 rounded-md bg-amber-50 p-3 text-xs text-amber-950">Este snapshot representa a melhor informação histórica disponível desde a competência indicada; não comprova que a fotografia do arquivo existia naquela data.</p>}
+        </AdminPanel>
         {coleta.situacao === "FALHOU" && (
           <AdminAlert>
             <strong>{coleta.codigo_erro || "COLETA_FALHOU"}</strong>

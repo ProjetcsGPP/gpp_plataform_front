@@ -9,6 +9,9 @@ import type {
   ResultadoMensalOrganizacaoEdocs,
   ResultadoMensalPatriarcaEdocs,
   SolicitarColetaMensalEdocsPayload,
+  TotaisResultadoMensalEdocs,
+  TotaisHistoricosEdocs,
+  TotaisHistoricosEdocsQuery,
 } from "@/features/publicacoes/edocs/mensal/model";
 
 const EDOCS_API = "/pub-institucional";
@@ -31,11 +34,38 @@ export async function solicitarColetaMensalEdocs(
   return response.data;
 }
 
+export async function reencaminharColetaMensalEdocs(id: string) {
+  const response = await api.post<ColetaMensalEdocs>(
+    `${EDOCS_API}/coletas-mensais-edocs/${id}/reencaminhar/`,
+  );
+  return response.data;
+}
+
 export async function listResultadosMensaisPatriarcasEdocs(
   query: MonthlyDetailQuery,
 ) {
   const response = await api.get<PaginatedResponse<ResultadoMensalPatriarcaEdocs>>(
     `${EDOCS_API}/resultados-mensais-patriarcas-edocs/`,
+    { params: query },
+  );
+  return response.data;
+}
+
+export async function getTotaisResultadosMensaisPatriarcasEdocs(
+  coletaId: string,
+) {
+  const response = await api.get<TotaisResultadoMensalEdocs>(
+    `${EDOCS_API}/resultados-mensais-patriarcas-edocs/totais/`,
+    { params: { coleta_id: coletaId } },
+  );
+  return response.data;
+}
+
+export async function getTotaisHistoricosEdocs(
+  query: TotaisHistoricosEdocsQuery,
+) {
+  const response = await api.get<TotaisHistoricosEdocs>(
+    `${EDOCS_API}/resultados-mensais-patriarcas-edocs/totais-historicos/`,
     { params: query },
   );
   return response.data;

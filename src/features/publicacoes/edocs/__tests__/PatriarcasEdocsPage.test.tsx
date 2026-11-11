@@ -45,6 +45,7 @@ const patriarch: PatriarcaEdocs = {
   municipio_em_implantacao: false,
   municipio_manifestou_interesse: false,
   municipio_implantado_sem_uso_edocs: false,
+  implantacao_edocs_observada: null,
   acoes_disponiveis: ["alterar_indicadores_municipais"],
 };
 
@@ -107,5 +108,27 @@ describe("indicadores municipais dos patriarcas E-Docs", () => {
 
     expect(await screen.findByText("3201100")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Indicadores" })).not.toBeInTheDocument();
+  });
+
+  it("distingue implantação não observada da evidência positiva preenchida", async () => {
+    const user = userEvent.setup();
+    setup();
+    expect(await screen.findByText("Não observada")).toBeInTheDocument();
+
+    setup({
+      ...patriarch,
+      implantacao_edocs_observada: {
+        ano: 2024,
+        mes: 6,
+        competencia: "2024-06",
+        coleta_evidencia_id: "11111111-1111-1111-1111-111111111111",
+        criterio: "ATIVIDADE_API",
+        totais_evidencia: { total_processos: 1 },
+        criado_em: "2026-11-11T10:00:00Z",
+      },
+    });
+    await user.click(await screen.findByRole("button", { name: "2024-06" }));
+    expect(screen.getByText(/Resultado zerado não é interpretado/)).toBeInTheDocument();
+    expect(screen.getByText("ATIVIDADE_API")).toBeInTheDocument();
   });
 });

@@ -8,6 +8,8 @@ import type {
   DivergenciasQuery,
   EventoAuditoriaPatriarcaEdocs,
   IndicadoresMunicipaisPayload,
+  ImplantacaoPatriarcaEdocs,
+  ImplantacoesQuery,
   PaginatedResponse,
   PatriarcaEdocs,
   PatriarcasQuery,
@@ -19,6 +21,14 @@ const EDOCS_API = "/pub-institucional";
 export async function listPatriarcasEdocs(query: PatriarcasQuery) {
   const response = await api.get<PaginatedResponse<PatriarcaEdocs>>(
     `${EDOCS_API}/patriarcas/`,
+    { params: query },
+  );
+  return response.data;
+}
+
+export async function listImplantacoesEdocs(query: ImplantacoesQuery) {
+  const response = await api.get<PaginatedResponse<ImplantacaoPatriarcaEdocs>>(
+    `${EDOCS_API}/implantacoes-edocs/`,
     { params: query },
   );
   return response.data;

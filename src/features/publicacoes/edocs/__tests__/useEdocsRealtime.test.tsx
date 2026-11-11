@@ -63,7 +63,7 @@ describe("sinais em tempo real E-Docs", () => {
     act(() => socket.open());
     act(() =>
       socket.message({
-        evento: "edocs.mensal.coleta.concluida",
+        evento: "edocs.mensal.coleta.reencaminhada",
         dados: {
           coleta_id: "11111111-1111-1111-1111-111111111111",
           situacao: "valor-que-nao-deve-ser-aplicado-localmente",

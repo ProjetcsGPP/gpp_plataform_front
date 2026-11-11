@@ -3,10 +3,19 @@ import type { PaginatedResponse } from "@/features/publicacoes/edocs/model";
 export type { PaginatedResponse };
 
 export type SituacaoColetaMensalEdocs =
-  | "AGENDADA"
-  | "EM_EXECUCAO"
-  | "CONCLUIDA"
-  | "FALHOU";
+  | "SOLICITADA"
+  | "EXECUTANDO"
+  | "SUCESSO"
+  | "ERRO";
+
+export type AcaoColetaMensalEdocs = "reencaminhar";
+
+export type TipoEventoColetaMensalEdocs =
+  | "SOLICITADA"
+  | "EXECUCAO_INICIADA"
+  | "SUCESSO"
+  | "ERRO"
+  | "REENCAMINHADA";
 
 export interface PatriarcaSolicitadoEdocs {
   id: number;
@@ -34,6 +43,7 @@ export interface ColetaMensalEdocs {
   criado_por_id: number | null;
   criado_por_nome: string;
   criado_em: string;
+  acoes_disponiveis: AcaoColetaMensalEdocs[];
 }
 
 export interface ResultadoMensalPatriarcaEdocs {
@@ -47,6 +57,58 @@ export interface ResultadoMensalPatriarcaEdocs {
   total_processos: number | null;
   total_documentos: number | null;
   total_paginas: number | null;
+  versao_calculo: string;
+  economia_papel_kg: string;
+  gases_poluentes_kg: string;
+  economia_papel_reais: string;
+  economia_insumos_reais: string;
+  economia_impressao_reais: string;
+  economia_total_reais: string;
+  economia_agua_m3: string;
+  arvores_salvas: string;
+}
+
+export interface TotaisResultadoMensalEdocs {
+  coleta_id: string;
+  quantidade_municipios: number;
+  versao_calculo: string;
+  total_processos: number;
+  total_documentos: number;
+  total_paginas: number;
+  economia_papel_kg: string;
+  gases_poluentes_kg: string;
+  economia_papel_reais: string;
+  economia_insumos_reais: string;
+  economia_impressao_reais: string;
+  economia_total_reais: string;
+  economia_agua_m3: string;
+  arvores_salvas: string;
+}
+
+export interface TotaisHistoricosEdocs {
+  ano: number | null;
+  patriarca_id: number | null;
+  codigo_municipio: number | null;
+  nome_municipio: string | null;
+  quantidade_competencias: number;
+  quantidade_municipios: number;
+  versoes_calculo: string[];
+  total_processos: number;
+  total_documentos: number;
+  total_paginas: number;
+  economia_papel_kg: string;
+  gases_poluentes_kg: string;
+  economia_papel_reais: string;
+  economia_insumos_reais: string;
+  economia_impressao_reais: string;
+  economia_total_reais: string;
+  economia_agua_m3: string;
+  arvores_salvas: string;
+}
+
+export interface TotaisHistoricosEdocsQuery {
+  ano?: number;
+  patriarca_id?: number;
 }
 
 export interface ResultadoMensalOrganizacaoEdocs {
@@ -75,7 +137,7 @@ export interface FonteBrutaColetaMensalEdocs {
 export interface EventoAuditoriaColetaMensalEdocs {
   id: number;
   coleta_id: string;
-  tipo_evento: "SOLICITADA" | "INICIADA" | "CONCLUIDA" | "FALHOU";
+  tipo_evento: TipoEventoColetaMensalEdocs;
   mensagem: string;
   metadados: Record<string, unknown>;
   criado_por_id: number | null;

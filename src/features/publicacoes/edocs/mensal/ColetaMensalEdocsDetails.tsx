@@ -8,11 +8,13 @@ import {
   type AdminTableColumn,
 } from "@/components/admin/AdminDataTable";
 import { AdminAlert, AdminPanel } from "@/components/admin/AdminPage";
+import { Button } from "@/components/ui/button";
 import {
   EdocsModal,
   EdocsTextFilter,
 } from "@/features/publicacoes/edocs/EdocsUi";
 import {
+  getTotaisResultadosMensaisPatriarcasEdocs,
   listAuditoriaColetasMensaisEdocs,
   listFontesBrutasColetasMensaisEdocs,
   listResultadosMensaisOrganizacoesEdocs,
@@ -27,7 +29,14 @@ import type {
   PaginatedResponse,
   ResultadoMensalOrganizacaoEdocs,
   ResultadoMensalPatriarcaEdocs,
+  TipoEventoColetaMensalEdocs,
 } from "@/features/publicacoes/edocs/mensal/model";
+import {
+  formatCurrency,
+  formatDecimal,
+  formatDecimalUnit,
+  formatInteger,
+} from "@/features/publicacoes/edocs/mensal/metrics";
 import {
   formatCompetence,
   MonthlyStatus,
@@ -59,7 +68,7 @@ export function ColetaMensalEdocsDetails({
 }) {
   const tabs: Array<{ key: DetailTab; label: string }> = [
     { key: "resumo", label: "Resumo" },
-    ...(canViewPatriarcas ? [{ key: "patriarcas" as const, label: "Patriarcas" }] : []),
+    ...(canViewPatriarcas ? [{ key: "patriarcas" as const, label: "Municípios" }] : []),
     ...(canViewOrganizacoes ? [{ key: "organizacoes" as const, label: "Organizações" }] : []),
     ...(canViewFontes ? [{ key: "fontes" as const, label: "Fontes" }] : []),
     ...(canViewAudit ? [{ key: "auditoria" as const, label: "Auditoria" }] : []),
@@ -94,7 +103,12 @@ export function ColetaMensalEdocsDetails({
       </div>
 
       <div className="mt-5" role="tabpanel">
-        {activeTab === "resumo" && <MonthlySummary coleta={coleta} />}
+        {activeTab === "resumo" && (
+          <MonthlySummary
+            coleta={coleta}
+            canViewTotals={canViewPatriarcas}
+          />
+        )}
         {activeTab === "patriarcas" && canViewPatriarcas && (
           <PatriarchResults coletaId={coleta.id} />
         )}
@@ -112,13 +126,29 @@ export function ColetaMensalEdocsDetails({
   );
 }
 
-function MonthlySummary({ coleta }: { coleta: ColetaMensalEdocs }) {
+function MonthlySummary({
+  coleta,
+  canViewTotals,
+}: {
+  coleta: ColetaMensalEdocs;
+  canViewTotals: boolean;
+}) {
   return (
     <div className="space-y-5">
-      {coleta.situacao === "FALHOU" && (
+      {coleta.situacao === "SOLICITADA" && (
+        <AdminAlert>
+          A solicitação foi registrada, mas a execução ainda não começou.
+        </AdminAlert>
+      )}
+      {coleta.situacao === "EXECUTANDO" && (
+        <AdminAlert>
+          A coleta está sendo processada. Os dados serão atualizados periodicamente.
+        </AdminAlert>
+      )}
+      {coleta.situacao === "ERRO" && (
         <AdminAlert variant="error">
-          <strong>{coleta.codigo_erro || "COLETA_FALHOU"}:</strong>{" "}
-          {coleta.mensagem_erro || "A coleta foi encerrada com falha funcional."}
+          <strong>{coleta.codigo_erro || "COLETA_COM_ERRO"}:</strong>{" "}
+          {coleta.mensagem_erro || "A coleta foi encerrada com erro funcional."}
         </AdminAlert>
       )}
       <dl className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -137,6 +167,9 @@ function MonthlySummary({ coleta }: { coleta: ColetaMensalEdocs }) {
         <SummaryItem label="Solicitada por" value={coleta.criado_por_nome || "Sistema"} />
         <SummaryItem label="Solicitada em" value={formatAdminDate(coleta.criado_em)} />
       </dl>
+      {coleta.situacao === "SUCESSO" && canViewTotals && (
+        <MonthlyTotals coletaId={coleta.id} />
+      )}
       <AdminPanel className="p-4">
         <h3 className="font-semibold text-slate-900">Patriarcas congelados nesta revisão</h3>
         <p className="mt-1 text-sm text-slate-600">
@@ -162,6 +195,63 @@ function MonthlySummary({ coleta }: { coleta: ColetaMensalEdocs }) {
   );
 }
 
+function MonthlyTotals({ coletaId }: { coletaId: string }) {
+  const key = edocsMensalCacheKeys.totaisPatriarcas(coletaId);
+  const { data, error, isLoading, isValidating, mutate } = useSWR(
+    key,
+    () => getTotaisResultadosMensaisPatriarcasEdocs(coletaId),
+    { keepPreviousData: true, revalidateOnFocus: false },
+  );
+
+  if (isLoading) {
+    return <AdminPanel className="p-4 text-sm text-slate-500">Carregando consolidado dos municípios...</AdminPanel>;
+  }
+  if (error) {
+    return (
+      <AdminAlert>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <span>{getApiErrorMessage(error, "Não foi possível carregar o consolidado dos municípios.")}</span>
+          <Button variant="outline" size="sm" onClick={() => mutate()}>
+            Tentar novamente
+          </Button>
+        </div>
+      </AdminAlert>
+    );
+  }
+  if (!data) return null;
+
+  return (
+    <AdminPanel className="relative p-4" aria-busy={isValidating}>
+      {isValidating && (
+        <div className="absolute inset-x-0 top-0 h-0.5 animate-pulse bg-app-primary" />
+      )}
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div>
+          <h3 className="font-semibold text-slate-900">Consolidado de todos os municípios</h3>
+          <p className="mt-1 text-sm text-slate-600">
+            Totais canônicos da revisão completa, independentes da paginação da tabela.
+          </p>
+        </div>
+        <span className="text-xs text-slate-500">Cálculo: {data.versao_calculo}</span>
+      </div>
+      <dl className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <SummaryItem label="Municípios" value={formatInteger(data.quantidade_municipios)} />
+        <SummaryItem label="Processos" value={formatInteger(data.total_processos)} />
+        <SummaryItem label="Documentos" value={formatInteger(data.total_documentos)} />
+        <SummaryItem label="Páginas" value={formatInteger(data.total_paginas)} />
+        <SummaryItem label="Papel economizado" value={formatDecimalUnit(data.economia_papel_kg, "kg", 5)} />
+        <SummaryItem label="Gases poluentes evitados" value={formatDecimalUnit(data.gases_poluentes_kg, "kg", 4)} />
+        <SummaryItem label="Água economizada" value={formatDecimalUnit(data.economia_agua_m3, "m³", 2)} />
+        <SummaryItem label="Árvores salvas" value={formatDecimal(data.arvores_salvas, 4)} />
+        <SummaryItem label="Economia com papel" value={formatCurrency(data.economia_papel_reais)} />
+        <SummaryItem label="Economia com insumos" value={formatCurrency(data.economia_insumos_reais)} />
+        <SummaryItem label="Economia com impressão" value={formatCurrency(data.economia_impressao_reais)} />
+        <SummaryItem label="Economia total" value={formatCurrency(data.economia_total_reais)} />
+      </dl>
+    </AdminPanel>
+  );
+}
+
 function SummaryItem({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
@@ -175,11 +265,40 @@ function PatriarchResults({ coletaId }: { coletaId: string }) {
   type SortKey = "sigla_patriarca" | "nome_patriarca" | "total_processos";
   const columns: AdminTableColumn<ResultadoMensalPatriarcaEdocs, SortKey>[] = [
     { key: "sigla", label: "Sigla", sortKey: "sigla_patriarca", render: (row) => <strong>{row.sigla_patriarca}</strong> },
-    { key: "nome", label: "Patriarca", sortKey: "nome_patriarca", render: (row) => row.nome_patriarca },
+    { key: "nome", label: "Município", sortKey: "nome_patriarca", render: (row) => row.nome_patriarca },
     { key: "municipio", label: "Código municipal", render: (row) => formatNullableMetric(row.codigo_municipio) },
     { key: "processos", label: "Processos", sortKey: "total_processos", render: (row) => formatNullableMetric(row.total_processos) },
     { key: "documentos", label: "Documentos", render: (row) => formatNullableMetric(row.total_documentos) },
     { key: "paginas", label: "Páginas", render: (row) => formatNullableMetric(row.total_paginas) },
+    {
+      key: "ambientais",
+      label: "Indicadores ambientais",
+      render: (row) => (
+        <MetricList
+          items={[
+            ["Papel", formatDecimalUnit(row.economia_papel_kg, "kg", 5)],
+            ["Gases", formatDecimalUnit(row.gases_poluentes_kg, "kg", 4)],
+            ["Água", formatDecimalUnit(row.economia_agua_m3, "m³", 2)],
+            ["Árvores", formatDecimal(row.arvores_salvas, 4)],
+          ]}
+        />
+      ),
+    },
+    {
+      key: "financeiros",
+      label: "Indicadores financeiros",
+      render: (row) => (
+        <MetricList
+          items={[
+            ["Papel", formatCurrency(row.economia_papel_reais)],
+            ["Insumos", formatCurrency(row.economia_insumos_reais)],
+            ["Impressão", formatCurrency(row.economia_impressao_reais)],
+            ["Total", formatCurrency(row.economia_total_reais)],
+          ]}
+        />
+      ),
+    },
+    { key: "versao", label: "Versão do cálculo", render: (row) => row.versao_calculo },
   ];
   return (
     <DetailTable
@@ -189,9 +308,22 @@ function PatriarchResults({ coletaId }: { coletaId: string }) {
       columns={columns}
       getRowKey={(row) => row.id}
       initialSorting={[{ key: "sigla_patriarca", direction: "asc" }]}
-      emptyMessage="Nenhum resultado por patriarca disponível."
-      errorMessage="Não foi possível carregar os resultados por patriarca."
+      emptyMessage="Nenhum resultado por município disponível."
+      errorMessage="Não foi possível carregar os resultados por município."
     />
+  );
+}
+
+function MetricList({ items }: { items: Array<[string, string]> }) {
+  return (
+    <dl className="min-w-48 space-y-1 text-xs">
+      {items.map(([label, value]) => (
+        <div key={label} className="flex justify-between gap-3">
+          <dt className="text-slate-500">{label}</dt>
+          <dd className="font-medium text-slate-800">{value}</dd>
+        </div>
+      ))}
+    </dl>
   );
 }
 
@@ -255,7 +387,12 @@ function RawSources({ coletaId }: { coletaId: string }) {
 function MonthlyAudit({ coletaId }: { coletaId: string }) {
   type SortKey = "tipo_evento" | "criado_em";
   const columns: AdminTableColumn<EventoAuditoriaColetaMensalEdocs, SortKey>[] = [
-    { key: "evento", label: "Evento", sortKey: "tipo_evento", render: (row) => <strong>{row.tipo_evento}</strong> },
+    {
+      key: "evento",
+      label: "Evento",
+      sortKey: "tipo_evento",
+      render: (row) => <strong>{monthlyAuditEventLabels[row.tipo_evento]}</strong>,
+    },
     { key: "mensagem", label: "Mensagem", render: (row) => row.mensagem },
     { key: "ator", label: "Responsável", render: (row) => row.criado_por_nome || "Sistema" },
     { key: "data", label: "Data e hora", sortKey: "criado_em", render: (row) => formatAdminDate(row.criado_em) },
@@ -273,6 +410,14 @@ function MonthlyAudit({ coletaId }: { coletaId: string }) {
     />
   );
 }
+
+export const monthlyAuditEventLabels = {
+  SOLICITADA: "Coleta solicitada",
+  EXECUCAO_INICIADA: "Execução iniciada",
+  SUCESSO: "Coleta concluída com sucesso",
+  ERRO: "Coleta concluída com erro",
+  REENCAMINHADA: "Solicitação reencaminhada",
+} satisfies Record<TipoEventoColetaMensalEdocs, string>;
 
 function DetailTable<Row, SortKey extends string>({
   coletaId,

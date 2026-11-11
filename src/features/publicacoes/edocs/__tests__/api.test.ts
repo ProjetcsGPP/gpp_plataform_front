@@ -8,6 +8,7 @@ import {
   listColetasEdocs,
   listDivergenciasEdocs,
   listPatriarcasEdocs,
+  listImplantacoesEdocs,
   solicitarColetaEdocs,
 } from "@/features/publicacoes/edocs/api";
 import api from "@/lib/api";
@@ -25,6 +26,7 @@ describe("API administrativa E-Docs", () => {
     await listColetasEdocs({ ...common, situacao: "CONCLUIDA" });
     await listDivergenciasEdocs({ ...common, situacao: "PENDENTE" });
     await listAuditoriaEdocs({ ...common, tipo_evento: "COLETA_CONCLUIDA" });
+    await listImplantacoesEdocs({ ...common, ano: 2024, mes: 6, search: "SEGER" });
 
     expect(get).toHaveBeenNthCalledWith(1, "/pub-institucional/patriarcas/", {
       params: { ...common, search: "SEGER", ativo: true },
@@ -37,6 +39,9 @@ describe("API administrativa E-Docs", () => {
     });
     expect(get).toHaveBeenNthCalledWith(4, "/pub-institucional/auditoria/", {
       params: { ...common, tipo_evento: "COLETA_CONCLUIDA" },
+    });
+    expect(get).toHaveBeenNthCalledWith(5, "/pub-institucional/implantacoes-edocs/", {
+      params: { ...common, ano: 2024, mes: 6, search: "SEGER" },
     });
   });
 

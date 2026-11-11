@@ -158,6 +158,20 @@ export const PERMISSIONS = {
   EFLOW_PREFERENCIA_ALTERAR: "alterar_preferencia_exibicao_eflow",
   EFLOW_PREFERENCIA_AUDITORIA_VIEW:
     "view_eventoauditoriapreferenciaeflow",
+
+  // ── Publicações Institucionais / Gestão editorial ─────────────
+  PUBLICACAO_VIEW: "view_publicacao",
+  PUBLICACAO_ADD: "add_publicacao",
+  PUBLICACAO_CHANGE: "change_publicacao",
+  PUBLICACAO_CALCULAR: "calcular_publicacao",
+  PUBLICACAO_PREVIA_VIEW: "visualizar_previa_publicacao",
+  PUBLICACAO_PUBLICAR: "publicar_publicacao",
+  PUBLICACAO_SUBSTITUIR: "substituir_publicacao",
+  PUBLICACAO_REVOGAR: "revogar_publicacao",
+  PUBLICACAO_VISAO_VIEW: "view_configuracaovisaopublicacao",
+  PUBLICACAO_VISAO_CONFIGURAR: "configurar_visao_publicacao",
+  PUBLICACAO_HISTORICO_VIEW: "view_historicopublicacao",
+  EDOCS_IMPLANTACAO_VIEW: "view_implantacaopatriarcaedocs",
 } as const;
 
 export type PermissionKey = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];

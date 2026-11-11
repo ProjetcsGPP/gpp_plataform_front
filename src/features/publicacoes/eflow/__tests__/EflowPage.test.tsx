@@ -40,6 +40,9 @@ const completed: ColetaEflow = {
   arquivo_tamanho_bytes: 2048,
   iniciada_em: "2026-11-10T12:00:00Z",
   concluida_em: "2026-11-10T12:01:00Z",
+  ano_vigencia_inicio: 2024,
+  mes_vigencia_inicio: 1,
+  vigencia_retroativa: true,
   quantidade_fluxos: 1016,
   quantidade_orgaos_participantes: 25,
   quantidade_setores_ativos: 80,
@@ -198,10 +201,19 @@ describe("página de coleta E-Flow", () => {
     const file = new File(["ID;Nome"], "eflow.csv", { type: "text/csv" });
 
     await user.upload(input, file);
+    await user.clear(screen.getByLabelText("Ano de início"));
+    await user.type(screen.getByLabelText("Ano de início"), "2024");
+    await user.selectOptions(screen.getByLabelText("Mês de início"), "1");
+    await user.click(screen.getByRole("checkbox", { name: /melhor informação histórica/i }));
     expect(screen.getByText(/eflow\.csv — 7 B/)).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Importar CSV" }));
 
-    await waitFor(() => expect(eflowApi.importarColetaEflow).toHaveBeenCalledWith(file));
+    await waitFor(() => expect(eflowApi.importarColetaEflow).toHaveBeenCalledWith({
+      arquivo: file,
+      ano_vigencia_inicio: 2024,
+      mes_vigencia_inicio: 1,
+      vigencia_retroativa: true,
+    }));
     expect(await screen.findByRole("heading", { name: "Resultado da importação" })).toBeInTheDocument();
     expect(screen.getByText("Snapshot E-Flow importado e indicadores registrados.")).toBeInTheDocument();
     expect(screen.getByText("1.016 fluxos")).toBeInTheDocument();

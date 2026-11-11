@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import useSWR, { useSWRConfig } from "swr";
-import { ListChecks, MapPin } from "lucide-react";
+import { Eye, ListChecks, MapPin } from "lucide-react";
 
 import { AdminDataTable, type AdminTableColumn } from "@/components/admin/AdminDataTable";
 import { AdminAlert } from "@/components/admin/AdminPage";
@@ -13,6 +13,7 @@ import {
   alterarIndicadoresMunicipaisEdocs,
   alterarSelecaoColetaEdocs,
   listPatriarcasEdocs,
+  listImplantacoesEdocs,
 } from "@/features/publicacoes/edocs/api";
 import { EDOCS_ACTIONS, hasEdocsAction } from "@/features/publicacoes/edocs/actions";
 import { edocsCacheKeys, revalidateEdocsCaches } from "@/features/publicacoes/edocs/cache";
@@ -27,6 +28,7 @@ import {
 import type {
   IndicadoresMunicipaisPayload,
   PatriarcaEdocs,
+  ImplantacaoPatriarcaEdocs,
 } from "@/features/publicacoes/edocs/model";
 import { edocsOrdering, nextEdocsSorting } from "@/features/publicacoes/edocs/table";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -51,6 +53,8 @@ export function PatriarcasEdocsPage() {
   ]);
   const [selected, setSelected] = useState<PatriarcaEdocs | null>(null);
   const [municipalIndicators, setMunicipalIndicators] =
+    useState<PatriarcaEdocs | null>(null);
+  const [implantationDetails, setImplantationDetails] =
     useState<PatriarcaEdocs | null>(null);
   const [feedback, setFeedback] = useState<{
     kind: "error" | "success";
@@ -148,6 +152,13 @@ export function PatriarcasEdocsPage() {
           </span>
         </div>
       ),
+    },
+    {
+      key: "implantacao_observada",
+      label: "Implantação E-Docs observada",
+      render: (row) => row.implantacao_edocs_observada ? (
+        <Button variant="outline" size="sm" onClick={() => setImplantationDetails(row)}><Eye aria-hidden="true" /> {row.implantacao_edocs_observada.competencia}</Button>
+      ) : <span className="text-xs text-slate-500">Não observada</span>,
     },
     {
       key: "atualizado",
@@ -278,6 +289,7 @@ export function PatriarcasEdocsPage() {
           onRetry={() => mutate()}
           emptyMessage="Nenhum patriarca encontrado."
         />
+        {can(PERMISSIONS.EDOCS_IMPLANTACAO_VIEW) && <ImplantacoesEdocsPanel />}
       </EdocsPage>
 
       {selected && (
@@ -337,8 +349,28 @@ export function PatriarcasEdocsPage() {
           }}
         />
       )}
+      {implantationDetails && <ImplantationEvidenceDialog patriarca={implantationDetails} onClose={() => setImplantationDetails(null)} />}
     </RouteGuard>
   );
+}
+
+function ImplantationEvidenceDialog({ patriarca, onClose }: { patriarca: PatriarcaEdocs; onClose: () => void }) {
+  const evidence = patriarca.implantacao_edocs_observada;
+  return <EdocsModal title="Implantação E-Docs observada" onClose={onClose} wide>{evidence && <div className="mt-4 space-y-4 text-sm"><p><strong>{patriarca.sigla}</strong> — {patriarca.nome}</p><dl className="grid gap-3 sm:grid-cols-2"><div><dt className="text-xs text-slate-500">Primeira competência positiva</dt><dd className="font-semibold">{evidence.competencia}</dd></div><div><dt className="text-xs text-slate-500">Critério</dt><dd className="font-semibold">{evidence.criterio}</dd></div><div><dt className="text-xs text-slate-500">Coleta de evidência</dt><dd className="break-all">{evidence.coleta_evidencia_id}</dd></div><div><dt className="text-xs text-slate-500">Registrado em</dt><dd>{formatAdminDate(evidence.criado_em)}</dd></div></dl><p className="rounded-lg bg-sky-50 p-3 text-sky-950">Registro somente leitura produzido a partir da primeira atividade positiva observada na API oficial. Resultado zerado não é interpretado como implantação.</p><details><summary className="cursor-pointer font-medium">Totais da evidência</summary><pre className="mt-2 overflow-auto rounded-lg bg-slate-950 p-3 text-xs text-slate-100">{JSON.stringify(evidence.totais_evidencia, null, 2)}</pre></details></div>}</EdocsModal>;
+}
+
+function ImplantacoesEdocsPanel() {
+  const [year, setYear] = useState(""); const [month, setMonth] = useState(""); const [search, setSearch] = useState("");
+  const [density, setDensity] = useState<AdminTableDensity>("compact");
+  const key = edocsCacheKeys.implantacoes([year, month, search]);
+  const { data, error, isLoading, mutate } = useSWR(key, () => listImplantacoesEdocs({ page: 1, page_size: 100, ordering: "ano,mes", ano: year ? Number(year) : undefined, mes: month ? Number(month) : undefined, search: search.trim() || undefined }), { keepPreviousData: true, revalidateOnFocus: false });
+  const columns: AdminTableColumn<ImplantacaoPatriarcaEdocs, string>[] = [
+    { key: "patriarca", label: "Patriarca", render: row => <div><strong>{row.patriarca_sigla}</strong><span className="block text-xs text-slate-500">{row.patriarca_nome}</span></div> },
+    { key: "competencia", label: "Primeira competência positiva", render: row => row.competencia },
+    { key: "criterio", label: "Critério", render: row => row.criterio },
+    { key: "registro", label: "Registrado em", render: row => formatAdminDate(row.criado_em) },
+  ];
+  return <section className="mt-8" aria-labelledby="implantacoes-title"><h2 id="implantacoes-title" className="text-lg font-semibold">Implantações E-Docs observadas</h2><p className="mb-3 text-sm text-slate-600">Consulta somente leitura da primeira competência positiva identificada na API oficial.</p><EdocsFilters><EdocsTextFilter label="Pesquisar" value={search} onChange={setSearch} /><label className="text-xs font-medium text-slate-600">Ano<input className="mt-1 block w-28 rounded-md border bg-white px-3 py-2 text-sm" type="number" min={2024} value={year} onChange={event => setYear(event.target.value)} /></label><EdocsSelectFilter label="Mês" value={month} onChange={setMonth}><option value="">Todos</option>{Array.from({ length: 12 }, (_, index) => <option key={index + 1} value={index + 1}>{String(index + 1).padStart(2, "0")}</option>)}</EdocsSelectFilter></EdocsFilters><AdminDataTable rows={data?.results ?? []} columns={columns} getRowKey={row => row.id} sorting={[]} onSort={() => undefined} page={1} pageSize={100} pageSizeOptions={[100]} totalCount={data?.count ?? 0} hasPreviousPage={false} hasNextPage={false} onPageChange={() => undefined} onPageSizeChange={() => undefined} density={density} onDensityChange={setDensity} onResetView={() => setDensity("compact")} isLoading={isLoading} errorMessage={error ? getApiErrorMessage(error, "Não foi possível carregar as implantações observadas.") : null} onRetry={() => mutate()} emptyMessage="Nenhuma implantação observada para os filtros informados." /></section>;
 }
 
 const MUNICIPAL_BOOLEAN_FIELDS = [
