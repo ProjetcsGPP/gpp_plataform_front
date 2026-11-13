@@ -8,7 +8,7 @@ import {
 } from "../model";
 
 export const frozenMap: MapaMunicipalCongelado = {
-  schema_version: "1.0",
+  schema_version: "1.1",
   tipo: "MAPA_MUNICIPAL",
   indicador: "IMPLANTACAO_EDOCS",
   titulo: "Implantação do E-Docs nos municípios",
@@ -26,7 +26,39 @@ export const frozenMap: MapaMunicipalCongelado = {
     { codigo: "MANIFESTOU_INTERESSE", rotulo: "Manifestou interesse", cor: "#93c5fd", ordem: 5 },
   ],
   municipios: [
-    { codigo_ibge: "3200102", nome: "Afonso Cláudio", categoria: "IMPLANTADO_COM_USO_EDOCS", valor: 1, texto_alternativo: "Afonso Cláudio: E-Docs implantado e em uso" },
+    {
+      codigo_ibge: "3200102",
+      nome: "Afonso Cláudio",
+      categoria: "IMPLANTADO_COM_USO_EDOCS",
+      valor: 1,
+      texto_alternativo: "Afonso Cláudio: E-Docs implantado e em uso",
+      edocs: {
+        mes: {
+          total_processos: 10,
+          total_documentos: 20,
+          total_paginas: 30,
+          economia_total_reais: "40.50",
+        },
+        acumulado: {
+          competencias_consideradas: 3,
+          total_processos: 100,
+          total_documentos: 200,
+          total_paginas: 300,
+          economia_total_reais: "400.50",
+        },
+      },
+      eflow: {
+        quantidade_fluxos: 15,
+        quantidade_orgaos_participantes: 4,
+        quantidade_setores_ativos: 7,
+        orgaos_maior_quantidade_fluxos: [
+          { patriarca: "PREFEITURA", orgao: "SEMAD", quantidade_fluxos: 9, percentual: "60.00" },
+        ],
+        distribuicao_publico_alvo: [
+          { publico_alvo: "CIDADÃO", quantidade_fluxos: 12, percentual: "80.00" },
+        ],
+      },
+    },
     { codigo_ibge: "3200201", nome: "Alegre", categoria: "IMPLANTADO_SEM_USO_EDOCS", valor: null, texto_alternativo: "Alegre: implantado sem uso do E-Docs" },
     { codigo_ibge: "3200300", nome: "Alfredo Chaves", categoria: "SEM_DADOS", valor: null, texto_alternativo: "Alfredo Chaves: sem dados disponíveis" },
     { codigo_ibge: "3200409", nome: "Anchieta", categoria: "EM_IMPLANTACAO", valor: null, texto_alternativo: "Anchieta: em implantação" },
@@ -77,7 +109,8 @@ describe("mapa municipal congelado", () => {
   });
 
   it("ignora discriminantes desconhecidos e aceita publicações antigas sem mapas", () => {
-    expect(mapasMunicipaisDoResultado({ mapas: [frozenMap, { ...frozenMap, schema_version: "2.0" }, { tipo: "GRAFICO" }] })).toEqual([frozenMap]);
+    const legacyMap = { ...frozenMap, schema_version: "1.0" as const };
+    expect(mapasMunicipaisDoResultado({ mapas: [legacyMap, frozenMap, { ...frozenMap, schema_version: "2.0" }, { tipo: "GRAFICO" }] })).toEqual([legacyMap, frozenMap]);
     expect(mapasMunicipaisDoResultado({ totais: {} })).toEqual([]);
   });
 });

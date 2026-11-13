@@ -16,23 +16,69 @@ export interface LegendaMapaMunicipal {
   ordem: number;
 }
 
+export type ValorIndicadorMunicipal = string | number | null;
+
+export interface IndicadoresEdocsMunicipio {
+  total_processos?: ValorIndicadorMunicipal;
+  total_documentos?: ValorIndicadorMunicipal;
+  total_paginas?: ValorIndicadorMunicipal;
+  economia_papel_kg?: ValorIndicadorMunicipal;
+  gases_poluentes_kg?: ValorIndicadorMunicipal;
+  economia_papel_reais?: ValorIndicadorMunicipal;
+  economia_insumos_reais?: ValorIndicadorMunicipal;
+  economia_impressao_reais?: ValorIndicadorMunicipal;
+  economia_total_reais?: ValorIndicadorMunicipal;
+  economia_agua_m3?: ValorIndicadorMunicipal;
+  arvores_salvas?: ValorIndicadorMunicipal;
+  competencias_consideradas?: ValorIndicadorMunicipal;
+}
+
+export interface DadosEdocsMunicipio {
+  mes?: IndicadoresEdocsMunicipio;
+  acumulado?: IndicadoresEdocsMunicipio;
+}
+
+export interface OrgaoEflowMunicipio {
+  patriarca?: string;
+  orgao: string;
+  quantidade_fluxos: ValorIndicadorMunicipal;
+  percentual: ValorIndicadorMunicipal;
+}
+
+export interface PublicoAlvoEflowMunicipio {
+  publico_alvo: string;
+  quantidade_fluxos: ValorIndicadorMunicipal;
+  percentual: ValorIndicadorMunicipal;
+}
+
+export interface DadosEflowMunicipio {
+  quantidade_fluxos?: ValorIndicadorMunicipal;
+  quantidade_orgaos_participantes?: ValorIndicadorMunicipal;
+  quantidade_setores_ativos?: ValorIndicadorMunicipal;
+  orgaos_maior_quantidade_fluxos?: OrgaoEflowMunicipio[];
+  distribuicao_publico_alvo?: PublicoAlvoEflowMunicipio[];
+}
+
 export interface MunicipioMapaCongelado {
   codigo_ibge: string;
   nome: string;
   categoria: CategoriaMapaMunicipal;
-  valor: string | number | null;
+  valor?: string | number | null;
   texto_alternativo: string;
+  edocs?: DadosEdocsMunicipio;
+  eflow?: DadosEflowMunicipio;
 }
 
 export interface MapaMunicipalCongelado {
-  schema_version: "1.0" | (string & Record<never, never>);
+  schema_version: "1.0" | "1.1";
   tipo: "MAPA_MUNICIPAL";
   indicador: "IMPLANTACAO_EDOCS" | (string & Record<never, never>);
   titulo: string;
   competencia: string;
   referencia_temporal: "COMPETENCIA" | (string & Record<never, never>);
   modo: "CATEGORICO" | (string & Record<never, never>);
-  unidade: string | null;
+  unidade?: string | null;
+  "unidade de valor"?: string | null;
   precisao: number | null;
   texto_sem_dados: string;
   legenda: LegendaMapaMunicipal[];
@@ -67,7 +113,7 @@ export function isMapaMunicipalCongelado(
   const map = value as Record<string, unknown>;
   return map.tipo === "MAPA_MUNICIPAL"
     && map.indicador === "IMPLANTACAO_EDOCS"
-    && map.schema_version === "1.0"
+    && (map.schema_version === "1.0" || map.schema_version === "1.1")
     && typeof map.titulo === "string"
     && typeof map.competencia === "string"
     && typeof map.texto_sem_dados === "string"

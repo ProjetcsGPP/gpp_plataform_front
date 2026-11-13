@@ -1,8 +1,11 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { SWRConfig } from "swr";
 
-import { MapaMunicipalPublicacao } from "../MapaMunicipalPublicacao";
+import {
+  MapaMunicipalPublicacao,
+  resolveMunicipalityListDensity,
+} from "../MapaMunicipalPublicacao";
 import { frozenMap } from "@/features/publicacoes/mapa/__tests__/model.test";
 
 vi.mock("next/dynamic", () => ({
@@ -26,6 +29,13 @@ describe("visualização compartilhada do mapa municipal", () => {
     return render(<SWRConfig value={{ provider: () => new Map(), dedupingInterval: 0 }}><MapaMunicipalPublicacao mapa={frozenMap} /></SWRConfig>);
   }
 
+  it("reduz progressivamente a densidade da lista conforme a quantidade", () => {
+    expect(resolveMunicipalityListDensity(9)).toBe("comfortable");
+    expect(resolveMunicipalityListDensity(10)).toBe("compact");
+    expect(resolveMunicipalityListDensity(19)).toBe("compact");
+    expect(resolveMunicipalityListDensity(20)).toBe("dense");
+  });
+
   it("carrega o GeoJSON local, ordena a legenda e oferece alternativa tabular", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: async () => geojson }));
     renderMap();
@@ -48,6 +58,7 @@ describe("visualização compartilhada do mapa municipal", () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: async () => geojson }));
     render(<SWRConfig value={{ provider: () => new Map(), dedupingInterval: 0 }}><MapaMunicipalPublicacao mapa={frozenMap} dark presentationLayout /></SWRConfig>);
     const municipalities = await screen.findByRole("list", { name: "Municípios com informações" });
+    expect(municipalities).toHaveAttribute("data-density", "comfortable");
     expect(municipalities).toHaveTextContent("Afonso Cláudio");
     expect(municipalities).toHaveTextContent("Alegre");
     expect(municipalities).not.toHaveTextContent("Alfredo Chaves");
@@ -58,5 +69,28 @@ describe("visualização compartilhada do mapa municipal", () => {
     expect(document.querySelector("[data-map-panel]")).toHaveClass("bg-slate-950");
     expect(screen.getByTestId("leaflet-map")).toHaveAttribute("data-dark", "true");
     expect(screen.getByTestId("leaflet-map")).toHaveAttribute("data-numbers", JSON.stringify({ "3200102": 1, "3200201": 2, "3200409": 3, "3200508": 4 }));
+
+    const details = screen.getByRole("region", { name: "Informações do município selecionado" });
+    expect(details).toHaveTextContent("Selecione um município na lista ou no mapa");
+    fireEvent.click(within(municipalities).getByRole("button", { name: "1 Afonso Cláudio" }));
+    expect(details).toHaveTextContent("Afonso Cláudio");
+    expect(details).toHaveTextContent("Com uso");
+    expect(details).toHaveTextContent("Competência 2026-10");
+    expect(details).toHaveTextContent("Afonso Cláudio: E-Docs implantado e em uso");
+    expect(within(details).getByRole("table", { name: "Indicadores E-Docs de Afonso Cláudio na competência e acumulados" })).toBeInTheDocument();
+    expect(details).toHaveTextContent("10");
+    expect(details).toHaveTextContent("100");
+    expect(details).toHaveTextContent("R$ 40,50");
+    expect(details).toHaveTextContent("R$ 400,50");
+    expect(details).toHaveTextContent("Acumulado de 3 competências");
+    expect(details).toHaveTextContent("Indicadores E-Flow");
+    expect(details).toHaveTextContent("15");
+    expect(details).toHaveTextContent("4");
+    expect(details).toHaveTextContent("7");
+    expect(details).toHaveTextContent("SEMAD");
+    expect(details).toHaveTextContent("60,00 %");
+    expect(details).toHaveTextContent("CIDADÃO");
+    expect(details).toHaveTextContent("80,00 %");
+    expect(document.querySelector("[data-map-panel] p[aria-live='polite']")).not.toBeInTheDocument();
   });
 });
