@@ -76,3 +76,13 @@ Os indicadores municipais são alterados no catálogo de patriarcas somente
 quando a permissão técnica e a ação `alterar_indicadores_municipais` estão
 presentes. O `PATCH` envia apenas campos efetivamente modificados e a
 justificativa obrigatória, sem impor exclusividade local entre os indicadores.
+
+## Exportação da prévia em vídeo
+
+A prévia administrativa reutiliza a apresentação pública, mas habilita
+explicitamente a exportação local do carrossel. Antes da captura, o usuário
+define uma duração única ou tempos individuais para as etapas. O navegador
+negocia MP4 primeiro e usa WebM como fallback real, sem renomear contêineres.
+Durante a captura da guia atual, controles e rodapé são ocultados e nenhuma API
+ou estado global paralelo é criado. O desenho, as limitações e o roteiro de
+aceite estão em `docs/PUBLICACOES/VIDEO_EXPORT.md`.

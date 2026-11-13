@@ -128,7 +128,7 @@ function JustificationDialog({ action, onClose, onConfirm }: { action: "publicar
 }
 
 function PreviewDialog({ publicacao, onClose }: { publicacao: Publicacao; onClose: () => void }) {
-  return <EdocsModal title={`Prévia — ${publicacao.titulo}`} onClose={onClose} extraWide><div className="mt-4"><PublicacaoPresentation publicacao={adaptAdministrativePublication(publicacao)} autoPlay={false} embedded /></div></EdocsModal>;
+  return <EdocsModal title={`Prévia — ${publicacao.titulo}`} onClose={onClose} extraWide><div className="mt-4"><PublicacaoPresentation publicacao={adaptAdministrativePublication(publicacao)} autoPlay={false} embedded videoExportEnabled /></div></EdocsModal>;
 }
 
 export function PreviewSection({ section }: { section: SecaoPublicacao }) {

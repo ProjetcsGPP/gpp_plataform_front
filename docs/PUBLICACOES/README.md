@@ -13,6 +13,8 @@ do frontend da aplicação `PUBLICACOES` e da transformação do Portal.
 - [DECISIONS_AND_INPUTS.md](./DECISIONS_AND_INPUTS.md): registro evolutivo de
   decisões aprovadas, pendências e novos insumos recebidos em reuniões ou
   conversas.
+- [VIDEO_EXPORT.md](./VIDEO_EXPORT.md): arquitetura, fluxo, autorização,
+  negociação MP4/WebM, limitações e aceite da exportação local do carrossel.
 
 Os documentos arquiteturais de origem estão no repositório backend, em
 [`docs/PUBLICACOES`](../../../backend/docs/PUBLICACOES/README.md).

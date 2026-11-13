@@ -20,8 +20,10 @@ import {
   Recycle,
   Sun,
   Trees,
+  Video,
   type LucideIcon,
 } from "lucide-react";
+import { flushSync } from "react-dom";
 
 import { MapaMunicipalPublicacao } from "@/components/common/MapaMunicipalPublicacao";
 import { Button } from "@/components/ui/button";
@@ -34,8 +36,20 @@ import type {
   PublicPublication,
   PublicSection,
 } from "./model";
+import { PublicacaoVideoExportDialog } from "./PublicacaoVideoExportDialog";
 import { PublicRankingChart, PublicSeriesChart } from "./PublicSeriesChart";
 import { formatPublicValue, latestAccumulatedValue } from "./presentationFormat";
+import {
+  detectVideoExportFormat,
+  downloadVideoBlob,
+  publicationDisplayMediaOptions,
+  type VideoExportFormat,
+  VIDEO_EXPORT_STOP_GRACE_MS,
+  videoExportErrorMessage,
+  videoExportFileName,
+  videoExportIsAvailable,
+  videoExportWatchdogDelay,
+} from "./videoExport";
 
 const ENVIRONMENT_CODES = new Set(["ECONOMIA_PAPEL_KG", "GASES_POLUENTES_KG", "ECONOMIA_AGUA_M3"]);
 
@@ -73,10 +87,71 @@ type PresentationStep =
   | { key: string; title: string; kind: "eflow-charts" | "eflow-totals"; section: PublicSection }
   | { key: string; title: string; kind: "unsupported"; section: PublicSection };
 
-export function PublicacaoPresentation({ publicacao, autoPlay = true, embedded = false, toolbarContent }: { publicacao: PublicPublication; autoPlay?: boolean; embedded?: boolean; toolbarContent?: React.ReactNode }) {
+interface ActiveVideoRecording {
+  cancelWait?: () => void;
+  interrupted: boolean;
+  recorder: MediaRecorder;
+  stream: MediaStream;
+}
+
+function waitForRecordingDuration(session: ActiveVideoRecording, duration: number) {
+  return new Promise<void>((resolve) => {
+    const timer = window.setTimeout(() => {
+      session.cancelWait = undefined;
+      resolve();
+    }, duration);
+    session.cancelWait = () => {
+      window.clearTimeout(timer);
+      session.cancelWait = undefined;
+      resolve();
+    };
+  });
+}
+
+function waitForPresentationPaint() {
+  return new Promise<void>((resolve) => {
+    let settled = false;
+    const fallback = window.setTimeout(finish, 250);
+    function finish() {
+      if (settled) return;
+      settled = true;
+      window.clearTimeout(fallback);
+      resolve();
+    }
+    window.requestAnimationFrame(() => window.requestAnimationFrame(finish));
+  });
+}
+
+function waitForRecorderStop(recording: Promise<Blob>, chunks: Blob[], mimeType: string) {
+  return new Promise<Blob>((resolve) => {
+    const fallback = window.setTimeout(
+      () => resolve(new Blob(chunks, { type: mimeType })),
+      VIDEO_EXPORT_STOP_GRACE_MS,
+    );
+    void recording.then((blob) => {
+      window.clearTimeout(fallback);
+      resolve(blob);
+    });
+  });
+}
+
+export function PublicacaoPresentation({
+  publicacao,
+  autoPlay = true,
+  embedded = false,
+  toolbarContent,
+  videoExportEnabled = false,
+}: {
+  publicacao: PublicPublication;
+  autoPlay?: boolean;
+  embedded?: boolean;
+  toolbarContent?: React.ReactNode;
+  videoExportEnabled?: boolean;
+}) {
   const containerRef = useRef<HTMLDivElement>(null);
   const controlsRef = useRef<HTMLDivElement>(null);
   const inactivityTimerRef = useRef<number | null>(null);
+  const activeRecordingRef = useRef<ActiveVideoRecording | null>(null);
   const sections = useMemo(() => [...publicacao.secoes].sort((a, b) => a.ordem - b.ordem), [publicacao.secoes]);
   const steps = useMemo(() => buildPresentationSteps(sections), [sections]);
   const [index, setIndex] = useState(0);
@@ -86,6 +161,11 @@ export function PublicacaoPresentation({ publicacao, autoPlay = true, embedded =
   const [playing, setPlaying] = useState(autoPlay && !reducedMotion);
   const [fullscreen, setFullscreen] = useState(false);
   const [controlsVisible, setControlsVisible] = useState(true);
+  const [videoDialogOpen, setVideoDialogOpen] = useState(false);
+  const [videoExportAvailable, setVideoExportAvailable] = useState(false);
+  const [videoExportError, setVideoExportError] = useState("");
+  const [videoExportFormat, setVideoExportFormat] = useState<VideoExportFormat | null>(null);
+  const [videoExportMode, setVideoExportMode] = useState(false);
 
   const clearInactivityTimer = useCallback(() => {
     if (inactivityTimerRef.current !== null) {
@@ -106,6 +186,15 @@ export function PublicacaoPresentation({ publicacao, autoPlay = true, embedded =
     scheduleControlsHide();
   }, [scheduleControlsHide]);
 
+  const stopActiveVideoRecording = useCallback(() => {
+    const session = activeRecordingRef.current;
+    if (!session) return;
+    session.interrupted = true;
+    session.cancelWait?.();
+    if (session.recorder.state !== "inactive") session.recorder.stop();
+    session.stream.getTracks().forEach((track) => track.stop());
+  }, []);
+
   useEffect(() => {
     if (!playing || steps.length < 2 || reducedMotion) return;
     const timer = window.setInterval(() => setIndex((current) => (current + 1) % steps.length), 12000);
@@ -121,9 +210,109 @@ export function PublicacaoPresentation({ publicacao, autoPlay = true, embedded =
     return clearInactivityTimer;
   }, [clearInactivityTimer, scheduleControlsHide]);
   useEffect(() => {
-    window.addEventListener("keydown", showControlsTemporarily);
-    return () => window.removeEventListener("keydown", showControlsTemporarily);
-  }, [showControlsTemporarily]);
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (videoExportMode) {
+        if (event.key === "Escape") stopActiveVideoRecording();
+        return;
+      }
+      showControlsTemporarily();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [showControlsTemporarily, stopActiveVideoRecording, videoExportMode]);
+  useEffect(() => () => {
+    const session = activeRecordingRef.current;
+    if (!session) return;
+    session.interrupted = true;
+    session.cancelWait?.();
+    if (session.recorder.state !== "inactive") session.recorder.stop();
+    session.stream.getTracks().forEach((track) => track.stop());
+  }, []);
+
+  function openVideoExportDialog() {
+    setVideoExportError("");
+    setVideoExportFormat(detectVideoExportFormat());
+    setVideoExportAvailable(videoExportIsAvailable());
+    setVideoDialogOpen(true);
+  }
+
+  async function startVideoExport(durations: number[]) {
+    const format = videoExportFormat;
+    if (!format || !videoExportIsAvailable()) return;
+    const previousState = { index, playing };
+    let stream: MediaStream | null = null;
+    let failed = false;
+    let watchdog: number | null = null;
+
+    flushSync(() => {
+      setVideoDialogOpen(false);
+      setPlaying(false);
+      setIndex(0);
+      setVideoExportMode(true);
+    });
+
+    try {
+      stream = await navigator.mediaDevices.getDisplayMedia(publicationDisplayMediaOptions());
+      const videoTrack = stream.getVideoTracks()[0];
+      const selectedSurface = videoTrack?.getSettings().displaySurface;
+      if (selectedSurface && selectedSurface !== "browser") {
+        throw new Error("Selecione esta guia do navegador para gravar somente a apresentação.");
+      }
+
+      await waitForPresentationPaint();
+      const chunks: Blob[] = [];
+      const recorder = new MediaRecorder(stream, {
+        mimeType: format.mimeType,
+        videoBitsPerSecond: 8_000_000,
+      });
+      const session: ActiveVideoRecording = { recorder, stream, interrupted: false };
+      let recordingError: Error | null = null;
+      const recording = new Promise<Blob>((resolve) => {
+        recorder.addEventListener("dataavailable", (event) => {
+          if (event.data.size > 0) chunks.push(event.data);
+        });
+        recorder.addEventListener("error", () => {
+          recordingError = new Error("O navegador interrompeu a codificação do vídeo.");
+          session.interrupted = true;
+          session.cancelWait?.();
+          if (recorder.state !== "inactive") recorder.stop();
+        });
+        recorder.addEventListener("stop", () => resolve(new Blob(chunks, { type: recorder.mimeType || format.mimeType })));
+      });
+      activeRecordingRef.current = session;
+      videoTrack?.addEventListener("ended", stopActiveVideoRecording, { once: true });
+      recorder.start(1000);
+      watchdog = window.setTimeout(stopActiveVideoRecording, videoExportWatchdogDelay(durations));
+
+      for (let stepIndex = 0; stepIndex < steps.length; stepIndex += 1) {
+        if (session.interrupted) break;
+        flushSync(() => setIndex(stepIndex));
+        await waitForPresentationPaint();
+        if (session.interrupted) break;
+        await waitForRecordingDuration(session, durations[stepIndex] * 1000);
+      }
+
+      stopActiveVideoRecording();
+      const video = await waitForRecorderStop(recording, chunks, recorder.mimeType || format.mimeType);
+      if (recordingError) throw recordingError;
+      if (video.size > 0) {
+        downloadVideoBlob(video, videoExportFileName(publicacao.competencia, publicacao.versao, format.extension));
+      }
+    } catch (error) {
+      failed = true;
+      setVideoExportError(videoExportErrorMessage(error));
+    } finally {
+      if (watchdog !== null) window.clearTimeout(watchdog);
+      stream?.getTracks().forEach((track) => track.stop());
+      activeRecordingRef.current = null;
+      flushSync(() => {
+        setVideoExportMode(false);
+        setIndex(previousState.index);
+        setPlaying(previousState.playing);
+        setVideoDialogOpen(failed);
+      });
+    }
+  }
 
   function move(delta: number) {
     if (!steps.length) return;
@@ -131,6 +320,7 @@ export function PublicacaoPresentation({ publicacao, autoPlay = true, embedded =
   }
 
   function keyboard(event: React.KeyboardEvent) {
+    if (videoExportMode) return;
     showControlsTemporarily();
     if (event.key === "ArrowRight") move(1);
     else if (event.key === "ArrowLeft") move(-1);
@@ -148,10 +338,10 @@ export function PublicacaoPresentation({ publicacao, autoPlay = true, embedded =
   const presentationHeight = embedded
     ? "h-[calc(90dvh-5rem)] min-h-[32rem]"
     : "h-[calc(100dvh-7rem)] min-h-[32rem]";
-  return <div ref={containerRef} tabIndex={0} onKeyDown={keyboard} onPointerMove={showControlsTemporarily} onPointerDown={showControlsTemporarily} data-theme={dark ? "dark" : "light"} className={`flex ${presentationHeight} flex-col overflow-hidden rounded-3xl shadow-2xl outline-none ring-sky-500 focus-visible:ring-2 ${shell} ${fullscreen ? "h-screen max-h-none min-h-0 rounded-none" : ""}`} aria-label="Apresentação da publicação">
+  return <div ref={containerRef} tabIndex={0} onKeyDown={keyboard} onPointerMove={videoExportMode ? undefined : showControlsTemporarily} onPointerDown={videoExportMode ? undefined : showControlsTemporarily} data-theme={dark ? "dark" : "light"} data-video-export={videoExportMode} className={`flex ${presentationHeight} flex-col overflow-hidden rounded-3xl shadow-2xl outline-none ring-sky-500 focus-visible:ring-2 ${shell} ${fullscreen ? "h-screen max-h-none min-h-0 rounded-none" : ""} ${videoExportMode ? "fixed inset-0 z-[110] h-dvh min-h-0 rounded-none shadow-none" : ""}`} aria-label="Apresentação da publicação">
     <header className="flex shrink-0 flex-wrap items-center justify-between gap-3 bg-slate-950 px-5 py-3 text-white">
       <div><p className="text-xs uppercase tracking-[0.2em] text-sky-300">Publicações Institucionais</p><h1 className="text-xl font-bold">{publicacao.titulo}</h1><p className="text-xs text-slate-300">Competência {publicacao.competencia} · versão {publicacao.versao}</p></div>
-      <div
+      {!videoExportMode && <div
         ref={controlsRef}
         data-testid="presentation-controls"
         data-visible={controlsVisible}
@@ -159,15 +349,17 @@ export function PublicacaoPresentation({ publicacao, autoPlay = true, embedded =
         onFocusCapture={showControlsTemporarily}
       >
         {toolbarContent}
+        {videoExportEnabled && <Button variant="outline" size="icon" className="border-white/30 bg-transparent text-white hover:bg-white/10" onClick={openVideoExportDialog} aria-label="Gravar apresentação em vídeo"><Video /></Button>}
         <Button variant="outline" size="icon" className="border-white/30 bg-transparent text-white hover:bg-white/10" onClick={() => move(-1)} aria-label="Etapa anterior"><ChevronLeft /></Button>
         <Button variant="outline" size="icon" className="border-white/30 bg-transparent text-white hover:bg-white/10" onClick={() => setPlaying((value) => !value)} aria-label={playing ? "Pausar apresentação" : "Retomar apresentação"}>{playing ? <Pause /> : <Play />}</Button>
         <Button variant="outline" size="icon" className="border-white/30 bg-transparent text-white hover:bg-white/10" onClick={() => setDark((value) => !value)} aria-label={dark ? "Usar tema claro" : "Usar tema escuro"}>{dark ? <Sun /> : <Moon />}</Button>
         <Button variant="outline" size="icon" className="border-white/30 bg-transparent text-white hover:bg-white/10" onClick={() => fullscreen ? document.exitFullscreen() : containerRef.current?.requestFullscreen()} aria-label={fullscreen ? "Sair da tela cheia" : "Exibir em tela cheia"}><Expand /></Button>
         <Button variant="outline" size="icon" className="border-white/30 bg-transparent text-white hover:bg-white/10" onClick={() => move(1)} aria-label="Próxima etapa"><ChevronRight /></Button>
-      </div>
+      </div>}
     </header>
     <div className="min-h-0 flex-1 overflow-hidden p-3 md:p-4" aria-live="polite"><StepPresentation step={current} dark={dark} /></div>
-    {carouselRunning && <footer className={`flex shrink-0 items-center justify-between border-t px-5 py-2 text-sm ${footer}`}><span>{index + 1} de {steps.length}</span><div className="flex gap-2" aria-label="Selecionar etapa">{steps.map((step, position) => <button key={step.key} onClick={() => setIndex(position)} className={`h-2.5 rounded-full ${position === index ? "w-8 bg-sky-500" : dark ? "w-2.5 bg-slate-600" : "w-2.5 bg-slate-300"}`} aria-label={`Abrir etapa ${position + 1}: ${step.title}`} aria-current={position === index ? "step" : undefined} />)}</div><span className="hidden sm:inline">Reprodução automática</span></footer>}
+    {!videoExportMode && carouselRunning && <footer className={`flex shrink-0 items-center justify-between border-t px-5 py-2 text-sm ${footer}`}><span>{index + 1} de {steps.length}</span><div className="flex gap-2" aria-label="Selecionar etapa">{steps.map((step, position) => <button key={step.key} onClick={() => setIndex(position)} className={`h-2.5 rounded-full ${position === index ? "w-8 bg-sky-500" : dark ? "w-2.5 bg-slate-600" : "w-2.5 bg-slate-300"}`} aria-label={`Abrir etapa ${position + 1}: ${step.title}`} aria-current={position === index ? "step" : undefined} />)}</div><span className="hidden sm:inline">Reprodução automática</span></footer>}
+    {videoDialogOpen && <PublicacaoVideoExportDialog steps={steps.map(({ key, title }) => ({ key, title }))} format={videoExportFormat} available={videoExportAvailable} error={videoExportError} onClose={() => setVideoDialogOpen(false)} onStart={(durations) => void startVideoExport(durations)} />}
   </div>;
 }
 

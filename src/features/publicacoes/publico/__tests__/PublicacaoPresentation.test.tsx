@@ -72,6 +72,17 @@ describe("apresentação reutilizável da publicação", () => {
     expect(screen.getByRole("button", { name: "Usar tema claro" })).toBeInTheDocument();
   });
 
+  it("oferece gravação somente quando habilitada pela prévia administrativa", async () => {
+    const user = userEvent.setup();
+    const { rerender } = render(<PublicacaoPresentation publicacao={publicPublication} autoPlay={false} />);
+    expect(screen.queryByRole("button", { name: "Gravar apresentação em vídeo" })).not.toBeInTheDocument();
+
+    rerender(<PublicacaoPresentation publicacao={publicPublication} autoPlay={false} videoExportEnabled />);
+    await user.click(screen.getByRole("button", { name: "Gravar apresentação em vídeo" }));
+    expect(screen.getByRole("dialog", { name: "Gravar apresentação em vídeo" })).toBeInTheDocument();
+    expect(screen.getByText(/Este navegador ou contexto não oferece captura/)).toBeInTheDocument();
+  });
+
   it("desativa autoplay com redução de movimento", () => {
     vi.mocked(window.matchMedia).mockReturnValue({ matches: true, addEventListener: vi.fn(), removeEventListener: vi.fn() } as unknown as MediaQueryList);
     render(<PublicacaoPresentation publicacao={publicPublication} autoPlay />);
