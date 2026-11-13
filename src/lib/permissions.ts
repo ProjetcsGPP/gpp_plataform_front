@@ -136,6 +136,15 @@ export const PERMISSIONS = {
   EDOCS_COLETA_VISUALIZAR: "visualizar_coletas_patriarcas",
   EDOCS_INDICADORES_MUNICIPAIS_ALTERAR:
     "alterar_indicadores_municipais_edocs",
+  EDOCS_INDICADOR_SEM_USO_ALTERAR:
+    "alterar_indicador_municipio_sem_edocs",
+  EDOCS_MUNICIPIO_VIEW: "view_municipioedocs",
+  EDOCS_MUNICIPIO_ADD: "add_municipioedocs",
+  EDOCS_MUNICIPIO_CHANGE: "change_municipioedocs",
+  EDOCS_MUNICIPIO_SITUACAO_ALTERAR:
+    "alterar_situacao_municipio_edocs",
+  EDOCS_MUNICIPIO_AUDITORIA_VIEW:
+    "view_eventoauditoriamunicipioedocs",
 
   // ── Publicações Institucionais / Coleta mensal E-Docs ─────────────
   EDOCS_MENSAL_COLETA_VIEW: "view_coletamensaledocs",

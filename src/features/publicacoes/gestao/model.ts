@@ -1,4 +1,5 @@
 import type { PaginatedResponse, PatriarcaEdocs } from "@/features/publicacoes/edocs/model";
+import type { MapaMunicipalCongelado } from "@/features/publicacoes/mapa/model";
 
 export type { PaginatedResponse };
 export type FonteVisao = "EDOCS" | "EFLOW";
@@ -20,8 +21,12 @@ export interface SecaoPublicacao {
   configuracao_visao_id: string; coleta_edocs_id: string | null;
   coleta_eflow_id: string | null; perfil_calculo: string;
   configuracao_congelada: Record<string, unknown>;
-  resultado: Record<string, unknown>; calculada_em: string | null;
+  resultado: ResultadoSecaoPublicacao; calculada_em: string | null;
   hash_resultado: string;
+}
+
+export interface ResultadoSecaoPublicacao extends Record<string, unknown> {
+  mapas?: MapaMunicipalCongelado[];
 }
 
 export interface Publicacao {

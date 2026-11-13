@@ -1,12 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import useSWR, { useSWRConfig } from "swr";
 import { Calculator, Eye, FilePlus2, Plus, RotateCcw, Send, Trash2 } from "lucide-react";
 import { AdminDataTable, type AdminTableColumn } from "@/components/admin/AdminDataTable";
 import { AdminAlert, AdminPanel } from "@/components/admin/AdminPage";
 import { AdminLoading } from "@/components/admin/AdminLoading";
 import { RouteGuard } from "@/components/common/RouteGuard";
+import { MapaMunicipalPublicacao } from "@/components/common/MapaMunicipalPublicacao";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { EdocsFilters, EdocsModal, EdocsPage, EdocsSelectFilter, EdocsStatusBadge, EdocsTextFilter } from "@/features/publicacoes/edocs/EdocsUi";
@@ -14,10 +15,13 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { formatAdminDate } from "@/lib/adminResource";
 import { getApiErrorMessage } from "@/lib/apiErrors";
 import { PERMISSIONS } from "@/lib/permissions";
+import { debugLog } from "@/lib/debug";
 import type { AdminTableDensity } from "@/types/admin";
 import { addSecao, createPublicacao, getConflict, getPreviaPublicacao, getPublicacao, listPublicacoes, listVisoes, publicarPublicacao, recalcularPublicacao, reabrirPublicacao, removeSecao, revogarPublicacao, substituirPublicacao } from "./api";
 import { publicacoesCacheKeys, revalidatePublicacoesCaches } from "./cache";
 import { canUsePublicationAction, formatDecimal, formatNumber, SITUACAO_LABELS } from "./format";
+import { mapasMunicipaisDoResultado } from "@/features/publicacoes/mapa/model";
+import { adaptAdministrativePublication, PublicacaoPresentation } from "@/features/publicacoes/publico/PublicacaoPresentation";
 import type { Publicacao, SecaoPublicacao, SituacaoPublicacao } from "./model";
 
 const STATUS = Object.keys(SITUACAO_LABELS) as SituacaoPublicacao[];
@@ -95,7 +99,7 @@ function PublicationDialog({ id, onClose, onNewId, onFeedback }: { id: string; o
       <div className="flex flex-wrap items-start justify-between gap-3"><div><h3 className="text-xl font-bold">{data.titulo}</h3><p className="text-sm text-slate-600">Competência {data.competencia} · versão {data.versao} · registro {data.versao_registro}</p></div><EdocsStatusBadge positive={data.situacao === "PUBLICADA"} negative={data.situacao === "REVOGADA"}>{SITUACAO_LABELS[data.situacao]}</EdocsStatusBadge></div>
       {localError && <AdminAlert onClose={() => setLocalError("")}>{localError}</AdminAlert>}
       <section><div className="mb-3 flex items-center justify-between"><div><h4 className="font-semibold">Seções</h4><p className="text-xs text-slate-500">As fontes canônicas são escolhidas e congeladas pelo backend.</p></div>{allowed("adicionar_secao", PERMISSIONS.PUBLICACAO_CHANGE) && <Button size="sm" onClick={() => setAdding(true)}><Plus /> Incluir seção</Button>}</div>
-        <div className="space-y-2">{data.secoes.length === 0 ? <p className="rounded-lg border border-dashed p-5 text-center text-sm text-slate-500">Nenhuma seção incluída.</p> : data.secoes.map(section => <div key={section.id} className="flex items-center justify-between rounded-lg border p-3"><div><strong>{section.ordem}. {section.titulo}</strong><span className="ml-2 text-xs text-slate-500">{section.fonte} · {section.perfil_calculo}</span></div>{allowed("remover_secao", PERMISSIONS.PUBLICACAO_CHANGE) && <Button size="sm" variant="destructive" disabled={busy === `remove-${section.id}`} onClick={() => run(`remove-${section.id}`, () => removeSecao(id, section.id), "Seção removida.")}><Trash2 /> Remover</Button>}</div>)}</div>
+        <div className="space-y-3">{data.secoes.length === 0 ? <p className="rounded-lg border border-dashed p-5 text-center text-sm text-slate-500">Nenhuma seção incluída.</p> : data.secoes.map(section => <div key={section.id} className="rounded-lg border p-3"><div className="flex items-center justify-between gap-3"><div><strong>{section.ordem}. {section.titulo}</strong><span className="ml-2 text-xs text-slate-500">{section.fonte} · {section.perfil_calculo}</span></div>{allowed("remover_secao", PERMISSIONS.PUBLICACAO_CHANGE) && <Button size="sm" variant="destructive" disabled={busy === `remove-${section.id}`} onClick={() => run(`remove-${section.id}`, () => removeSecao(id, section.id), "Seção removida.")}><Trash2 /> Remover</Button>}</div><MapasSecaoPublicacao section={section} compact /></div>)}</div>
       </section>
       <div className="flex flex-wrap gap-2 border-t pt-4">
         {allowed("recalcular", PERMISSIONS.PUBLICACAO_CALCULAR) && <Button disabled={Boolean(busy)} onClick={() => run("recalcular", () => recalcularPublicacao(id), "Publicação calculada e validada.")}><Calculator /> {busy === "recalcular" ? "Calculando..." : "Calcular"}</Button>}
@@ -124,18 +128,33 @@ function JustificationDialog({ action, onClose, onConfirm }: { action: "publicar
 }
 
 function PreviewDialog({ publicacao, onClose }: { publicacao: Publicacao; onClose: () => void }) {
-  const sections = useMemo(() => [...publicacao.secoes].sort((a, b) => a.ordem - b.ordem), [publicacao.secoes]);
-  return <EdocsModal title={`Prévia — ${publicacao.titulo}`} onClose={onClose} extraWide><div className="mt-4 space-y-5"><p className="text-sm text-slate-600">Conteúdo congelado pelo backend para {publicacao.competencia}. Esta visualização não recalcula indicadores.</p>{sections.map(section => <PreviewSection key={section.id} section={section} />)}</div></EdocsModal>;
+  return <EdocsModal title={`Prévia — ${publicacao.titulo}`} onClose={onClose} extraWide><div className="mt-4"><PublicacaoPresentation publicacao={adaptAdministrativePublication(publicacao)} autoPlay={false} embedded /></div></EdocsModal>;
 }
 
-function PreviewSection({ section }: { section: SecaoPublicacao }) {
+export function PreviewSection({ section }: { section: SecaoPublicacao }) {
   const result = section.resultado; const totals = (result.totais ?? {}) as Record<string, unknown>;
   const patriarchs = Array.isArray(result.patriarcas) ? result.patriarcas as Record<string, unknown>[] : [];
   const top = Array.isArray(result.orgaos_maior_quantidade_fluxos) ? result.orgaos_maior_quantidade_fluxos as Record<string, unknown>[] : [];
   const audience = Array.isArray(result.distribuicao_publico_alvo) ? result.distribuicao_publico_alvo as Record<string, unknown>[] : [];
   return <AdminPanel className="p-5"><div className="flex justify-between gap-3"><div><h3 className="text-lg font-semibold">{section.ordem}. {section.titulo}</h3><p className="text-xs text-slate-500">{section.fonte} · {section.perfil_calculo} · coleta {section.coleta_edocs_id ?? section.coleta_eflow_id ?? "—"}</p></div></div>
-    {section.fonte === "EDOCS" ? <><div className="mt-4 grid gap-3 sm:grid-cols-4"><Metric label="Patriarcas" value={formatNumber(result.quantidade_patriarcas)} /><Metric label="Processos" value={formatNumber(totals.total_processos)} /><Metric label="Documentos" value={formatNumber(totals.total_documentos)} /><Metric label="Páginas" value={formatNumber(totals.total_paginas)} /><Metric label="Economia total" value={`R$ ${formatDecimal(totals.economia_total_reais)}`} /><Metric label="Papel economizado" value={`${formatDecimal(totals.economia_papel_kg)} kg`} /><Metric label="Água economizada" value={`${formatDecimal(totals.economia_agua_m3)} m³`} /><Metric label="Árvores salvas" value={formatDecimal(totals.arvores_salvas)} /></div><details className="mt-4"><summary className="cursor-pointer font-medium">Resultados por patriarca ({patriarchs.length})</summary><div className="mt-2 overflow-auto"><table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="p-2">Patriarca</th><th>Processos</th><th>Documentos</th><th>Páginas</th></tr></thead><tbody>{patriarchs.map((item, index) => <tr key={String(item.patriarca_id ?? index)} className="border-b"><td className="p-2">{String(item.sigla_patriarca ?? "")} — {String(item.nome_patriarca ?? "")}</td><td>{formatNumber(item.total_processos)}</td><td>{formatNumber(item.total_documentos)}</td><td>{formatNumber(item.total_paginas)}</td></tr>)}</tbody></table></div></details></> : <><div className="mt-4 grid gap-3 sm:grid-cols-3"><Metric label="Fluxos" value={formatNumber(result.quantidade_fluxos)} /><Metric label="Órgãos participantes" value={formatNumber(result.quantidade_orgaos_participantes)} /><Metric label="Setores ativos" value={formatNumber(result.quantidade_setores_ativos)} /></div><div className="mt-4 grid gap-4 lg:grid-cols-2"><IndicatorList title="Órgãos com mais fluxos" values={top} nameKey="orgao" /><IndicatorList title="Distribuição por público-alvo" values={audience} nameKey="publico_alvo" /></div><details className="mt-4"><summary className="cursor-pointer font-medium">Proveniência e vigência</summary><pre className="mt-2 overflow-auto rounded-lg bg-slate-950 p-3 text-xs text-slate-100">{JSON.stringify(section.configuracao_congelada, null, 2)}</pre></details></>}
+    {section.fonte === "EDOCS" ? <><div className="mt-4 grid gap-3 sm:grid-cols-4"><Metric label="Patriarcas" value={formatNumber(result.quantidade_patriarcas)} /><Metric label="Processos" value={formatNumber(totals.total_processos)} /><Metric label="Documentos" value={formatNumber(totals.total_documentos)} /><Metric label="Páginas" value={formatNumber(totals.total_paginas)} /><Metric label="Economia total" value={`R$ ${formatDecimal(totals.economia_total_reais)}`} /><Metric label="Papel economizado" value={`${formatDecimal(totals.economia_papel_kg)} kg`} /><Metric label="Água economizada" value={`${formatDecimal(totals.economia_agua_m3)} m³`} /><Metric label="Árvores salvas" value={formatDecimal(totals.arvores_salvas)} /></div><MapasSecaoPublicacao section={section} /><details className="mt-4"><summary className="cursor-pointer font-medium">Resultados por patriarca ({patriarchs.length})</summary><div className="mt-2 overflow-auto"><table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="p-2">Patriarca</th><th>Processos</th><th>Documentos</th><th>Páginas</th></tr></thead><tbody>{patriarchs.map((item, index) => <tr key={String(item.patriarca_id ?? index)} className="border-b"><td className="p-2">{String(item.sigla_patriarca ?? "")} — {String(item.nome_patriarca ?? "")}</td><td>{formatNumber(item.total_processos)}</td><td>{formatNumber(item.total_documentos)}</td><td>{formatNumber(item.total_paginas)}</td></tr>)}</tbody></table></div></details></> : <><div className="mt-4 grid gap-3 sm:grid-cols-3"><Metric label="Fluxos" value={formatNumber(result.quantidade_fluxos)} /><Metric label="Órgãos participantes" value={formatNumber(result.quantidade_orgaos_participantes)} /><Metric label="Setores ativos" value={formatNumber(result.quantidade_setores_ativos)} /></div><div className="mt-4 grid gap-4 lg:grid-cols-2"><IndicatorList title="Órgãos com mais fluxos" values={top} nameKey="orgao" /><IndicatorList title="Distribuição por público-alvo" values={audience} nameKey="publico_alvo" /></div><details className="mt-4"><summary className="cursor-pointer font-medium">Proveniência e vigência</summary><pre className="mt-2 overflow-auto rounded-lg bg-slate-950 p-3 text-xs text-slate-100">{JSON.stringify(section.configuracao_congelada, null, 2)}</pre></details></>}
   </AdminPanel>;
+}
+
+export function MapasSecaoPublicacao({ section, compact = false }: { section: SecaoPublicacao; compact?: boolean }) {
+  const maps = mapasMunicipaisDoResultado(section.resultado);
+  const rawMaps = Array.isArray(section.resultado.mapas) ? section.resultado.mapas : [];
+  useEffect(() => {
+    if (rawMaps.length !== maps.length) {
+      debugLog("publicacoes", "mapa congelado ignorado por discriminador desconhecido", {
+        secao_id: section.id,
+        mapas_recebidos: rawMaps.length,
+        mapas_suportados: maps.length,
+      });
+    }
+  }, [maps.length, rawMaps.length, section.id]);
+  if (!maps.length) return null;
+  return <div className="mt-4 space-y-4">{maps.map((map, index) => <MapaMunicipalPublicacao key={`${map.indicador}-${map.competencia}-${index}`} mapa={map} altura={compact ? 380 : 520} exibirDetalhesTecnicos={!compact} />)}</div>;
 }
 function Metric({ label, value }: { label: string; value: string }) { return <div className="rounded-lg border bg-slate-50 p-3"><span className="block text-xs text-slate-500">{label}</span><strong className="text-lg">{value}</strong></div>; }
 function IndicatorList({ title, values, nameKey }: { title: string; values: Record<string, unknown>[]; nameKey: string }) { return <div><h4 className="font-medium">{title}</h4><ul className="mt-2 space-y-1 text-sm">{values.map((item, index) => <li key={`${String(item[nameKey])}-${index}`} className="flex justify-between rounded bg-slate-50 px-3 py-2"><span>{String(item[nameKey] ?? "—")}</span><span>{formatNumber(item.quantidade_fluxos)} · {formatDecimal(item.percentual)}%</span></li>)}</ul></div>; }

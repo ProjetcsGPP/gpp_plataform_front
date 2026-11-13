@@ -46,10 +46,12 @@ export function EflowDonutChart({
   ariaLabel,
   data,
   centerTotal,
+  dark = false,
 }: {
   ariaLabel: string;
   data: EflowDonutDatum[];
   centerTotal?: number;
+  dark?: boolean;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -57,8 +59,11 @@ export function EflowDonutChart({
     const container = containerRef.current;
     if (!container || data.length === 0) return;
 
-    const chart = echarts.init(container, null, { renderer: "svg" });
+    const chart = echarts.init(container, dark ? "dark" : undefined, { renderer: "svg" });
+    const reducedMotion = typeof window.matchMedia === "function"
+      && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const option: EflowChartOption = {
+      animation: !reducedMotion,
       color: CHART_COLORS,
       aria: {
         enabled: true,
@@ -81,13 +86,13 @@ export function EflowDonutChart({
           avoidLabelOverlap: true,
           minAngle: 2,
           itemStyle: {
-            borderColor: "#ffffff",
+            borderColor: dark ? "#0f172a" : "#ffffff",
             borderRadius: 4,
             borderWidth: 2,
           },
           label: {
             show: true,
-            color: "#334155",
+            color: dark ? "#cbd5e1" : "#334155",
             fontSize: 11,
             lineHeight: 15,
             formatter: (params) => {
@@ -96,8 +101,8 @@ export function EflowDonutChart({
               return `{name|${item.name}}\n{value|${item.value.toLocaleString("pt-BR")} (${formatPercent(item.percentage)})}`;
             },
             rich: {
-              name: { color: "#0f172a", fontWeight: 600 },
-              value: { color: "#475569" },
+              name: { color: dark ? "#f8fafc" : "#0f172a", fontWeight: 600 },
+              value: { color: dark ? "#cbd5e1" : "#475569" },
             },
           },
           labelLine: {
@@ -132,7 +137,7 @@ export function EflowDonutChart({
       window.removeEventListener("resize", resize);
       chart.dispose();
     };
-  }, [ariaLabel, centerTotal, data]);
+  }, [ariaLabel, centerTotal, dark, data]);
 
   if (data.length === 0) {
     return (
@@ -143,17 +148,17 @@ export function EflowDonutChart({
   }
 
   return (
-    <div className="relative h-72 min-w-0 flex-1">
+    <div className="relative h-72 min-h-0 min-w-0 flex-1">
       <div ref={containerRef} className="size-full" />
       {centerTotal !== undefined && (
         <div
           aria-hidden="true"
           className="pointer-events-none absolute left-1/2 top-1/2 flex w-24 -translate-x-1/2 -translate-y-1/2 flex-col items-center text-center"
         >
-          <strong className="text-2xl leading-none text-slate-900">
+          <strong className={`text-2xl leading-none ${dark ? "text-slate-100" : "text-slate-900"}`}>
             {centerTotal.toLocaleString("pt-BR")}
           </strong>
-          <span className="mt-1 text-[10px] leading-tight text-slate-600">
+          <span className={`mt-1 text-[10px] leading-tight ${dark ? "text-slate-300" : "text-slate-600"}`}>
             Fluxos destes órgãos
           </span>
         </div>

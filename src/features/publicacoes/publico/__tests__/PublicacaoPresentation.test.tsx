@@ -1,0 +1,77 @@
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+import { PublicacaoPresentation } from "../PublicacaoPresentation";
+import { publicPublication } from "./fixtures";
+
+const donut = vi.fn(({ data, centerTotal }: { data: unknown[]; centerTotal?: number }) => <div data-testid="donut" data-count={data.length} data-center={centerTotal} />);
+vi.mock("@/features/publicacoes/eflow/EflowDonutChart", () => ({ EflowDonutChart: (props: unknown) => donut(props as never) }));
+vi.mock("../PublicSeriesChart", () => ({
+  PublicSeriesChart: ({ title, series, kind }: { title: string; series: Array<{ pontos: Array<{ valor: string | null; valor_acumulado: string | null }> }>; kind: string }) => <div data-testid="series-chart" data-kind={kind} data-values={JSON.stringify(series[0]?.pontos)}>{title}</div>,
+  PublicRankingChart: ({ title }: { title: string }) => <div data-testid="ranking-chart">{title}</div>,
+}));
+vi.mock("@/components/common/MapaMunicipalPublicacao", () => ({ MapaMunicipalPublicacao: () => <div data-testid="frozen-map" /> }));
+
+describe("apresentação reutilizável da publicação", () => {
+  beforeEach(() => {
+    donut.mockClear();
+    Object.defineProperty(window, "matchMedia", { configurable: true, value: vi.fn().mockReturnValue({ matches: false, addEventListener: vi.fn(), removeEventListener: vi.fn() }) });
+  });
+
+  it("navega pelo carrossel por controles e teclado", async () => {
+    const user = userEvent.setup();
+    render(<PublicacaoPresentation publicacao={publicPublication} autoPlay={false} />);
+    expect(screen.getByRole("heading", { name: "Resultado e-Docs nos Municípios" })).toBeInTheDocument();
+    expect(screen.getByText("Total de Páginas em PDF")).toBeInTheDocument();
+    expect(screen.getByText("10 páginas")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Próxima etapa" }));
+    expect(screen.getByText("Ranking da economia")).toBeInTheDocument();
+    expect(screen.getByText("Páginas por mês")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Próxima etapa" }));
+    expect(screen.getByTestId("frozen-map")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Próxima etapa" }));
+    expect(screen.getByText("Órgãos com mais fluxos")).toBeInTheDocument();
+    await user.keyboard("{ArrowLeft}");
+    expect(screen.getByTestId("frozen-map")).toBeInTheDocument();
+  });
+
+  it("organiza os totalizadores E-Docs em quatro linhas com títulos e ícones", () => {
+    render(<PublicacaoPresentation publicacao={publicPublication} autoPlay={false} />);
+    const expectedTitles = [
+      "Economia total", "Total de Páginas em PDF",
+      "Economia de Papel", "Economia de Insumos", "Economia de Impressão",
+      "Economia de Água", "Redução de CO₂", "Árvores preservadas",
+      "Total de Processos", "Total de Documentos", "Papel economizado",
+    ];
+    for (const title of expectedTitles) expect(screen.getByText(title)).toBeInTheDocument();
+    expect(screen.getAllByRole("article")).toHaveLength(11);
+    expect(screen.getAllByRole("article").every((card) => card.querySelector("svg"))).toBe(true);
+  });
+
+  it("separa os gráficos e os totalizadores do E-Flow em etapas", async () => {
+    const user = userEvent.setup();
+    render(<PublicacaoPresentation publicacao={publicPublication} autoPlay={false} />);
+    await user.click(screen.getByRole("button", { name: "Abrir etapa 4: Resultados E-Flow: gráficos" }));
+    expect(donut).toHaveBeenCalled();
+    expect(donut.mock.calls.every(([props]) => props.centerTotal === undefined)).toBe(true);
+    await user.click(screen.getByRole("button", { name: "Próxima etapa" }));
+    expect(screen.getByText("15")).toBeInTheDocument();
+  });
+
+  it("oferece tema escuro para toda a apresentação", async () => {
+    const user = userEvent.setup();
+    render(<PublicacaoPresentation publicacao={publicPublication} autoPlay={false} />);
+    const presentation = screen.getByLabelText("Apresentação da publicação");
+    expect(presentation).toHaveAttribute("data-theme", "light");
+    await user.click(screen.getByRole("button", { name: "Usar tema escuro" }));
+    expect(presentation).toHaveAttribute("data-theme", "dark");
+    expect(screen.getByRole("button", { name: "Usar tema claro" })).toBeInTheDocument();
+  });
+
+  it("desativa autoplay com redução de movimento", () => {
+    vi.mocked(window.matchMedia).mockReturnValue({ matches: true, addEventListener: vi.fn(), removeEventListener: vi.fn() } as unknown as MediaQueryList);
+    render(<PublicacaoPresentation publicacao={publicPublication} autoPlay />);
+    expect(screen.getByText("Pausada")).toBeInTheDocument();
+  });
+});

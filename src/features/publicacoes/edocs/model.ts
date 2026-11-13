@@ -22,6 +22,8 @@ export interface PatriarcaEdocs {
   municipio_em_implantacao: boolean;
   municipio_manifestou_interesse: boolean;
   municipio_implantado_sem_uso_edocs: boolean;
+  ano_inicio_implantacao_sem_uso_edocs: number | null;
+  mes_inicio_implantacao_sem_uso_edocs: number | null;
   implantacao_edocs_observada: ImplantacaoEdocsObservada | null;
   acoes_disponiveis: string[];
 }
@@ -41,6 +43,65 @@ export interface ImplantacaoPatriarcaEdocs extends ImplantacaoEdocsObservada {
   patriarca_id: number;
   patriarca_sigla: string;
   patriarca_nome: string;
+}
+
+export type SituacaoMunicipioEdocs =
+  | "SEM_DADOS"
+  | "MANIFESTOU_INTERESSE"
+  | "EM_IMPLANTACAO"
+  | "IMPLANTADO_SEM_USO_EDOCS";
+
+export interface VigenciaSituacaoMunicipioEdocs {
+  id: number;
+  situacao: SituacaoMunicipioEdocs;
+  ano_inicio: number;
+  mes_inicio: number;
+  competencia_inicio: string;
+  ano_fim: number | null;
+  mes_fim: number | null;
+  competencia_fim: string | null;
+  criado_em: string;
+}
+
+export interface PatriarcaAssociadoMunicipioEdocs {
+  id: number;
+  id_externo: string;
+  sigla: string;
+  nome: string;
+}
+
+export interface MunicipioEdocs {
+  id: number;
+  codigo_ibge: number;
+  nome: string;
+  ativo: boolean;
+  versao: number;
+  situacao_atual: VigenciaSituacaoMunicipioEdocs | null;
+  vigencias: VigenciaSituacaoMunicipioEdocs[];
+  patriarca_edocs: PatriarcaAssociadoMunicipioEdocs | null;
+  criado_em: string;
+  atualizado_em: string;
+  acoes_disponiveis: string[];
+}
+
+export interface MunicipioIbge {
+  nome: string;
+  codigo_ibge: number;
+}
+
+export interface EventoAuditoriaMunicipioEdocs {
+  id: number;
+  municipio_id: number;
+  municipio_codigo_ibge: number;
+  municipio_nome: string;
+  tipo_evento: string;
+  mensagem: string;
+  dados_anteriores: Record<string, unknown>;
+  dados_atuais: Record<string, unknown>;
+  metadados: Record<string, unknown>;
+  criado_por_id: number | null;
+  criado_por_nome: string;
+  criado_em: string;
 }
 
 export interface ColetaPatriarcasEdocs {
@@ -133,6 +194,38 @@ export interface ImplantacoesQuery extends ListQuery {
   search?: string;
 }
 
+export interface MunicipiosEdocsQuery extends ListQuery {
+  search?: string;
+}
+
+export interface AuditoriaMunicipiosEdocsQuery extends ListQuery {
+  municipio_id?: number;
+}
+
+export interface CriacaoMunicipioEdocsPayload {
+  codigo_ibge: number;
+  nome: string;
+  situacao: SituacaoMunicipioEdocs;
+  ano_inicio: number;
+  mes_inicio: number;
+  justificativa: string;
+}
+
+export interface AlteracaoSituacaoMunicipioEdocsPayload {
+  situacao: SituacaoMunicipioEdocs;
+  ano_inicio: number;
+  mes_inicio: number;
+  versao: number;
+  justificativa: string;
+}
+
+export interface CorrecaoMunicipioEdocsPayload {
+  codigo_ibge: number;
+  nome: string;
+  versao: number;
+  justificativa: string;
+}
+
 export interface SelecaoColetaPayload {
   coletar_detalhes: boolean;
   justificativa: string;
@@ -144,6 +237,15 @@ export interface IndicadoresMunicipaisPayload {
   municipio_em_implantacao?: boolean;
   municipio_manifestou_interesse?: boolean;
   municipio_implantado_sem_uso_edocs?: boolean;
+  ano_inicio_implantacao_sem_uso_edocs?: number | null;
+  mes_inicio_implantacao_sem_uso_edocs?: number | null;
+  justificativa: string;
+}
+
+export interface IndicadorSemUsoEdocsPayload {
+  municipio_implantado_sem_uso_edocs: boolean;
+  ano_inicio?: number;
+  mes_inicio?: number;
   justificativa: string;
 }
 

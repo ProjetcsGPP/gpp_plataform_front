@@ -61,6 +61,12 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL('/portal/manutencao', request.url))
   }
 
+  // A vitrine de Publicações Institucionais é pública. As demais rotas do
+  // Portal, especialmente /portal/dashboard, continuam protegidas.
+  if (pathname === '/portal') {
+    return NextResponse.next()
+  }
+
   // ── Guard de cookie de sessao ─────────────────────────────────────────────
   const appPrefix = Object.keys(ROUTE_COOKIE_MAP).find((prefix) =>
     pathname.startsWith(prefix)

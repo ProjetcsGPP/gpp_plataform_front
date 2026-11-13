@@ -14,6 +14,11 @@ function makeRequest(pathname: string, cookies: Record<string, string> = {}): Ne
 
 describe('proxy — FASE 4', () => {
   // ── PORTAL ────────────────────────────────────────────────────────
+  it('deve deixar /portal público sem cookie', () => {
+    const res = proxy(makeRequest('/portal'))
+    expect(res.status).toBe(200)
+  })
+
   it('deve redirecionar /portal/dashboard sem cookie para /portal/login', () => {
     const req = makeRequest('/portal/dashboard')
     const res = proxy(req)
