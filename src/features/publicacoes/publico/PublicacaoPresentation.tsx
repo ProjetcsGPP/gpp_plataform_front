@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Banknote,
   Boxes,
@@ -73,8 +73,10 @@ type PresentationStep =
   | { key: string; title: string; kind: "eflow-charts" | "eflow-totals"; section: PublicSection }
   | { key: string; title: string; kind: "unsupported"; section: PublicSection };
 
-export function PublicacaoPresentation({ publicacao, autoPlay = true, embedded = false }: { publicacao: PublicPublication; autoPlay?: boolean; embedded?: boolean }) {
+export function PublicacaoPresentation({ publicacao, autoPlay = true, embedded = false, toolbarContent }: { publicacao: PublicPublication; autoPlay?: boolean; embedded?: boolean; toolbarContent?: React.ReactNode }) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const controlsRef = useRef<HTMLDivElement>(null);
+  const inactivityTimerRef = useRef<number | null>(null);
   const sections = useMemo(() => [...publicacao.secoes].sort((a, b) => a.ordem - b.ordem), [publicacao.secoes]);
   const steps = useMemo(() => buildPresentationSteps(sections), [sections]);
   const [index, setIndex] = useState(0);
@@ -83,6 +85,26 @@ export function PublicacaoPresentation({ publicacao, autoPlay = true, embedded =
     && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const [playing, setPlaying] = useState(autoPlay && !reducedMotion);
   const [fullscreen, setFullscreen] = useState(false);
+  const [controlsVisible, setControlsVisible] = useState(true);
+
+  const clearInactivityTimer = useCallback(() => {
+    if (inactivityTimerRef.current !== null) {
+      window.clearTimeout(inactivityTimerRef.current);
+      inactivityTimerRef.current = null;
+    }
+  }, []);
+
+  const scheduleControlsHide = useCallback(() => {
+    clearInactivityTimer();
+    inactivityTimerRef.current = window.setTimeout(() => {
+      setControlsVisible(false);
+    }, 5000);
+  }, [clearInactivityTimer]);
+
+  const showControlsTemporarily = useCallback(() => {
+    setControlsVisible(true);
+    scheduleControlsHide();
+  }, [scheduleControlsHide]);
 
   useEffect(() => {
     if (!playing || steps.length < 2 || reducedMotion) return;
@@ -94,6 +116,14 @@ export function PublicacaoPresentation({ publicacao, autoPlay = true, embedded =
     document.addEventListener("fullscreenchange", update);
     return () => document.removeEventListener("fullscreenchange", update);
   }, []);
+  useEffect(() => {
+    scheduleControlsHide();
+    return clearInactivityTimer;
+  }, [clearInactivityTimer, scheduleControlsHide]);
+  useEffect(() => {
+    window.addEventListener("keydown", showControlsTemporarily);
+    return () => window.removeEventListener("keydown", showControlsTemporarily);
+  }, [showControlsTemporarily]);
 
   function move(delta: number) {
     if (!steps.length) return;
@@ -101,6 +131,7 @@ export function PublicacaoPresentation({ publicacao, autoPlay = true, embedded =
   }
 
   function keyboard(event: React.KeyboardEvent) {
+    showControlsTemporarily();
     if (event.key === "ArrowRight") move(1);
     else if (event.key === "ArrowLeft") move(-1);
     else if (event.key === " ") { event.preventDefault(); setPlaying((value) => !value); }
@@ -110,16 +141,24 @@ export function PublicacaoPresentation({ publicacao, autoPlay = true, embedded =
 
   if (!steps.length) return <div className="rounded-2xl border border-dashed p-10 text-center text-slate-600">Esta publicação não possui seções disponíveis.</div>;
   const current = steps[Math.min(index, steps.length - 1)];
+  const carouselRunning = playing && !reducedMotion && steps.length > 1;
   const shell = dark ? "bg-slate-950 text-slate-100" : "bg-slate-100 text-slate-950";
   const footer = dark ? "border-slate-700 bg-slate-900 text-slate-200" : "border-slate-200 bg-white text-slate-700";
 
   const presentationHeight = embedded
     ? "h-[calc(90dvh-5rem)] min-h-[32rem]"
     : "h-[calc(100dvh-7rem)] min-h-[32rem]";
-  return <div ref={containerRef} tabIndex={0} onKeyDown={keyboard} data-theme={dark ? "dark" : "light"} className={`flex ${presentationHeight} flex-col overflow-hidden rounded-3xl shadow-2xl outline-none ring-sky-500 focus-visible:ring-2 ${shell} ${fullscreen ? "h-screen max-h-none min-h-0 rounded-none" : ""}`} aria-label="Apresentação da publicação">
+  return <div ref={containerRef} tabIndex={0} onKeyDown={keyboard} onPointerMove={showControlsTemporarily} onPointerDown={showControlsTemporarily} data-theme={dark ? "dark" : "light"} className={`flex ${presentationHeight} flex-col overflow-hidden rounded-3xl shadow-2xl outline-none ring-sky-500 focus-visible:ring-2 ${shell} ${fullscreen ? "h-screen max-h-none min-h-0 rounded-none" : ""}`} aria-label="Apresentação da publicação">
     <header className="flex shrink-0 flex-wrap items-center justify-between gap-3 bg-slate-950 px-5 py-3 text-white">
       <div><p className="text-xs uppercase tracking-[0.2em] text-sky-300">Publicações Institucionais</p><h1 className="text-xl font-bold">{publicacao.titulo}</h1><p className="text-xs text-slate-300">Competência {publicacao.competencia} · versão {publicacao.versao}</p></div>
-      <div className="flex items-center gap-2">
+      <div
+        ref={controlsRef}
+        data-testid="presentation-controls"
+        data-visible={controlsVisible}
+        className={`flex items-center gap-2 transition-opacity duration-300 ${controlsVisible ? "opacity-100" : "pointer-events-none opacity-0"}`}
+        onFocusCapture={showControlsTemporarily}
+      >
+        {toolbarContent}
         <Button variant="outline" size="icon" className="border-white/30 bg-transparent text-white hover:bg-white/10" onClick={() => move(-1)} aria-label="Etapa anterior"><ChevronLeft /></Button>
         <Button variant="outline" size="icon" className="border-white/30 bg-transparent text-white hover:bg-white/10" onClick={() => setPlaying((value) => !value)} aria-label={playing ? "Pausar apresentação" : "Retomar apresentação"}>{playing ? <Pause /> : <Play />}</Button>
         <Button variant="outline" size="icon" className="border-white/30 bg-transparent text-white hover:bg-white/10" onClick={() => setDark((value) => !value)} aria-label={dark ? "Usar tema claro" : "Usar tema escuro"}>{dark ? <Sun /> : <Moon />}</Button>
@@ -128,7 +167,7 @@ export function PublicacaoPresentation({ publicacao, autoPlay = true, embedded =
       </div>
     </header>
     <div className="min-h-0 flex-1 overflow-hidden p-3 md:p-4" aria-live="polite"><StepPresentation step={current} dark={dark} /></div>
-    <footer className={`flex shrink-0 items-center justify-between border-t px-5 py-2 text-sm ${footer}`}><span>{index + 1} de {steps.length}</span><div className="flex gap-2" aria-label="Selecionar etapa">{steps.map((step, position) => <button key={step.key} onClick={() => setIndex(position)} className={`h-2.5 rounded-full ${position === index ? "w-8 bg-sky-500" : dark ? "w-2.5 bg-slate-600" : "w-2.5 bg-slate-300"}`} aria-label={`Abrir etapa ${position + 1}: ${step.title}`} aria-current={position === index ? "step" : undefined} />)}</div><span className="hidden sm:inline">{playing && !reducedMotion ? "Reprodução automática" : "Pausada"}</span></footer>
+    {carouselRunning && <footer className={`flex shrink-0 items-center justify-between border-t px-5 py-2 text-sm ${footer}`}><span>{index + 1} de {steps.length}</span><div className="flex gap-2" aria-label="Selecionar etapa">{steps.map((step, position) => <button key={step.key} onClick={() => setIndex(position)} className={`h-2.5 rounded-full ${position === index ? "w-8 bg-sky-500" : dark ? "w-2.5 bg-slate-600" : "w-2.5 bg-slate-300"}`} aria-label={`Abrir etapa ${position + 1}: ${step.title}`} aria-current={position === index ? "step" : undefined} />)}</div><span className="hidden sm:inline">Reprodução automática</span></footer>}
   </div>;
 }
 

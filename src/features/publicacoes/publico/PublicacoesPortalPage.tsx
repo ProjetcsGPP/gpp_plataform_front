@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import useSWR from "swr";
-import { Archive, LogIn, RefreshCw, WifiOff } from "lucide-react";
+import { LogIn, RefreshCw, WifiOff } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -11,47 +11,80 @@ import {
   getPublicPublication,
   listPublicPublications,
 } from "./api";
-import type { PublicDistributionError } from "./model";
+import type {
+  PublicDistributionError,
+  PublicPublicationSummary,
+} from "./model";
 import { PublicacaoPresentation } from "./PublicacaoPresentation";
 
+export function sortPublicHistory(items: PublicPublicationSummary[]) {
+  return [...items].sort((left, right) => {
+    const competencyOrder = right.competencia.localeCompare(left.competencia);
+    if (competencyOrder) return competencyOrder;
+    const versionOrder = right.versao - left.versao;
+    if (versionOrder) return versionOrder;
+    const publishedOrder = Date.parse(right.publicada_em) - Date.parse(left.publicada_em);
+    if (Number.isFinite(publishedOrder) && publishedOrder) return publishedOrder;
+    return right.id.localeCompare(left.id);
+  });
+}
+
+function historyOptionLabel(item: PublicPublicationSummary) {
+  return `${item.competencia} · versão ${item.versao} · ${item.titulo}`;
+}
+
 export function PublicacoesPortalPage() {
-  const [historyOpen, setHistoryOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const current = useSWR("publicacoes-publicas/vigente", getCurrentPublicPublication, {
     revalidateOnFocus: true,
     shouldRetryOnError: false,
   });
-  const history = useSWR(
-    historyOpen ? "publicacoes-publicas/historico" : null,
-    listPublicPublications,
-    { revalidateOnFocus: false, shouldRetryOnError: false },
-  );
+  const history = useSWR("publicacoes-publicas/historico", listPublicPublications, {
+    revalidateOnFocus: false,
+    shouldRetryOnError: false,
+  });
   const detail = useSWR(
     selectedId ? ["publicacoes-publicas/detalhe", selectedId] : null,
     ([, id]) => getPublicPublication(id),
     { revalidateOnFocus: true, shouldRetryOnError: false },
   );
   const active = selectedId ? detail : current;
+  const orderedHistory = useMemo(
+    () => sortPublicHistory(history.data?.resultados ?? [])
+      .filter((item) => item.id !== current.data?.id),
+    [current.data?.id, history.data?.resultados],
+  );
+  const publicationSelector = (
+    <label className="min-w-0">
+      <span className="sr-only">Selecionar publicação</span>
+      <select
+        aria-label="Selecionar publicação"
+        className="h-9 max-w-[min(42vw,28rem)] rounded-lg border border-white/30 bg-slate-950 px-3 text-sm text-white outline-none transition focus-visible:border-cyan-300 focus-visible:ring-2 focus-visible:ring-cyan-300/40"
+        value={selectedId ?? ""}
+        onChange={(event) => setSelectedId(event.target.value || null)}
+      >
+        <option value="">
+          {current.data ? `Atual · ${current.data.competencia} · versão ${current.data.versao}` : "Publicação atual"}
+        </option>
+        {orderedHistory.map((item) => <option key={item.id} value={item.id}>{historyOptionLabel(item)}</option>)}
+        {history.isLoading && <option disabled value="__loading__">Carregando histórico...</option>}
+        {history.error && <option disabled value="__error__">Histórico temporariamente indisponível</option>}
+      </select>
+    </label>
+  );
 
   return <main className="min-h-screen bg-[radial-gradient(circle_at_top,#164e63_0,#020617_50%)] px-3 py-4 md:px-8 md:py-6">
     <div className="mx-auto max-w-[1920px]">
       <nav className="mb-4 flex flex-wrap items-center justify-between gap-3 text-white" aria-label="Navegação pública">
         <div><p className="text-xs uppercase tracking-[0.25em] text-cyan-300">Governo do Espírito Santo</p><strong className="text-lg">Portal de Publicações Institucionais</strong></div>
-        <div className="flex gap-2">
-          <Button variant="outline" className="border-white/30 bg-white/5 text-white hover:bg-white/10" onClick={() => setHistoryOpen((value) => !value)}><Archive /> Histórico</Button>
+        <div className="flex items-center gap-2">
           <Button asChild className="bg-cyan-500 text-slate-950 hover:bg-cyan-400"><Link href="/portal/login"><LogIn /> Entrar</Link></Button>
         </div>
       </nav>
 
-      {historyOpen && <section className="mb-4 rounded-2xl bg-white p-4" aria-labelledby="history-title"><div className="flex items-center justify-between"><h2 id="history-title" className="text-lg font-semibold">Histórico público</h2>{selectedId && <Button variant="outline" size="sm" onClick={() => setSelectedId(null)}>Voltar à vigente</Button>}</div>
-        {history.isLoading && <p role="status" className="mt-3 text-sm text-slate-500">Carregando histórico...</p>}
-        {history.error && <PublicState error={history.error as PublicDistributionError} retry={() => void history.mutate()} compact />}
-        {history.data && <ul className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">{history.data.resultados.map((item) => <li key={item.id}><button className="w-full rounded-xl border p-3 text-left hover:border-sky-500 focus-visible:outline-2 focus-visible:outline-sky-600" onClick={() => setSelectedId(item.id)}><strong className="block">{item.titulo}</strong><span className="text-sm text-slate-600">{item.competencia} · versão {item.versao}</span></button></li>)}</ul>}
-      </section>}
-
       {active.isLoading && <div role="status" className="flex min-h-[35rem] items-center justify-center rounded-3xl bg-white/95 text-slate-600">Carregando publicação institucional...</div>}
       {active.error && <PublicState error={active.error as PublicDistributionError} retry={() => void active.mutate()} />}
-      {!active.error && active.data && <PublicacaoPresentation key={active.data.id} publicacao={active.data} autoPlay />}
+      {!active.error && active.data && <PublicacaoPresentation key={active.data.id} publicacao={active.data} autoPlay toolbarContent={publicationSelector} />}
     </div>
   </main>;
 }

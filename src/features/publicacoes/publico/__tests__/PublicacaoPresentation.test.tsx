@@ -1,6 +1,6 @@
-import { render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { PublicacaoPresentation } from "../PublicacaoPresentation";
 import { publicPublication } from "./fixtures";
@@ -18,6 +18,7 @@ describe("apresentação reutilizável da publicação", () => {
     donut.mockClear();
     Object.defineProperty(window, "matchMedia", { configurable: true, value: vi.fn().mockReturnValue({ matches: false, addEventListener: vi.fn(), removeEventListener: vi.fn() }) });
   });
+  afterEach(() => vi.useRealTimers());
 
   it("navega pelo carrossel por controles e teclado", async () => {
     const user = userEvent.setup();
@@ -52,7 +53,9 @@ describe("apresentação reutilizável da publicação", () => {
   it("separa os gráficos e os totalizadores do E-Flow em etapas", async () => {
     const user = userEvent.setup();
     render(<PublicacaoPresentation publicacao={publicPublication} autoPlay={false} />);
-    await user.click(screen.getByRole("button", { name: "Abrir etapa 4: Resultados E-Flow: gráficos" }));
+    await user.click(screen.getByRole("button", { name: "Próxima etapa" }));
+    await user.click(screen.getByRole("button", { name: "Próxima etapa" }));
+    await user.click(screen.getByRole("button", { name: "Próxima etapa" }));
     expect(donut).toHaveBeenCalled();
     expect(donut.mock.calls.every(([props]) => props.centerTotal === undefined)).toBe(true);
     await user.click(screen.getByRole("button", { name: "Próxima etapa" }));
@@ -72,6 +75,48 @@ describe("apresentação reutilizável da publicação", () => {
   it("desativa autoplay com redução de movimento", () => {
     vi.mocked(window.matchMedia).mockReturnValue({ matches: true, addEventListener: vi.fn(), removeEventListener: vi.fn() } as unknown as MediaQueryList);
     render(<PublicacaoPresentation publicacao={publicPublication} autoPlay />);
-    expect(screen.getByText("Pausada")).toBeInTheDocument();
+    expect(screen.queryByText("Pausada")).not.toBeInTheDocument();
+    expect(screen.queryByText("Reprodução automática")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Retomar apresentação" })).toBeInTheDocument();
+  });
+
+  it("exibe o rodapé somente durante a reprodução do carrossel", async () => {
+    const user = userEvent.setup();
+    render(<PublicacaoPresentation publicacao={publicPublication} autoPlay />);
+    expect(screen.getByText("Reprodução automática")).toBeInTheDocument();
+    expect(screen.getByLabelText("Selecionar etapa")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Pausar apresentação" }));
+    expect(screen.queryByText("Reprodução automática")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Selecionar etapa")).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Retomar apresentação" }));
+    expect(screen.getByText("Reprodução automática")).toBeInTheDocument();
+  });
+
+  it("oculta os controles após cinco segundos e os recupera com mouse ou teclado", () => {
+    vi.useFakeTimers();
+    render(<PublicacaoPresentation publicacao={publicPublication} autoPlay={false} toolbarContent={<select aria-label="Histórico da apresentação"><option>Atual</option></select>} />);
+    const presentation = screen.getByLabelText("Apresentação da publicação");
+    const controls = screen.getByTestId("presentation-controls");
+    const historySelect = screen.getByRole("combobox", { name: "Histórico da apresentação" });
+    expect(controls).toContainElement(historySelect);
+    expect(controls).toHaveAttribute("data-visible", "true");
+
+    fireEvent.focus(historySelect);
+    act(() => vi.advanceTimersByTime(5000));
+    expect(controls).toHaveAttribute("data-visible", "false");
+    expect(controls).toHaveClass("opacity-0");
+
+    fireEvent.pointerMove(presentation);
+    expect(controls).toHaveAttribute("data-visible", "true");
+    expect(controls).toHaveClass("opacity-100");
+
+    act(() => vi.advanceTimersByTime(5000));
+    expect(controls).toHaveAttribute("data-visible", "false");
+
+    fireEvent.keyDown(window, { key: "Shift" });
+    expect(controls).toHaveAttribute("data-visible", "true");
+    expect(controls).toHaveClass("opacity-100");
   });
 });
