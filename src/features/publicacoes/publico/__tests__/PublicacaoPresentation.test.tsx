@@ -32,7 +32,7 @@ describe("apresentação reutilizável da publicação", () => {
     await user.click(screen.getByRole("button", { name: "Próxima etapa" }));
     expect(screen.getByTestId("frozen-map")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Próxima etapa" }));
-    expect(screen.getByText("Órgãos com mais fluxos")).toBeInTheDocument();
+    expect(screen.getByText("Órgãos com maior quantidade de fluxos")).toBeInTheDocument();
     await user.keyboard("{ArrowLeft}");
     expect(screen.getByTestId("frozen-map")).toBeInTheDocument();
   });
@@ -50,16 +50,33 @@ describe("apresentação reutilizável da publicação", () => {
     expect(screen.getAllByRole("article").every((card) => card.querySelector("svg"))).toBe(true);
   });
 
-  it("separa os gráficos e os totalizadores do E-Flow em etapas", async () => {
+  it("reúne os totalizadores e os gráficos do E-Flow em uma única etapa", async () => {
     const user = userEvent.setup();
     render(<PublicacaoPresentation publicacao={publicPublication} autoPlay={false} />);
     await user.click(screen.getByRole("button", { name: "Próxima etapa" }));
     await user.click(screen.getByRole("button", { name: "Próxima etapa" }));
     await user.click(screen.getByRole("button", { name: "Próxima etapa" }));
-    expect(donut).toHaveBeenCalled();
-    expect(donut.mock.calls.every(([props]) => props.centerTotal === undefined)).toBe(true);
-    await user.click(screen.getByRole("button", { name: "Próxima etapa" }));
+    expect(screen.getByRole("heading", { name: "Resultados e-Flow" })).toBeInTheDocument();
+    expect(screen.getByText("Total de fluxos")).toBeInTheDocument();
+    expect(screen.getByText("Órgãos participantes")).toBeInTheDocument();
+    expect(screen.getByText("Setores ativos")).toBeInTheDocument();
     expect(screen.getByText("15")).toBeInTheDocument();
+    expect(screen.getByText("Órgãos com maior quantidade de fluxos")).toBeInTheDocument();
+    expect(screen.getByText("Distribuição por público-alvo")).toBeInTheDocument();
+    expect(donut).toHaveBeenCalledTimes(2);
+    expect(donut.mock.calls[0][0]).toMatchObject({
+      centerTotal: 9,
+      data: [{ name: "SEGER", value: 9, percentage: "60.00" }],
+      legendFontSize: 16,
+      presentation: true,
+    });
+    expect(donut.mock.calls[1][0]).toMatchObject({
+      centerTotal: undefined,
+      legendFontSize: 16,
+      presentation: true,
+    });
+    await user.click(screen.getByRole("button", { name: "Próxima etapa" }));
+    expect(screen.getByRole("heading", { name: "Resultado e-Docs nos Municípios" })).toBeInTheDocument();
   });
 
   it("oferece tema escuro para toda a apresentação", async () => {

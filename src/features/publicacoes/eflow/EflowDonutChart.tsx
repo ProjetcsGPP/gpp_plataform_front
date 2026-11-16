@@ -5,8 +5,10 @@ import * as echarts from "echarts/core";
 import { PieChart, type PieSeriesOption } from "echarts/charts";
 import {
   AriaComponent,
+  LegendComponent,
   TooltipComponent,
   type AriaComponentOption,
+  type LegendComponentOption,
   type TooltipComponentOption,
 } from "echarts/components";
 import { LabelLayout } from "echarts/features";
@@ -16,7 +18,7 @@ import type { ComposeOption } from "echarts/core";
 import { formatPercent } from "@/features/publicacoes/eflow/format";
 
 type EflowChartOption = ComposeOption<
-  PieSeriesOption | TooltipComponentOption | AriaComponentOption
+  PieSeriesOption | TooltipComponentOption | AriaComponentOption | LegendComponentOption
 >;
 
 export interface EflowDonutDatum {
@@ -34,9 +36,19 @@ const CHART_COLORS = [
   "#475569",
 ];
 
+const PRESENTATION_COLORS = [
+  "#93c5fd",
+  "#60a5fa",
+  "#0f4c81",
+  "#3b9eea",
+  "#1671bd",
+  "#075985",
+];
+
 echarts.use([
   PieChart,
   TooltipComponent,
+  LegendComponent,
   AriaComponent,
   LabelLayout,
   SVGRenderer,
@@ -47,11 +59,15 @@ export function EflowDonutChart({
   data,
   centerTotal,
   dark = false,
+  presentation = false,
+  legendFontSize = 12,
 }: {
   ariaLabel: string;
   data: EflowDonutDatum[];
   centerTotal?: number;
   dark?: boolean;
+  presentation?: boolean;
+  legendFontSize?: number;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -64,7 +80,7 @@ export function EflowDonutChart({
       && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const option: EflowChartOption = {
       animation: !reducedMotion,
-      color: CHART_COLORS,
+      color: presentation ? PRESENTATION_COLORS : CHART_COLORS,
       aria: {
         enabled: true,
         description: ariaLabel,
@@ -78,11 +94,31 @@ export function EflowDonutChart({
           return `${escapeHtml(item.name)}: ${item.value.toLocaleString("pt-BR")} (${formatPercent(item.percentage)})`;
         },
       },
+      legend: presentation
+        ? {
+            show: true,
+            type: "scroll",
+            orient: "horizontal",
+            left: "center",
+            bottom: 10,
+            itemWidth: 11,
+            itemHeight: 11,
+            itemGap: 18,
+            icon: "circle",
+            textStyle: {
+              color: dark ? "#e2e8f0" : "#0f172a",
+              fontSize: legendFontSize,
+              fontWeight: 600,
+            },
+          }
+        : { show: false },
       series: [
         {
           type: "pie",
-          radius: centerTotal === undefined ? ["0%", "60%"] : ["42%", "62%"],
-          center: ["50%", "50%"],
+          radius: centerTotal === undefined
+            ? ["0%", presentation ? "58%" : "60%"]
+            : [presentation ? "35%" : "42%", presentation ? "58%" : "62%"],
+          center: presentation ? ["50%", "43%"] : ["50%", "50%"],
           avoidLabelOverlap: true,
           minAngle: 2,
           itemStyle: {
@@ -98,11 +134,18 @@ export function EflowDonutChart({
             formatter: (params) => {
               const item = data[params.dataIndex];
               if (!item) return "";
+              if (presentation) {
+                return `{value|${item.value.toLocaleString("pt-BR")} (${formatPercent(item.percentage)})}`;
+              }
               return `{name|${item.name}}\n{value|${item.value.toLocaleString("pt-BR")} (${formatPercent(item.percentage)})}`;
             },
             rich: {
               name: { color: dark ? "#f8fafc" : "#0f172a", fontWeight: 600 },
-              value: { color: dark ? "#cbd5e1" : "#475569" },
+              value: {
+                color: dark ? "#f8fafc" : "#0f172a",
+                fontSize: presentation ? 14 : 11,
+                fontWeight: presentation ? 700 : 400,
+              },
             },
           },
           labelLine: {
@@ -137,7 +180,7 @@ export function EflowDonutChart({
       window.removeEventListener("resize", resize);
       chart.dispose();
     };
-  }, [ariaLabel, centerTotal, dark, data]);
+  }, [ariaLabel, centerTotal, dark, data, legendFontSize, presentation]);
 
   if (data.length === 0) {
     return (
@@ -148,18 +191,18 @@ export function EflowDonutChart({
   }
 
   return (
-    <div className="relative h-72 min-h-0 min-w-0 flex-1">
+    <div className={`relative min-h-0 min-w-0 flex-1 ${presentation ? "h-full" : "h-72"}`}>
       <div ref={containerRef} className="size-full" />
       {centerTotal !== undefined && (
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute left-1/2 top-1/2 flex w-24 -translate-x-1/2 -translate-y-1/2 flex-col items-center text-center"
+          className={`pointer-events-none absolute left-1/2 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center text-center ${presentation ? "top-[43%] w-28" : "top-1/2 w-24"}`}
         >
-          <strong className={`text-2xl leading-none ${dark ? "text-slate-100" : "text-slate-900"}`}>
+          <strong className={`${presentation ? "text-3xl" : "text-2xl"} leading-none ${dark ? "text-slate-100" : "text-slate-900"}`}>
             {centerTotal.toLocaleString("pt-BR")}
           </strong>
-          <span className={`mt-1 text-[10px] leading-tight ${dark ? "text-slate-300" : "text-slate-600"}`}>
-            Fluxos destes órgãos
+          <span className={`mt-1 leading-tight ${presentation ? "text-sm" : "text-[10px]"} ${dark ? "text-slate-300" : "text-slate-600"}`}>
+            Fluxos totais destes órgãos
           </span>
         </div>
       )}

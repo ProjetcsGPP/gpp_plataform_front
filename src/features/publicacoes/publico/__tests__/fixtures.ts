@@ -42,7 +42,7 @@ export const publicPublication: PublicPublication = {
         quantidade_fluxos: 15,
         quantidade_orgaos_participantes: 2,
         quantidade_setores_ativos: 4,
-        orgaos_maior_quantidade_fluxos: [{ orgao: "SEGER", quantidade_fluxos: 9, percentual: "60.00" }],
+        orgaos_maior_quantidade_fluxos: [{ patriarca: "SEGER", orgao: "SEGER - Secretaria de Gestão", quantidade_fluxos: 9, percentual: "60.00" }],
         distribuicao_publico_alvo: [{ publico_alvo: "CIDADÃO", quantidade_fluxos: 15, percentual: "100.00" }],
         series_historicas: [{ codigo: "QUANTIDADE_FLUXOS", titulo: "Total de fluxos", periodicidade: "MENSAL", natureza: "ESTOQUE_VIGENTE", unidade: "fluxos", precisao: 0, serie_completa: true, pontos: [{ competencia: "2024-06", valor: "15", valor_acumulado: null, proveniencia: { tipo: "PUBLICACAO" } }] }],
       },

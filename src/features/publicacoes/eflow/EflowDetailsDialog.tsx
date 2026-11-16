@@ -23,6 +23,7 @@ import {
 } from "@/features/publicacoes/eflow/api";
 import { eflowCacheKeys } from "@/features/publicacoes/eflow/cache";
 import { EflowDonutChart } from "@/features/publicacoes/eflow/EflowDonutChart";
+import { getOrganizationAcronym } from "@/features/publicacoes/eflow/format";
 import type {
   ColetaEflow,
   DefinicaoFluxoEflow,
@@ -430,11 +431,6 @@ function AccessiblePieChart<Row extends PieRow>({
       </div>
     </AdminPanel>
   );
-}
-
-export function getOrganizationAcronym(organization: string): string {
-  if (organization === "Outros") return organization;
-  return organization.split(/\s[-–—]\s/, 1)[0].trim();
 }
 
 function Metadata({ label, value, mono = false }: { label: string; value: string; mono?: boolean }) {

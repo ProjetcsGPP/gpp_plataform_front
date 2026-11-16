@@ -11,3 +11,8 @@ export function formatPercent(value: string): string {
   if (!Number.isFinite(numeric)) return value;
   return `${numeric.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`;
 }
+
+export function getOrganizationAcronym(organization: string): string {
+  if (organization === "Outros") return organization;
+  return organization.split(/\s[-–—]\s/, 1)[0].trim();
+}

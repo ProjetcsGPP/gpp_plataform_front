@@ -28,6 +28,7 @@ import { flushSync } from "react-dom";
 import { MapaMunicipalPublicacao } from "@/components/common/MapaMunicipalPublicacao";
 import { Button } from "@/components/ui/button";
 import { EflowDonutChart } from "@/features/publicacoes/eflow/EflowDonutChart";
+import { getOrganizationAcronym } from "@/features/publicacoes/eflow/format";
 import { mapasMunicipaisDoResultado, type MapaMunicipalCongelado } from "@/features/publicacoes/mapa/model";
 import { debugLog } from "@/lib/debug";
 import type {
@@ -84,7 +85,7 @@ const EDOCS_METRIC_ROWS: readonly (readonly EdocsMetricDefinition[])[] = [
 type PresentationStep =
   | { key: string; title: string; kind: "edocs-totals" | "edocs-analysis"; section: PublicSection }
   | { key: string; title: string; kind: "edocs-map"; section: PublicSection; map: MapaMunicipalCongelado }
-  | { key: string; title: string; kind: "eflow-charts" | "eflow-totals"; section: PublicSection }
+  | { key: string; title: string; kind: "eflow"; section: PublicSection }
   | { key: string; title: string; kind: "unsupported"; section: PublicSection };
 
 interface ActiveVideoRecording {
@@ -371,8 +372,7 @@ function buildPresentationSteps(sections: PublicSection[]): PresentationStep[] {
     ...edocs.map((section) => ({ key: `edocs-totals-${section.ordem}`, title: "Resultado e-Docs nos Municípios: totalizadores", kind: "edocs-totals" as const, section })),
     ...edocs.map((section) => ({ key: `edocs-analysis-${section.ordem}`, title: `${section.titulo}: análises`, kind: "edocs-analysis" as const, section })),
     ...edocs.flatMap((section) => mapasMunicipaisDoResultado(section.conteudo as PublicEdocsContent).map((map, mapIndex) => ({ key: `edocs-map-${section.ordem}-${mapIndex}`, title: map.titulo, kind: "edocs-map" as const, section, map }))),
-    ...eflow.map((section) => ({ key: `eflow-charts-${section.ordem}`, title: `${section.titulo}: gráficos`, kind: "eflow-charts" as const, section })),
-    ...eflow.map((section) => ({ key: `eflow-totals-${section.ordem}`, title: `${section.titulo}: totalizadores`, kind: "eflow-totals" as const, section })),
+    ...eflow.map((section) => ({ key: `eflow-${section.ordem}`, title: "Resultados e-Flow", kind: "eflow" as const, section })),
     ...unsupported.map((section) => ({ key: `unsupported-${section.ordem}`, title: section.titulo, kind: "unsupported" as const, section })),
   ];
 }
@@ -381,8 +381,7 @@ function StepPresentation({ step, dark }: { step: PresentationStep; dark: boolea
   if (step.kind === "edocs-totals") return <EdocsTotals content={step.section.conteudo as PublicEdocsContent} dark={dark} />;
   if (step.kind === "edocs-analysis") return <EdocsAnalysis section={step.section} content={step.section.conteudo as PublicEdocsContent} dark={dark} />;
   if (step.kind === "edocs-map") return <MapStep section={step.section} map={step.map} dark={dark} />;
-  if (step.kind === "eflow-charts") return <EflowCharts section={step.section} content={step.section.conteudo as PublicEflowContent} dark={dark} />;
-  if (step.kind === "eflow-totals") return <EflowTotals section={step.section} content={step.section.conteudo as PublicEflowContent} dark={dark} />;
+  if (step.kind === "eflow") return <EflowPresentation section={step.section} content={step.section.conteudo as PublicEflowContent} dark={dark} />;
   debugLog("publicacoes", "seção pública ignorada por fonte desconhecida", { fonte: step.section.fonte, codigo: step.section.codigo });
   return <StepFrame eyebrow={String(step.section.fonte)} title={step.section.titulo} dark={dark}><div className={cardClass(dark, "p-6")}>Este tipo de seção ainda não possui apresentação visual compatível.</div></StepFrame>;
 }
@@ -418,14 +417,21 @@ function MapStep({ section, map, dark }: { section: PublicSection; map: MapaMuni
   return <StepFrame eyebrow="E-Docs · distribuição municipal" title={section.titulo} dark={dark}><MapaMunicipalPublicacao mapa={map} interativo dark={dark} compact presentationLayout /></StepFrame>;
 }
 
-function EflowCharts({ section, content, dark }: { section: PublicSection; content: PublicEflowContent; dark: boolean }) {
+function EflowPresentation({ section, content, dark }: { section: PublicSection; content: PublicEflowContent; dark: boolean }) {
   const top = Array.isArray(content.orgaos_maior_quantidade_fluxos) ? content.orgaos_maior_quantidade_fluxos : [];
   const audience = Array.isArray(content.distribuicao_publico_alvo) ? content.distribuicao_publico_alvo : [];
-  return <StepFrame eyebrow={`E-Flow · ${section.perfil_calculo}`} title={section.titulo} dark={dark}><div className="grid h-full min-h-0 gap-4 lg:grid-cols-2"><ChartCard title="Órgãos com mais fluxos" values={top.map((item) => ({ name: item.orgao, value: item.quantidade_fluxos, percentage: String(item.percentual) }))} dark={dark} /><ChartCard title="Distribuição por público-alvo" values={audience.map((item) => ({ name: item.publico_alvo, value: item.quantidade_fluxos, percentage: String(item.percentual) }))} dark={dark} /></div></StepFrame>;
-}
-
-function EflowTotals({ section, content, dark }: { section: PublicSection; content: PublicEflowContent; dark: boolean }) {
-  return <StepFrame eyebrow={`E-Flow · ${section.perfil_calculo}`} title={section.titulo} dark={dark}><div className="grid h-full content-center gap-5 md:grid-cols-3"><Metric label="Total de fluxos" value={formatPublicValue(content.quantidade_fluxos)} dark={dark} icon={Boxes} featured /><Metric label="Órgãos participantes" value={formatPublicValue(content.quantidade_orgaos_participantes)} dark={dark} icon={FileText} featured /><Metric label="Setores ativos" value={formatPublicValue(content.quantidade_setores_ativos)} dark={dark} icon={Leaf} featured /></div></StepFrame>;
+  const countedTopFlows = top.reduce((total, item) => total + item.quantidade_fluxos, 0);
+  return <StepFrame eyebrow={`E-Flow · ${section.perfil_calculo}`} title="Resultados e-Flow" dark={dark}><div className="grid h-full min-h-0 grid-rows-[minmax(7.5rem,0.72fr)_minmax(0,2fr)] gap-5">
+    <div className="grid min-h-0 grid-cols-3 gap-5">
+      <Metric label="Total de fluxos" value={formatPublicValue(content.quantidade_fluxos)} dark={dark} icon={Boxes} featured />
+      <Metric label="Órgãos participantes" value={formatPublicValue(content.quantidade_orgaos_participantes)} dark={dark} icon={FileText} featured />
+      <Metric label="Setores ativos" value={formatPublicValue(content.quantidade_setores_ativos)} dark={dark} icon={Leaf} featured />
+    </div>
+    <div className="grid min-h-0 grid-cols-2 gap-5">
+      <ChartCard title="Órgãos com maior quantidade de fluxos" values={top.map((item) => ({ name: item.patriarca?.trim() || getOrganizationAcronym(item.orgao), value: item.quantidade_fluxos, percentage: String(item.percentual) }))} centerTotal={countedTopFlows} legendFontSize={16} dark={dark} />
+      <ChartCard title="Distribuição por público-alvo" values={audience.map((item) => ({ name: item.publico_alvo, value: item.quantidade_fluxos, percentage: String(item.percentual) }))} legendFontSize={16} dark={dark} />
+    </div>
+  </div></StepFrame>;
 }
 
 function cardClass(dark: boolean, extra = "") {
@@ -436,8 +442,8 @@ function Metric({ label, value, dark, icon: Icon, featured = false }: { label: s
   return <article className={cardClass(dark, "flex h-full min-h-0 flex-col overflow-hidden text-center")}><header className={`flex shrink-0 items-center justify-between gap-3 text-left text-white ${featured ? "min-h-16 px-5 py-3" : "min-h-14 px-4 py-2.5"} ${dark ? "bg-sky-900" : "bg-sky-800"}`}><span className={`font-semibold leading-tight ${featured ? "text-xl md:text-2xl" : "text-base md:text-lg xl:text-xl"}`}>{label}</span><Icon className={featured ? "h-9 w-9 md:h-11 md:w-11" : "h-7 w-7 md:h-8 md:w-8"} strokeWidth={1.8} aria-hidden="true" /></header><div className="flex min-h-0 flex-1 items-center justify-center px-3 py-1"><strong className={`leading-none tracking-tight ${featured ? "text-3xl md:text-4xl xl:text-5xl" : "text-xl md:text-2xl xl:text-3xl"}`}>{value}</strong></div></article>;
 }
 
-function ChartCard({ title, values, dark }: { title: string; values: Array<{ name: string; value: number; percentage: string }>; dark: boolean }) {
-  return <section className={cardClass(dark, "flex min-h-0 flex-col overflow-hidden")}><h3 className={`flex min-h-14 shrink-0 items-center px-4 py-2.5 text-base font-semibold leading-tight text-white md:text-lg xl:text-xl ${dark ? "bg-sky-900" : "bg-sky-800"}`}>{title}</h3><div className="min-h-0 flex-1 p-3"><EflowDonutChart ariaLabel={title} data={values} dark={dark} /></div></section>;
+function ChartCard({ title, values, centerTotal, legendFontSize, dark }: { title: string; values: Array<{ name: string; value: number; percentage: string }>; centerTotal?: number; legendFontSize?: number; dark: boolean }) {
+  return <section className={cardClass(dark, "flex min-h-0 flex-col overflow-hidden")}><h3 className={`flex min-h-14 shrink-0 items-center justify-center px-4 py-2.5 text-center text-base font-semibold leading-tight text-white md:text-lg xl:text-xl ${dark ? "bg-sky-900" : "bg-sky-800"}`}>{title}</h3><div className="min-h-0 flex-1 p-2"><EflowDonutChart ariaLabel={title} data={values} centerTotal={centerTotal} dark={dark} presentation legendFontSize={legendFontSize} /></div></section>;
 }
 
 export function adaptAdministrativePublication(publication: { id: string; versao: number; titulo: string; competencia: string; publicada_em: string | null; atualizado_em: string; secoes: Array<{ ordem: number; titulo: string; fonte: "EDOCS" | "EFLOW"; perfil_calculo: string; configuracao_congelada: Record<string, unknown>; resultado: Record<string, unknown> }> }): PublicPublication {
