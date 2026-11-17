@@ -23,6 +23,7 @@ import {
   Video,
   type LucideIcon,
 } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
 import { flushSync } from "react-dom";
 
 import { MapaMunicipalPublicacao } from "@/components/common/MapaMunicipalPublicacao";
@@ -339,7 +340,7 @@ export function PublicacaoPresentation({
   const presentationHeight = embedded
     ? "h-[calc(90dvh-5rem)] min-h-[32rem]"
     : "h-[calc(100dvh-7rem)] min-h-[32rem]";
-  return <div ref={containerRef} tabIndex={0} onKeyDown={keyboard} onPointerMove={videoExportMode ? undefined : showControlsTemporarily} onPointerDown={videoExportMode ? undefined : showControlsTemporarily} data-theme={dark ? "dark" : "light"} data-video-export={videoExportMode} className={`flex ${presentationHeight} flex-col overflow-hidden rounded-3xl shadow-2xl outline-none ring-sky-500 focus-visible:ring-2 ${shell} ${fullscreen ? "h-screen max-h-none min-h-0 rounded-none" : ""} ${videoExportMode ? "fixed inset-0 z-[110] h-dvh min-h-0 rounded-none shadow-none" : ""}`} aria-label="Apresentação da publicação">
+  return <div ref={containerRef} tabIndex={0} onKeyDown={keyboard} onPointerMove={videoExportMode ? undefined : showControlsTemporarily} onPointerDown={videoExportMode ? undefined : showControlsTemporarily} data-theme={dark ? "dark" : "light"} data-video-export={videoExportMode} className={`flex ${presentationHeight} flex-col overflow-hidden rounded-3xl shadow-2xl outline-none ring-sky-500 focus-visible:ring-2 ${shell} ${fullscreen ? "h-screen max-h-none min-h-0 rounded-none" : ""} ${videoExportMode ? "fixed inset-0 z-[110] h-dvh min-h-0 cursor-none rounded-none shadow-none" : ""} ${!controlsVisible ? "cursor-none" : ""}`} aria-label="Apresentação da publicação">
     <header className="flex shrink-0 flex-wrap items-center justify-between gap-3 bg-slate-950 px-5 py-3 text-white">
       <div><p className="text-xs uppercase tracking-[0.2em] text-sky-300">Publicações Institucionais</p><h1 className="text-xl font-bold">{publicacao.titulo}</h1><p className="text-xs text-slate-300">Competência {publicacao.competencia} · versão {publicacao.versao}</p></div>
       {!videoExportMode && <div
@@ -358,7 +359,21 @@ export function PublicacaoPresentation({
         <Button variant="outline" size="icon" className="border-white/30 bg-transparent text-white hover:bg-white/10" onClick={() => move(1)} aria-label="Próxima etapa"><ChevronRight /></Button>
       </div>}
     </header>
-    <div className="min-h-0 flex-1 overflow-hidden p-3 md:p-4" aria-live="polite"><StepPresentation step={current} dark={dark} /></div>
+    <div className="relative min-h-0 flex-1 overflow-hidden" aria-live="polite">
+      <AnimatePresence initial={false} mode="sync">
+        <motion.div
+          key={current.key}
+          data-testid="presentation-step"
+          className="absolute inset-0 p-3 md:p-4"
+          initial={reducedMotion ? false : { opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={reducedMotion ? undefined : { opacity: 0 }}
+          transition={{ duration: reducedMotion ? 0 : 0.45, ease: "easeInOut" }}
+        >
+          <StepPresentation step={current} dark={dark} />
+        </motion.div>
+      </AnimatePresence>
+    </div>
     {!videoExportMode && carouselRunning && <footer className={`flex shrink-0 items-center justify-between border-t px-5 py-2 text-sm ${footer}`}><span>{index + 1} de {steps.length}</span><div className="flex gap-2" aria-label="Selecionar etapa">{steps.map((step, position) => <button key={step.key} onClick={() => setIndex(position)} className={`h-2.5 rounded-full ${position === index ? "w-8 bg-sky-500" : dark ? "w-2.5 bg-slate-600" : "w-2.5 bg-slate-300"}`} aria-label={`Abrir etapa ${position + 1}: ${step.title}`} aria-current={position === index ? "step" : undefined} />)}</div><span className="hidden sm:inline">Reprodução automática</span></footer>}
     {videoDialogOpen && <PublicacaoVideoExportDialog steps={steps.map(({ key, title }) => ({ key, title }))} format={videoExportFormat} available={videoExportAvailable} error={videoExportError} onClose={() => setVideoDialogOpen(false)} onStart={(durations) => void startVideoExport(durations)} />}
   </div>;

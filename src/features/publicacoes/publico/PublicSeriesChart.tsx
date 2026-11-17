@@ -16,6 +16,7 @@ import {
 import { SVGRenderer } from "echarts/renderers";
 import type { ComposeOption } from "echarts/core";
 
+import { observeChartResize } from "@/features/publicacoes/chartResize";
 import type { PublicSeries, PublicValue } from "./model";
 import { formatPublicValue } from "./presentationFormat";
 
@@ -153,11 +154,11 @@ export function PublicSeriesChart({ title, series, kind = "line", dark = false, 
       }),
     };
     chart.setOption(option);
-    const resize = () => chart.resize();
-    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(resize);
-    observer?.observe(container);
-    if (!observer) window.addEventListener("resize", resize);
-    return () => { observer?.disconnect(); window.removeEventListener("resize", resize); chart.dispose(); };
+    const stopObservingResize = observeChartResize(
+      container,
+      (width, height) => chart.resize({ width, height }),
+    );
+    return () => { stopObservingResize(); chart.dispose(); };
   }, [dark, kind, series, title]);
 
   if (!series.length) return <EmptyChart title={title} dark={dark} />;
@@ -205,11 +206,11 @@ export function PublicRankingChart({ title, values, dark = false }: { title: str
       }],
     };
     chart.setOption(option);
-    const resize = () => chart.resize();
-    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(resize);
-    observer?.observe(container);
-    if (!observer) window.addEventListener("resize", resize);
-    return () => { observer?.disconnect(); window.removeEventListener("resize", resize); chart.dispose(); };
+    const stopObservingResize = observeChartResize(
+      container,
+      (width, height) => chart.resize({ width, height }),
+    );
+    return () => { stopObservingResize(); chart.dispose(); };
   }, [dark, orderedValues, title]);
   if (!orderedValues.length) return <EmptyChart title={title} dark={dark} />;
   return <section className={chartCardClass(dark)}><ChartHeader title={title} dark={dark} /><div ref={ref} className="mx-3 mb-3 mt-2 min-h-0 flex-1" aria-hidden="true" /><table className="sr-only"><caption>{title}</caption><tbody>{orderedValues.map((item) => <tr key={`${item.posicao}-${item.codigo_municipio}`}><td>{municipalityName(item)}</td><td>{formatPublicValue(item.economia_total_reais, "BRL", 2)}</td></tr>)}</tbody></table></section>;

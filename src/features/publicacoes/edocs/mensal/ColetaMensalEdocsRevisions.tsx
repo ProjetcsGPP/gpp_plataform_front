@@ -33,7 +33,7 @@ import { getApiErrorMessage } from "@/lib/apiErrors";
 import { PERMISSIONS } from "@/lib/permissions";
 import type { AdminSortRule, AdminTableDensity } from "@/types/admin";
 
-type SortKey = "ano" | "mes" | "revisao" | "situacao" | "criado_em";
+type SortKey = "competencia" | "revisao" | "criado_em";
 
 const MONTHS = [
   "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
@@ -55,8 +55,7 @@ export function ColetaMensalEdocsRevisions() {
   const [status, setStatus] = useState("");
   const [density, setDensity] = useState<AdminTableDensity>("compact");
   const [sorting, setSorting] = useState<AdminSortRule<SortKey>[]>([
-    { key: "ano", direction: "desc" },
-    { key: "mes", direction: "desc" },
+    { key: "competencia", direction: "desc" },
     { key: "revisao", direction: "desc" },
   ]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -113,14 +112,24 @@ export function ColetaMensalEdocsRevisions() {
 
   function toggleSort(sortKey: SortKey, additive: boolean) {
     setPage(1);
-    setSorting((current) => nextEdocsSorting(current, sortKey, additive));
+    setSorting((current) => {
+      if (sortKey !== "competencia" || additive) {
+        return nextEdocsSorting(current, sortKey, additive);
+      }
+      const currentDirection = current.find((rule) => rule.key === "competencia")?.direction;
+      const direction = currentDirection === "asc" ? "desc" : "asc";
+      return [
+        { key: "competencia", direction },
+        { key: "revisao", direction },
+      ];
+    });
   }
 
   const columns: AdminTableColumn<ColetaMensalEdocs, SortKey>[] = [
     {
       key: "competencia",
       label: "Competência",
-      sortKey: "ano",
+      sortKey: "competencia",
       render: (row) => <strong>{formatCompetence(row.ano, row.mes)}</strong>,
     },
     {
@@ -133,7 +142,6 @@ export function ColetaMensalEdocsRevisions() {
     {
       key: "situacao",
       label: "Situação",
-      sortKey: "situacao",
       render: (row) => <MonthlyStatus status={row.situacao} />,
     },
     {
@@ -248,13 +256,12 @@ export function ColetaMensalEdocsRevisions() {
           onDensityChange={setDensity}
           onResetView={() => {
             setSorting([
-              { key: "ano", direction: "desc" },
-              { key: "mes", direction: "desc" },
+              { key: "competencia", direction: "desc" },
               { key: "revisao", direction: "desc" },
             ]);
             setDensity("compact");
           }}
-          isLoading={isLoading}
+          isLoading={isLoading && !data}
           isRefreshing={isValidating && Boolean(data)}
           errorMessage={
             error

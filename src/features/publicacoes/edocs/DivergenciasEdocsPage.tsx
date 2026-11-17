@@ -31,6 +31,19 @@ import type { AdminSortRule, AdminTableDensity } from "@/types/admin";
 
 type SortKey = "criado_em" | "situacao" | "comparacao";
 
+function getPatriarchEvidence(
+  divergence: DivergenciaPatriarcaEdocs,
+  field: "sigla" | "nome",
+) {
+  const observed = divergence.dados_observados?.[field];
+  if (typeof observed === "string" && observed.trim()) return observed.trim();
+
+  const expected = divergence.dados_esperados[field];
+  if (typeof expected === "string" && expected.trim()) return expected.trim();
+
+  return "—";
+}
+
 export function DivergenciasEdocsPage() {
   const { can } = usePermissions();
   const { mutate: mutateCache } = useSWRConfig();
@@ -87,6 +100,18 @@ export function DivergenciasEdocsPage() {
       label: "Detectada em",
       sortKey: "criado_em",
       render: (row) => formatAdminDate(row.criado_em),
+    },
+    {
+      key: "sigla",
+      label: "Sigla",
+      render: (row) => (
+        <span className="font-semibold">{getPatriarchEvidence(row, "sigla")}</span>
+      ),
+    },
+    {
+      key: "nome",
+      label: "Nome do patriarca",
+      render: (row) => getPatriarchEvidence(row, "nome"),
     },
     {
       key: "id_externo",

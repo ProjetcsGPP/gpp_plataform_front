@@ -160,6 +160,10 @@ describe("coleta mensal E-Docs", () => {
     setup();
 
     expect(await screen.findByText("Totais históricos E-Docs")).toBeInTheDocument();
+    const disclosure = screen.getByTestId("monthly-historical-totals-disclosure");
+    expect(disclosure).not.toHaveAttribute("open");
+    await user.click(screen.getByText("Totais históricos E-Docs"));
+    expect(disclosure).toHaveAttribute("open");
     expect(monthlyApi.getTotaisHistoricosEdocs).toHaveBeenCalledWith({});
     await user.type(screen.getByLabelText("Ano (opcional)"), "2024");
     await user.type(screen.getByLabelText("ID interno do município (opcional)"), "25");
@@ -169,6 +173,64 @@ describe("coleta mensal E-Docs", () => {
         ano: 2024,
         patriarca_id: 25,
       }),
+    );
+  });
+
+  it("ordena por competência composta e mantém a grade durante a consulta", async () => {
+    const user = userEvent.setup();
+    vi.mocked(monthlyApi.listColetasMensaisEdocs).mockResolvedValue({
+      count: 1,
+      next: null,
+      previous: null,
+      results: [collection],
+    });
+    setup();
+
+    await waitFor(() =>
+      expect(monthlyApi.listColetasMensaisEdocs).toHaveBeenCalledWith(
+        expect.objectContaining({ ordering: "-competencia,-revisao" }),
+      ),
+    );
+    expect(
+      screen.getByRole("button", { name: /^Competência/ }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Situação" })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /^Competência/ }));
+    await waitFor(() =>
+      expect(monthlyApi.listColetasMensaisEdocs).toHaveBeenLastCalledWith(
+        expect.objectContaining({ ordering: "competencia,revisao" }),
+      ),
+    );
+    await user.click(screen.getByRole("button", { name: /^Competência/ }));
+    await waitFor(() =>
+      expect(monthlyApi.listColetasMensaisEdocs).toHaveBeenLastCalledWith(
+        expect.objectContaining({ ordering: "-competencia,-revisao" }),
+      ),
+    );
+
+    vi.mocked(monthlyApi.listColetasMensaisEdocs).mockImplementationOnce(
+      () => new Promise(() => undefined),
+    );
+    await user.click(screen.getByRole("button", { name: /^Revisão/ }));
+    await waitFor(() =>
+      expect(monthlyApi.listColetasMensaisEdocs).toHaveBeenLastCalledWith(
+        expect.objectContaining({ ordering: "revisao" }),
+      ),
+    );
+    expect(screen.getByText("09/2024")).toBeInTheDocument();
+
+    vi.mocked(monthlyApi.listColetasMensaisEdocs).mockResolvedValue({
+      count: 1,
+      next: null,
+      previous: null,
+      results: [collection],
+    });
+    await user.click(screen.getByRole("button", { name: /^Revisão/ }));
+    await waitFor(() =>
+      expect(monthlyApi.listColetasMensaisEdocs).toHaveBeenLastCalledWith(
+        expect.objectContaining({ ordering: "-revisao" }),
+      ),
     );
   });
 

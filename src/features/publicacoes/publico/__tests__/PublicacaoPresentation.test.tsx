@@ -135,10 +135,12 @@ describe("apresentação reutilizável da publicação", () => {
     act(() => vi.advanceTimersByTime(5000));
     expect(controls).toHaveAttribute("data-visible", "false");
     expect(controls).toHaveClass("opacity-0");
+    expect(presentation).toHaveClass("cursor-none");
 
     fireEvent.pointerMove(presentation);
     expect(controls).toHaveAttribute("data-visible", "true");
     expect(controls).toHaveClass("opacity-100");
+    expect(presentation).not.toHaveClass("cursor-none");
 
     act(() => vi.advanceTimersByTime(5000));
     expect(controls).toHaveAttribute("data-visible", "false");
@@ -146,5 +148,6 @@ describe("apresentação reutilizável da publicação", () => {
     fireEvent.keyDown(window, { key: "Shift" });
     expect(controls).toHaveAttribute("data-visible", "true");
     expect(controls).toHaveClass("opacity-100");
+    expect(presentation).not.toHaveClass("cursor-none");
   });
 });

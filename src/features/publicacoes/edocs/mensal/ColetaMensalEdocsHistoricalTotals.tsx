@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import useSWR from "swr";
-import { BarChart3, FilterX } from "lucide-react";
+import { BarChart3, ChevronDown, FilterX } from "lucide-react";
 
 import { AdminAlert, AdminPanel } from "@/components/admin/AdminPage";
 import { Button } from "@/components/ui/button";
@@ -63,81 +63,86 @@ export function ColetaMensalEdocsHistoricalTotals() {
 
   return (
     <div data-testid="monthly-historical-totals">
-      <AdminPanel className="relative p-5" aria-busy={isValidating}>
+      <AdminPanel className="relative overflow-hidden p-0" aria-busy={isValidating}>
         {isValidating && data && (
           <div className="absolute inset-x-0 top-0 h-0.5 animate-pulse bg-app-primary" />
         )}
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="flex items-start gap-3">
-            <span className="rounded-lg bg-emerald-100 p-2 text-emerald-700">
-              <BarChart3 aria-hidden="true" />
-            </span>
-            <div>
+        <details className="group" data-testid="monthly-historical-totals-disclosure">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 marker:hidden">
+            <span className="flex items-center gap-3">
+              <span className="rounded-lg bg-emerald-100 p-2 text-emerald-700">
+                <BarChart3 aria-hidden="true" />
+              </span>
               <h2 className="font-semibold text-slate-900">Totais históricos E-Docs</h2>
+            </span>
+            <ChevronDown className="size-5 shrink-0 text-slate-500 transition-transform group-open:rotate-180" aria-hidden="true" />
+          </summary>
+          <div className="border-t border-slate-200 px-5 pb-5 pt-4">
+            <div>
               <p className="mt-1 max-w-3xl text-sm text-slate-600">
                 Somatórios das últimas revisões bem-sucedidas de cada competência, calculados pelo backend.
               </p>
             </div>
+
+            <div className="mt-4 flex flex-wrap items-end gap-3">
+              <label className="text-xs font-medium text-slate-600">
+                Ano (opcional)
+                <input
+                  type="number"
+                  min={2000}
+                  max={9999}
+                  className="mt-1 block w-36 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm"
+                  value={year}
+                  onChange={(event) => setYear(event.target.value)}
+                  aria-invalid={!yearIsValid}
+                />
+              </label>
+              <label className="text-xs font-medium text-slate-600">
+                ID interno do município (opcional)
+                <input
+                  type="number"
+                  min={1}
+                  className="mt-1 block w-60 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm"
+                  value={municipalityId}
+                  onChange={(event) => setMunicipalityId(event.target.value)}
+                  aria-invalid={!municipalityIsValid}
+                />
+              </label>
+              <Button
+                variant="outline"
+                onClick={applyFilters}
+                disabled={!yearIsValid || !municipalityIsValid || isValidating}
+              >
+                Aplicar filtros
+              </Button>
+              <Button variant="ghost" onClick={clearFilters} disabled={isValidating}>
+                <FilterX aria-hidden="true" /> Limpar
+              </Button>
+            </div>
+            {(!yearIsValid || !municipalityIsValid) && (
+              <p className="mt-2 text-xs text-red-700">
+                Informe um ano entre 2000 e 9999 e um ID de município inteiro positivo.
+              </p>
+            )}
+
+            <div className="mt-5">
+              {isLoading && (
+                <p className="text-sm text-slate-500">Carregando totais históricos...</p>
+              )}
+              {error && (
+                <AdminAlert>
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <span>{getApiErrorMessage(error, "Não foi possível carregar os totais históricos.")}</span>
+                    <Button variant="outline" size="sm" onClick={() => mutate()}>
+                      Tentar novamente
+                    </Button>
+                  </div>
+                </AdminAlert>
+              )}
+              {data && <HistoricalTotalsResult data={data} />}
+            </div>
           </div>
-        </div>
-
-        <div className="mt-4 flex flex-wrap items-end gap-3">
-          <label className="text-xs font-medium text-slate-600">
-            Ano (opcional)
-            <input
-              type="number"
-              min={2000}
-              max={9999}
-              className="mt-1 block w-36 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm"
-              value={year}
-              onChange={(event) => setYear(event.target.value)}
-              aria-invalid={!yearIsValid}
-            />
-          </label>
-          <label className="text-xs font-medium text-slate-600">
-            ID interno do município (opcional)
-            <input
-              type="number"
-              min={1}
-              className="mt-1 block w-60 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm"
-              value={municipalityId}
-              onChange={(event) => setMunicipalityId(event.target.value)}
-              aria-invalid={!municipalityIsValid}
-            />
-          </label>
-          <Button
-            variant="outline"
-            onClick={applyFilters}
-            disabled={!yearIsValid || !municipalityIsValid || isValidating}
-          >
-            Aplicar filtros
-          </Button>
-          <Button variant="ghost" onClick={clearFilters} disabled={isValidating}>
-            <FilterX aria-hidden="true" /> Limpar
-          </Button>
-        </div>
-        {(!yearIsValid || !municipalityIsValid) && (
-          <p className="mt-2 text-xs text-red-700">
-            Informe um ano entre 2000 e 9999 e um ID de município inteiro positivo.
-          </p>
-        )}
-
-        <div className="mt-5">
-          {isLoading && (
-            <p className="text-sm text-slate-500">Carregando totais históricos...</p>
-          )}
-          {error && (
-            <AdminAlert>
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <span>{getApiErrorMessage(error, "Não foi possível carregar os totais históricos.")}</span>
-                <Button variant="outline" size="sm" onClick={() => mutate()}>
-                  Tentar novamente
-                </Button>
-              </div>
-            </AdminAlert>
-          )}
-          {data && <HistoricalTotalsResult data={data} />}
-        </div>
+        </details>
       </AdminPanel>
     </div>
   );

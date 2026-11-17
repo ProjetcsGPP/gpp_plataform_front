@@ -15,6 +15,7 @@ import { LabelLayout } from "echarts/features";
 import { SVGRenderer } from "echarts/renderers";
 import type { ComposeOption } from "echarts/core";
 
+import { observeChartResize } from "@/features/publicacoes/chartResize";
 import { formatPercent } from "@/features/publicacoes/eflow/format";
 
 type EflowChartOption = ComposeOption<
@@ -168,16 +169,13 @@ export function EflowDonutChart({
 
     chart.setOption(option);
 
-    const resize = () => chart.resize();
-    const resizeObserver =
-      typeof ResizeObserver === "undefined" ? null : new ResizeObserver(resize);
-
-    if (resizeObserver) resizeObserver.observe(container);
-    else window.addEventListener("resize", resize);
+    const stopObservingResize = observeChartResize(
+      container,
+      (width, height) => chart.resize({ width, height }),
+    );
 
     return () => {
-      resizeObserver?.disconnect();
-      window.removeEventListener("resize", resize);
+      stopObservingResize();
       chart.dispose();
     };
   }, [ariaLabel, centerTotal, dark, data, legendFontSize, presentation]);
