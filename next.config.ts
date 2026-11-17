@@ -4,6 +4,7 @@ import path from "path";
 const nextConfig: NextConfig = {
   experimental: {
     useTypeScriptCli: false,
+    agentUpgrade: "security",
   },
   turbopack: {
     root: path.resolve(__dirname),
