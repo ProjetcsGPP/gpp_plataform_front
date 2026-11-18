@@ -567,7 +567,28 @@ export type EnvioOrganogramaStatus =
   | "PROCESSANDO"
   | "CONCLUIDO"
   | "CONCLUIDO_DESATUALIZADO"
+  | "SITUACAO_REMOTA_INDETERMINADA"
   | "ERRO";
+
+export interface EncerramentoMonitoramentoProdest {
+  permitido: boolean;
+  opcoes_disponiveis: Array<
+    "CONTINUAR_AGUARDANDO" | "LIBERAR_NOVO_ENVIO"
+  >;
+  carencia_segundos: number;
+  referencia_em: string | null;
+  disponivel_em: string | null;
+  segundos_restantes: number | null;
+  situacao_remota_finalizada: boolean;
+}
+
+export interface EncerrarMonitoramentoProdestPayload {
+  justificativa: string;
+  confirmar_risco_processamento_remoto: boolean;
+  analista_prodest_avisado: boolean;
+  analista_prodest_respondeu: boolean;
+  retorno_analista_prodest: string;
+}
 
 export type FaseIntegracaoProdest =
   | "PREPARACAO"
@@ -585,6 +606,27 @@ export type StatusOperacionalProdest =
   | "ERRO"
   | "IGNORADO";
 
+export interface EtapaFluxoOperacional {
+  codigo: FaseIntegracaoProdest;
+  nome: string;
+  ordem: number;
+  status: StatusOperacionalProdest;
+  status_nome: string;
+  mensagem: string;
+  data_ultima_atividade: string | null;
+  atual: boolean;
+  origem_autenticacao?: "NOVO" | "CACHE_COMPARTILHADO" | "";
+}
+
+export interface FluxoOperacionalProdest {
+  fase_atual: FaseIntegracaoProdest;
+  fase_atual_nome: string;
+  status_atual: StatusOperacionalProdest;
+  status_atual_nome: string;
+  mensagem_atual: string;
+  etapas: EtapaFluxoOperacional[];
+}
+
 export interface EtapaProdest {
   etapa?: number | string | null;
   status?: number | string | null;
@@ -599,6 +641,7 @@ export interface EnvioOrganogramaProdest {
   idenvioorganograma: number;
   idimportacaoplanilha_id: number;
   idprocessocargainicial_id: number | null;
+  idtentativaanterior_id: number | null;
   idpatriarca_id: number;
   patriarca_nome: string;
   importacao_referencia: string;
@@ -610,6 +653,7 @@ export interface EnvioOrganogramaProdest {
   status_nome: string;
   finalizada_prodest: boolean;
   relatorio_disponivel: boolean;
+  fluxo_operacional?: FluxoOperacionalProdest;
   etapas_prodest: EtapaProdest[];
   strfaseatual: FaseIntegracaoProdest;
   fase_atual: FaseIntegracaoProdest;
@@ -618,13 +662,23 @@ export interface EnvioOrganogramaProdest {
   status_atual_nome: string;
   strmensagematual: string;
   mensagem_atual: string;
-  datultimaatividade: string;
+  datultimaatividade: string | null;
   datproximaconsulta: string | null;
+  datfimmonitoramento: string | null;
+  datencerramentomanual: string | null;
+  strjustificativaencerramento: string;
+  flganalistaprodestavisado: boolean | null;
+  flganalistaprodestrespondeu: boolean | null;
+  strretornoanalistaprodest: string;
+  encerrado_by_id: number | null;
+  encerrado_by_name: string;
+  encerramento_monitoramento: EncerramentoMonitoramentoProdest;
   acoes_disponiveis: {
     consultar_detalhes: boolean;
     consultar_status: boolean;
     consultar_relatorio: boolean;
     tentar_novamente: boolean;
+    encerrar_monitoramento: boolean;
   };
   ultimo_evento_id: number | null;
   strhashpayload: string;
@@ -653,6 +707,8 @@ export interface EventoIntegracaoProdest {
   strtipocarga: "ORGANOGRAMA" | "LOTACAO";
   strfase: FaseIntegracaoProdest;
   fase_nome: string;
+  fase_exibicao: FaseIntegracaoProdest;
+  fase_exibicao_nome: string;
   strcodigo: string;
   strstatusoperacional: StatusOperacionalProdest;
   status_operacional_nome: string;
@@ -669,6 +725,7 @@ export interface EventoIntegracaoProdest {
   intduracaoms: number | null;
   strmensagem: string;
   jsondetalhes: Record<string, unknown>;
+  jsondetalhes_exibicao?: Record<string, unknown>;
   datocorrencia: string;
   created_by_name: string | null;
 }
@@ -701,6 +758,7 @@ export interface ProcessoAtualizadoProdest {
   mensagem_atual: string;
   datultimaatividade: string;
   ultimo_evento_id: number;
+  fluxo_operacional?: FluxoOperacionalProdest;
 }
 
 export interface MensagemWebSocketProdest {

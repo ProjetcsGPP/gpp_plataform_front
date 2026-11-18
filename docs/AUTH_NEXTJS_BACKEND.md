@@ -1,68 +1,44 @@
-# Autenticação e troca de contexto no GPP
+# Contrato backend de autenticação consumido pelo frontend
 
-## Objetivo
+Este resumo não substitui a documentação canônica do backend. Ele mantém o
+repositório frontend alinhado ao contrato vigente de sessão multiaplicação.
 
-Este documento descreve como o frontend deve integrar com o backend Django do GPP usando autenticação por sessão e troca de contexto por aplicação.
+## Endpoints
 
-## Regras do backend
+| Finalidade | Método e endpoint | Corpo | Observação |
+|---|---|---|---|
+| Bootstrap CSRF | `GET /api/accounts/auth/csrf/` | — | Emite `csrftoken` legível |
+| Login | `POST /api/accounts/login/` | `identifier`, `password`, `app_context` | `identifier` é opaco |
+| Estado atual | `GET /api/accounts/me/` | — | Usa a sessão da aplicação |
+| Troca de aplicação | `POST /api/accounts/switch-app/` | `app_context` | Não reenvia credenciais |
+| Logout seletivo | `POST /api/accounts/logout/{app_slug}/` | — | Exige CSRF e remove apenas o cookie alvo |
 
-- O backend autentica exclusivamente por sessão Django.
-- O cookie de sessão é `gpp_session`.
-- A revogação real da sessão é controlada por `accounts_session`.
-- O backend injeta `request.user`, `request.application`, `request.user_roles` e `request.is_portal_admin` em cada request.
+O endpoint `resolve-user` foi removido e não possui consumidor ou fallback no
+frontend.
 
-## Fluxos suportados
+## Sessões e cookies
 
-### 1. Login direto em uma aplicação
+- cada aplicação possui cookie `gpp_session_<APP>`;
+- cookies de sessão são HttpOnly e `SameSite=Lax`, com `Secure` em produção;
+- `csrftoken` é legível para composição de `X-CSRFToken`;
+- login pode rotacionar CSRF, portanto o token não é mantido em memória;
+- sessão expirada, revogada, pertencente a usuário inativo ou usada em contexto
+  divergente é recusada pelo backend;
+- o backend continua sendo a autoridade para autorização, menus, capabilities,
+  aplicações disponíveis e permissões técnicas.
 
-Usuário informa credenciais e o `app_context` da aplicação desejada.
-Se ele tiver role nessa aplicação, a sessão é criada já contextualizada.
+## Respostas relevantes
 
-### 2. Login no Portal
+- login: `400` requisição inválida, `401` credenciais inválidas, `403` contexto
+  ou acesso recusado, `429` throttling e `5xx` indisponibilidade;
+- endpoints autenticados: `401` para sessão inválida;
+- logout seletivo: idempotente para cookie ausente, mas sempre protegido por
+  CSRF;
+- falhas do login não devem permitir distinguir identificador inexistente,
+  senha inválida ou ausência de vínculo pela mensagem da interface.
 
-`PORTAL` é um contexto especial.
-Somente usuários com `PORTAL_ADMIN` ou superuser conseguem entrar nele.
+## Responsabilidade do frontend
 
-### 3. Troca de contexto depois do login
-
-Se o usuário entrar no Portal e depois escolher outra aplicação permitida, o frontend deve chamar o endpoint de switch de aplicação.
-O cookie permanece o mesmo, mas o `app_context` da sessão muda e o backend passa a carregar as roles daquela aplicação.
-
-## O que muda no switch de contexto
-
-- O cookie `gpp_session` não muda.
-- A sessão Django continua autenticada.
-- O backend troca o `app_context` armazenado na sessão.
-- Uma nova `AccountsSession` é criada para o novo contexto.
-- As próximas chamadas passam a obedecer às permissões da aplicação escolhida.
-
-## Situações suportadas
-
-- Login direto em `ACOES_PNGI`.
-- Login direto em `CARGA_ORG_LOT`.
-- Login no `PORTAL` por `PORTAL_ADMIN`.
-- Entrar no Portal e depois alternar para outra aplicação autorizada.
-- Alternar entre aplicações permitidas sem relogar.
-
-## Situações não suportadas
-
-- Login no `PORTAL` por usuário sem `PORTAL_ADMIN`.
-- Trocar para uma aplicação na qual o usuário não possui role.
-- Acessar uma aplicação sem autenticação válida.
-- Tentar tratar `gpp_session` como JWT ou token Bearer.
-
-## Padrão de consumo no frontend
-
-- Sempre enviar `credentials: 'include'` nas requisições.
-- Sempre usar o mesmo backend base URL.
-- Após login ou switch, chamar um endpoint de estado, como `me`, para atualizar o contexto da interface.
-- Exibir somente as aplicações retornadas pelo backend para o usuário autenticado.
-
-## Fluxo recomendado
-
-1. Buscar as aplicações públicas para preencher o seletor de login.
-2. Fazer login com `username`, `password` e `app_context`.
-3. Ler o usuário autenticado com `me`.
-4. Se for Portal Admin, listar apps disponíveis pós-login.
-5. Ao trocar de app, chamar switch de contexto.
-6. Recarregar estado e permissões após o switch.
+Consumir o contrato pelo Axios compartilhado com `withCredentials: true`,
+preservar os hydrators/Zustand/SWR existentes, usar redirects internos
+validados e nunca derivar autorização de nomes de roles.

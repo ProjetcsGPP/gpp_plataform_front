@@ -30,6 +30,7 @@ export function usePatriarcaSelection() {
       userId && selectedForUserId === userId ? storedSelection : null,
     select: (patriarca: {
       idpatriarca: number;
+      idexternopatriarca: string;
       strsiglapatriarca: string;
       strnome: string;
     }) => {

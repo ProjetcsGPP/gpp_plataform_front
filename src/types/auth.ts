@@ -1,6 +1,10 @@
 // src/types/auth.ts
 
-export type AppContext = "PORTAL" | "ACOES_PNGI" | "CARGA_ORG_LOT";
+export type AppContext =
+  | "PORTAL"
+  | "ACOES_PNGI"
+  | "CARGA_ORG_LOT"
+  | "PUB_INSTITUCIONAL";
 
 export interface UserRole {
   id: number;
@@ -30,6 +34,7 @@ export const APP_CONFIG: Record<
   AppContext,
   {
     slug: string;
+    logoutSlug?: string;
     loginPath: string;
     label: string;
     topBarContext?: { label: string; href: string };
@@ -49,5 +54,11 @@ export const APP_CONFIG: Record<
       label: "Patriarca",
       href: "/carga-org-lot/patriarcas",
     },
+  },
+  PUB_INSTITUCIONAL: {
+    slug: "publicacoes",
+    logoutSlug: "pub-institucional",
+    loginPath: "/publicacoes/login",
+    label: "Publicações Institucionais",
   },
 };

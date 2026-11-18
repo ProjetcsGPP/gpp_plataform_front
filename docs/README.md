@@ -1,3 +1,10 @@
+# Documentação do frontend
+
+- [PUBLICACOES](./PUBLICACOES/README.md): assessment arquitetural, decisões e
+  insumos para a nova aplicação e para a transformação do Portal.
+
+## Referência do projeto Next.js
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started

@@ -12,6 +12,7 @@ import {
   getCargaOrgLotDashboard,
   consultarRelatorioEnvioOrganogramaProdest,
   consultarStatusEnvioOrganogramaProdest,
+  encerrarMonitoramentoEnvioOrganogramaProdest,
   deleteImportacao,
   deleteItemOrganograma,
   downloadArquivo,
@@ -256,6 +257,13 @@ describe("API de carga de organograma e lotação", () => {
     await solicitarEnvioOrganogramaProdest(123, true);
     await consultarStatusEnvioOrganogramaProdest(15);
     await consultarRelatorioEnvioOrganogramaProdest(15);
+    await encerrarMonitoramentoEnvioOrganogramaProdest(15, {
+      justificativa: "Carga sem atualização há vários dias.",
+      confirmar_risco_processamento_remoto: true,
+      analista_prodest_avisado: true,
+      analista_prodest_respondeu: false,
+      retorno_analista_prodest: "",
+    });
     await listCargasRecentesProdest(8, 99);
     await getConfiguracaoProdest();
     await testarConexaoProdest();
@@ -269,11 +277,18 @@ describe("API de carga de organograma e lotação", () => {
     });
     expect(post).toHaveBeenNthCalledWith(2, "/carga-org-lot/envios-organograma-prodest/15/consultar-status/");
     expect(post).toHaveBeenNthCalledWith(3, "/carga-org-lot/envios-organograma-prodest/15/consultar-relatorio/");
+    expect(post).toHaveBeenNthCalledWith(4, "/carga-org-lot/envios-organograma-prodest/15/encerrar-monitoramento/", {
+      justificativa: "Carga sem atualização há vários dias.",
+      confirmar_risco_processamento_remoto: true,
+      analista_prodest_avisado: true,
+      analista_prodest_respondeu: false,
+      retorno_analista_prodest: "",
+    });
     expect(get).toHaveBeenNthCalledWith(2, "/carga-org-lot/envios-organograma-prodest/ultimas-prodest/", {
       params: { patriarca: 8, limit: 10 },
     });
     expect(get).toHaveBeenNthCalledWith(3, "/carga-org-lot/envios-organograma-prodest/configuracao/");
-    expect(post).toHaveBeenNthCalledWith(4, "/carga-org-lot/envios-organograma-prodest/testar-conexao/");
+    expect(post).toHaveBeenNthCalledWith(5, "/carga-org-lot/envios-organograma-prodest/testar-conexao/");
   });
 
   it("consulta acompanhamento, eventos incrementais e dashboard somente no backend local", async () => {

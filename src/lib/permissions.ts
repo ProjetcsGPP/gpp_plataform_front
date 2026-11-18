@@ -122,6 +122,65 @@ export const PERMISSIONS = {
   ITEMORGANOGRAMA_ADD: "add_itemorganograma",
   ITEMORGANOGRAMA_CHANGE: "change_itemorganograma",
   ITEMORGANOGRAMA_DELETE: "delete_itemorganograma",
+
+  // ── Publicações Institucionais / E-Docs ───────────────────────────
+  EDOCS_PATRIARCA_CONSULTAR: "consultar_patriarcas_edocs",
+  EDOCS_PATRIARCA_REVISAR: "revisar_patriarcas_edocs",
+  EDOCS_PATRIARCA_SELECIONAR_COLETA: "selecionar_patriarcas_coleta",
+  EDOCS_PATRIARCA_SOLICITAR_COLETA: "solicitar_coleta_patriarcas_edocs",
+  EDOCS_COLETA_VIEW: "view_coletapatriarcasedocs",
+  EDOCS_DIVERGENCIA_VIEW: "view_divergenciapatriarcaedocs",
+  EDOCS_EVENTO_AUDITORIA_VIEW: "view_eventoauditoriapatriarcaedocs",
+  EDOCS_OBSERVACAO_VIEW: "view_observacaopatriarcaedocs",
+  EDOCS_PATRIARCA_VIEW: "view_patriarcaedocs",
+  EDOCS_COLETA_VISUALIZAR: "visualizar_coletas_patriarcas",
+  EDOCS_INDICADORES_MUNICIPAIS_ALTERAR:
+    "alterar_indicadores_municipais_edocs",
+  EDOCS_INDICADOR_SEM_USO_ALTERAR:
+    "alterar_indicador_municipio_sem_edocs",
+  EDOCS_MUNICIPIO_VIEW: "view_municipioedocs",
+  EDOCS_MUNICIPIO_ADD: "add_municipioedocs",
+  EDOCS_MUNICIPIO_CHANGE: "change_municipioedocs",
+  EDOCS_MUNICIPIO_SITUACAO_ALTERAR:
+    "alterar_situacao_municipio_edocs",
+  EDOCS_MUNICIPIO_AUDITORIA_VIEW:
+    "view_eventoauditoriamunicipioedocs",
+
+  // ── Publicações Institucionais / Coleta mensal E-Docs ─────────────
+  EDOCS_MENSAL_COLETA_VIEW: "view_coletamensaledocs",
+  EDOCS_MENSAL_COLETA_SOLICITAR: "solicitar_coleta_mensal_edocs",
+  EDOCS_MENSAL_RESULTADO_PATRIARCA_VIEW:
+    "view_resultadomensalpatriarcaedocs",
+  EDOCS_MENSAL_RESULTADO_ORGANIZACAO_VIEW:
+    "view_resultadomensalorganizacaoedocs",
+  EDOCS_MENSAL_FONTE_BRUTA_VIEW: "view_fontebrutacoletamensaledocs",
+  EDOCS_MENSAL_EVENTO_AUDITORIA_VIEW:
+    "view_eventoauditoriacoletamensaledocs",
+
+  // ── Publicações Institucionais / E-Flow ────────────────────────────
+  EFLOW_COLETA_IMPORTAR: "importar_coleta_eflow",
+  EFLOW_COLETA_VIEW: "view_coletaeflow",
+  EFLOW_DEFINICAO_VIEW: "view_definicaofluxoeflow",
+  EFLOW_EVENTO_AUDITORIA_VIEW: "view_eventoauditoriaeflow",
+  EFLOW_RESULTADO_VIEW: "view_resultadocalculoeflow",
+  EFLOW_PREFERENCIA_VIEW: "view_preferenciaexibicaoeflow",
+  EFLOW_PREFERENCIA_ALTERAR: "alterar_preferencia_exibicao_eflow",
+  EFLOW_PREFERENCIA_AUDITORIA_VIEW:
+    "view_eventoauditoriapreferenciaeflow",
+
+  // ── Publicações Institucionais / Gestão editorial ─────────────
+  PUBLICACAO_VIEW: "view_publicacao",
+  PUBLICACAO_ADD: "add_publicacao",
+  PUBLICACAO_CHANGE: "change_publicacao",
+  PUBLICACAO_CALCULAR: "calcular_publicacao",
+  PUBLICACAO_PREVIA_VIEW: "visualizar_previa_publicacao",
+  PUBLICACAO_PUBLICAR: "publicar_publicacao",
+  PUBLICACAO_SUBSTITUIR: "substituir_publicacao",
+  PUBLICACAO_REVOGAR: "revogar_publicacao",
+  PUBLICACAO_VISAO_VIEW: "view_configuracaovisaopublicacao",
+  PUBLICACAO_VISAO_CONFIGURAR: "configurar_visao_publicacao",
+  PUBLICACAO_HISTORICO_VIEW: "view_historicopublicacao",
+  EDOCS_IMPLANTACAO_VIEW: "view_implantacaopatriarcaedocs",
 } as const;
 
 export type PermissionKey = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];

@@ -8,6 +8,7 @@ import type {
   ConjuntoLotacao,
   DashboardCargaOrgLot,
   EnvioOrganogramaProdest,
+  EncerrarMonitoramentoProdestPayload,
   EventosEnvioOrganogramaPage,
   HistoricoConjuntoLotacao,
   ImportacaoPlanilha,
@@ -85,6 +86,10 @@ export function envioOrganogramaProdestAtivoKey(patriarcaId: number) {
 
 export function acompanhamentoEnvioOrganogramaKey(patriarcaId: number) {
   return ["carga-org-lot:acompanhamento-envio-organograma", patriarcaId] as const;
+}
+
+export function patriarcaDetailKey(patriarcaId: number) {
+  return ["carga-org-lot:patriarca", patriarcaId] as const;
 }
 
 export const cargaOrgLotDashboardKey = ["carga-org-lot:dashboard"] as const;
@@ -352,6 +357,17 @@ export async function consultarStatusEnvioOrganogramaProdest(id: number) {
 export async function consultarRelatorioEnvioOrganogramaProdest(id: number) {
   const response = await api.post<EnvioOrganogramaProdest>(
     `${ENVIOS_ORGANOGRAMA_PRODEST_ENDPOINT}${id}/consultar-relatorio/`,
+  );
+  return response.data;
+}
+
+export async function encerrarMonitoramentoEnvioOrganogramaProdest(
+  id: number,
+  payload: EncerrarMonitoramentoProdestPayload,
+) {
+  const response = await api.post<EnvioOrganogramaProdest>(
+    `${ENVIOS_ORGANOGRAMA_PRODEST_ENDPOINT}${id}/encerrar-monitoramento/`,
+    payload,
   );
   return response.data;
 }

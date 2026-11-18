@@ -20,6 +20,7 @@ const APP_NAV_MAP: Record<AppContext, string> = {
   ACOES_PNGI: "/nav/ACOES_PNGI.json",
   PORTAL: "/nav/PORTAL.json",
   CARGA_ORG_LOT: "/nav/CARGA_ORG_LOT.json",
+  PUB_INSTITUCIONAL: "/nav/PUB_INSTITUCIONAL.json",
 };
 
 const EMPTY_GRANTED: string[] = [];
